@@ -4,6 +4,10 @@ import express from "express";
 // TODO: find a way to not use rollup directly
 import { rollup } from "rollup";
 
+const isServerFile = (id) =>
+	/(?:\.server\.[tj]s$|\/server-(?:actions|functions)\/)/.test(id)
+;
+
 export default function serverActions() {
 	const serverFunctions = new Map();
 	let app;
@@ -18,14 +22,14 @@ export default function serverActions() {
 		},
 
 		async resolveId(source, importer) {
-			if (source.endsWith(".server.js") && importer) {
+			if (isServerFile(source) && importer) {
 				const resolvedPath = path.resolve(path.dirname(importer), source);
 				return resolvedPath;
 			}
 		},
 
 		async load(id) {
-			if (id.endsWith(".server.js")) {
+			if (isServerFile(id)) {
 				const code = await fs.readFile(id, "utf-8");
 				const moduleName = path.basename(id, ".server.js");
 				const exportRegex = /export\s+(async\s+)?function\s+(\w+)/g;
@@ -85,7 +89,7 @@ export default function serverActions() {
 					{
 						name: "external-modules",
 						resolveId(source) {
-							if (!source.endsWith(".server.js") && !source.startsWith(".") && !path.isAbsolute(source)) {
+							if (!isServerFile(source) && !source.startsWith(".") && !path.isAbsolute(source)) {
 								return { id: source, external: true };
 							}
 						},
