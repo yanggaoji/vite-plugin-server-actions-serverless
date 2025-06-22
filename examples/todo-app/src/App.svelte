@@ -41,18 +41,18 @@
 <main>
 	<h1>Todo List</h1>
 
-	<form class="todo-form" on:submit|preventDefault={handleAddTodo}>
-		<input class="todo-input" bind:value={newTodoText} placeholder="Add a new todo" />
-		<button class="todo-button" type="submit">Add</button>
+	<form class="todo-form" data-testid="todo-form" on:submit|preventDefault={handleAddTodo}>
+		<input class="todo-input" data-testid="todo-input" bind:value={newTodoText} placeholder="Add a new todo" />
+		<button class="todo-button" data-testid="add-button" type="submit">Add</button>
 	</form>
 
 	{#if todos.length > 0}
 		<ul class="todo-list">
 			{#each todos as todo}
-				<li class="todo-item">
-					<input type="checkbox" checked={todo.completed} on:change={() => handleToggleTodo(todo.id)} />
-					<span class:completed={todo.completed}>{todo.text}</span>
-					<button class="delete-button" on:click={() => handleDeleteTodo(todo.id)}>Delete</button>
+				<li class="todo-item" data-testid="todo-item">
+					<input type="checkbox" data-testid="todo-checkbox" checked={todo.completed} on:change={() => handleToggleTodo(todo.id)} />
+					<span class:completed={todo.completed} data-testid="todo-text">{todo.text}</span>
+					<button class="delete-button" data-testid="delete-button" on:click={() => handleDeleteTodo(todo.id)}>Delete</button>
 				</li>
 			{/each}
 		</ul>

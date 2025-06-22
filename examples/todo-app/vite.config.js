@@ -1,12 +1,14 @@
 import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import serverActions, { middleware } from "../../src/index.js";
+import serverActions, { middleware, pathUtils } from "../../src/index.js";
 
 // https://vitejs.dev/config/
 export default defineConfig({
 	plugins: [
 		svelte(),
 		serverActions({
+			// Use clean hierarchical paths for routes (actions/todo/create instead of src_actions_todo/create)
+			routeTransform: pathUtils.createCleanRoute,
 			// Enable validation and OpenAPI features
 			validation: {
 				enabled: true,
