@@ -130,8 +130,20 @@ To see a real-world example of how to use Vite Server Actions, check out the TOD
 ## 📚 How it works
 
 **Vite Server Actions** creates an API endpoint for each server function you define. When you import a server action in
-your client-side code, it returns a proxy function) that sends a request to the server endpoint instead of executing the
+your client-side code, it returns a proxy function that sends a request to the server endpoint instead of executing the
 function locally.
+
+### Module Naming
+
+To prevent collisions between files with the same name in different directories, the plugin generates unique module names based on the file path:
+
+- `src/actions/auth.server.js` → Module name: `src_actions_auth`
+- `src/admin/auth.server.js` → Module name: `src_admin_auth`
+
+This ensures that server functions are accessible at unique endpoints like:
+
+- `/api/src_actions_auth/login`
+- `/api/src_admin_auth/login`
 
 In _development_, the server actions run as a middleware in the Vite dev server.
 While in _production_, it's bundled into a single file that can be run with Node.js.
@@ -142,22 +154,141 @@ Vite Server Actions works out of the box, but you can customize it by passing op
 
 ```javascript
 serverActions({
-  // Options (coming soon)
+  apiPrefix: "/custom-api", // Custom API prefix (default: '/api')
+  include: "**/*.server.js", // Include patterns (default: ['**/*.server.js'])
+  exclude: ["**/node_modules/**"], // Exclude patterns (default: [])
 });
 ```
 
 ## 🛠️ Configuration Options
 
-Coming soon...
+| Option       | Type                                 | Default              | Description                                          |
+| ------------ | ------------------------------------ | -------------------- | ---------------------------------------------------- |
+| `apiPrefix`  | `string`                             | `"/api"`             | The URL prefix for server action endpoints           |
+| `include`    | `string \| string[]`                 | `["**/*.server.js"]` | Glob patterns for files to process as server actions |
+| `exclude`    | `string \| string[]`                 | `[]`                 | Glob patterns for files to exclude from processing   |
+| `middleware` | `RequestHandler \| RequestHandler[]` | `[]`                 | Express middleware to run before server actions      |
+
+### Examples
+
+**Custom API prefix:**
+
+```javascript
+serverActions({
+  apiPrefix: "/server",
+});
+// Server actions will be available at /server/moduleName/functionName
+```
+
+**Include only specific directories:**
+
+```javascript
+serverActions({
+  include: ["src/actions/**/*.server.js", "src/api/**/*.server.js"],
+});
+```
+
+**Exclude test files:**
+
+```javascript
+serverActions({
+  exclude: ["**/*.test.server.js", "**/*.spec.server.js"],
+});
+```
+
+## 🔍 Built-in Middleware
+
+### Logging Middleware
+
+Vite Server Actions includes a built-in logging middleware that provides detailed console output for debugging:
+
+```javascript
+import serverActions, { middleware } from "vite-plugin-server-actions";
+
+export default defineConfig({
+  plugins: [
+    serverActions({
+      middleware: middleware.logging,
+    }),
+  ],
+});
+```
+
+The logging middleware displays:
+
+- 🚀 Action trigger details (module, function, endpoint)
+- 📦 Formatted request body with syntax highlighting
+- ✅ Response time and data
+- ❌ Error responses with status codes
+
+Example output:
+
+```
+[2024-01-21T10:30:45.123Z] 🚀 Server Action Triggered
+├─ Module: src_actions_todo
+├─ Function: addTodo
+├─ Method: POST
+└─ Endpoint: /api/src_actions_todo/addTodo
+
+📦 Request Body:
+{
+  text: 'Buy groceries',
+  priority: 'high'
+}
+
+✅ Response sent in 25ms
+📤 Response data:
+{
+  id: 1,
+  text: 'Buy groceries',
+  priority: 'high',
+  completed: false
+}
+──────────────────────────────────────────────────
+```
+
+### Custom Middleware
+
+You can add your own Express middleware for authentication, validation, etc:
+
+```javascript
+import serverActions from "vite-plugin-server-actions";
+
+// Authentication middleware
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization;
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  // Verify token...
+  next();
+};
+
+// CORS middleware
+const corsMiddleware = (req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "POST");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  next();
+};
+
+export default defineConfig({
+  plugins: [
+    serverActions({
+      middleware: [corsMiddleware, authMiddleware],
+    }),
+  ],
+});
+```
 
 ## TODO
 
 This is a proof of concept, and things are still missing, such as:
 
-- [ ] Add configuration options
-- [ ] Add tests
+- [x] Add configuration options
+- [x] Add tests
 - [ ] Allow customizing the HTTP method for each action (e.g. `GET`, `POST`, `PUT`, `DELETE`)
-- [ ] Make sure name collisions are handled correctly
+- [x] Make sure name collisions are handled correctly
 - [ ] Make sure the actions are only available on the server when running in production mode.
 - [ ] Add more examples (Vue, React, etc.)
 - [ ] Publish to npm
@@ -166,6 +297,8 @@ This is a proof of concept, and things are still missing, such as:
 
 To set up the project for development, follow these steps:
 
+### Getting Started
+
 ```shell
 # Clone the repository
 git clone git@github.com:HelgeSverre/vite-plugin-server-actions.git
@@ -173,11 +306,74 @@ cd vite-plugin-server-actions
 
 # Install dependencies
 npm install
-npm run dev
-
-# Format code
-npm run format
 ```
+
+### Development Commands
+
+```shell
+# Run tests in watch mode
+npm run test
+
+# Run tests once
+npm run test:run
+
+# Check code quality with ESLint
+npm run lint
+
+# Fix auto-fixable lint issues
+npm run lint:fix
+
+# Check TypeScript types
+npm run typecheck
+
+# Format code with Prettier
+npm run format
+
+# Sort package.json
+npm run sort
+
+# Run the example app in development mode
+npm run example:dev
+
+# Build the example app
+npm run example:build
+```
+
+### Testing
+
+The project uses [Vitest](https://vitest.dev/) for testing. Tests are located in `src/index.test.js` and cover:
+
+- Plugin initialization and configuration
+- Server action file processing
+- Error handling for malformed code
+- Module name collision prevention
+- Configuration options (apiPrefix, include/exclude)
+- Client proxy generation
+
+To write new tests, follow the existing patterns and ensure you mock external dependencies properly.
+
+### Code Quality
+
+The project enforces code quality through:
+
+- **ESLint** - Modern ESLint configuration with sensible defaults
+- **Prettier** - Code formatting (via `npm run format`)
+- **TypeScript** - Type checking for better developer experience
+- **Husky** - Git hooks for automatic quality checks
+- **Lint-staged** - Run linters on staged files only
+
+### Before Committing
+
+Run all quality checks with a single command:
+
+```shell
+npm run check
+```
+
+This runs tests, linting, and type checking. These checks also run automatically:
+
+- **On commit** - Lint-staged runs on changed files
+- **On push** - All checks run to ensure code quality
 
 ## 📝 License
 
