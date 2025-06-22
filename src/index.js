@@ -14,11 +14,71 @@ import {
 	setupOpenAPIEndpoints 
 } from "./openapi.js";
 
+// Utility functions for path transformation
+export const pathUtils = {
+	/**
+	 * Default path normalizer - creates underscore-separated module names (preserves original behavior)
+	 * @param {string} filePath - Relative file path (e.g., "src/actions/todo.server.js")
+	 * @returns {string} - Normalized module name (e.g., "src_actions_todo")
+	 */
+	createModuleName: (filePath) => {
+		return filePath
+			.replace(/\//g, "_") // Replace slashes with underscores
+			.replace(/\./g, "_") // Replace dots with underscores
+			.replace(/_server_js$/, ""); // Remove .server.js extension
+	},
+
+	/**
+	 * Clean route transformer - creates hierarchical paths: /api/actions/todo/create
+	 * @param {string} filePath - Relative file path (e.g., "src/actions/todo.server.js")
+	 * @param {string} functionName - Function name (e.g., "create")
+	 * @returns {string} - Clean route (e.g., "actions/todo/create")
+	 */
+	createCleanRoute: (filePath, functionName) => {
+		const cleanPath = filePath
+			.replace(/^src\//, "") // Remove src/ prefix
+			.replace(/\.server\.js$/, ""); // Remove .server.js suffix
+		return `${cleanPath}/${functionName}`;
+	},
+
+	/**
+	 * Legacy route transformer - creates underscore-separated paths: /api/src_actions_todo/create
+	 * @param {string} filePath - Relative file path (e.g., "src/actions/todo.server.js")
+	 * @param {string} functionName - Function name (e.g., "create")
+	 * @returns {string} - Legacy route (e.g., "src_actions_todo/create")
+	 */
+	createLegacyRoute: (filePath, functionName) => {
+		const legacyPath = filePath
+			.replace(/\//g, "_") // Replace slashes with underscores
+			.replace(/\.server\.js$/, ""); // Remove .server.js extension
+		return `${legacyPath}/${functionName}`;
+	},
+
+	/**
+	 * Minimal route transformer - keeps original structure: /api/actions/todo.server/create
+	 * @param {string} filePath - Relative file path (e.g., "actions/todo.server.js")
+	 * @param {string} functionName - Function name (e.g., "create")
+	 * @returns {string} - Minimal route (e.g., "actions/todo.server/create")
+	 */
+	createMinimalRoute: (filePath, functionName) => {
+		const minimalPath = filePath.replace(/\.js$/, ""); // Just remove .js
+		return `${minimalPath}/${functionName}`;
+	}
+};
+
 const DEFAULT_OPTIONS = {
 	apiPrefix: "/api",
 	include: ["**/*.server.js"],
 	exclude: [],
 	middleware: [],
+	moduleNameTransform: pathUtils.createModuleName,
+	routeTransform: (filePath, functionName) => {
+		// Default to clean hierarchical paths: /api/actions/todo/create
+		const cleanPath = filePath
+			.replace(/^src\//, "") // Remove src/ prefix
+			.replace(/\.server\.js$/, ""); // Remove .server.js suffix
+		return `${cleanPath}/${functionName}`;
+	},
 	validation: {
 		enabled: false,
 		adapter: "zod",
@@ -61,6 +121,7 @@ export default function serverActions(userOptions = {}) {
 	let app;
 	let openAPIGenerator;
 	let validationMiddleware = null;
+	let viteConfig = null;
 
 	// Initialize OpenAPI generator if enabled
 	if (options.validation.generateOpenAPI) {
@@ -79,6 +140,11 @@ export default function serverActions(userOptions = {}) {
 	return {
 		name: "vite-plugin-server-actions",
 
+		configResolved(config) {
+			// Store Vite config for later use
+			viteConfig = config;
+		},
+
 		configureServer(server) {
 			app = express();
 			app.use(express.json());
@@ -90,7 +156,10 @@ export default function serverActions(userOptions = {}) {
 					const openAPISpec = openAPIGenerator.generateSpec(
 						serverFunctions,
 						schemaDiscovery,
-						{ apiPrefix: options.apiPrefix }
+						{ 
+							apiPrefix: options.apiPrefix,
+							routeTransform: options.routeTransform
+						}
 					);
 					res.json(openAPISpec);
 				});
@@ -108,8 +177,26 @@ export default function serverActions(userOptions = {}) {
 								}
 							}));
 
-							console.log(`📖 API Documentation: http://localhost:5173${docsPath}`);
-							console.log(`📄 OpenAPI Spec: http://localhost:5173${options.validation.openAPIOptions.specPath || "/api/openapi.json"}`);
+							// Wait for server to start and get the actual port, then log URLs
+							server.httpServer?.on('listening', () => {
+								const address = server.httpServer.address();
+								const port = address?.port || 5173;
+								// Always use localhost for consistent display
+								const host = 'localhost';
+								
+								// Delay to appear after Vite's startup messages
+								global.setTimeout(() => {
+									if (viteConfig?.logger) {
+										// Use a more integrated approach with cleaner output matching Vite's style
+										// Use dim green (32m + 2m) to match Vite's faded green arrows
+										console.log(`  \x1b[2;32m➜\x1b[0m  API Docs: http://${host}:${port}${docsPath}`);
+										console.log(`  \x1b[2;32m➜\x1b[0m  OpenAPI:  http://${host}:${port}${options.validation.openAPIOptions.specPath || "/api/openapi.json"}`);
+									} else {
+										console.log(`📖 API Documentation: http://${host}:${port}${docsPath}`);
+										console.log(`📄 OpenAPI Spec: http://${host}:${port}${options.validation.openAPIOptions.specPath || "/api/openapi.json"}`);
+									}
+								}, 50); // Small delay to appear after Vite's ready message
+							});
 						}).catch((error) => {
 							console.warn("Swagger UI setup failed:", error.message);
 						});
@@ -135,7 +222,6 @@ export default function serverActions(userOptions = {}) {
 					const code = await fs.readFile(id, "utf-8");
 
 					// Create a unique module name based on the file path
-					// Convert path separators to underscores and remove .server.js extension
 					let relativePath = path.relative(process.cwd(), id);
 
 					// If the file is outside the project root, use the absolute path
@@ -143,12 +229,11 @@ export default function serverActions(userOptions = {}) {
 						relativePath = id;
 					}
 
-					const moduleName = relativePath
-						.replace(/\\/g, "/") // Normalize path separators
-						.replace(/^\//, "") // Remove leading slash
-						.replace(/\//g, "_") // Replace slashes with underscores
-						.replace(/\./g, "_") // Replace dots with underscores
-						.replace(/_server_js$/, ""); // Remove .server.js extension
+					// Normalize path separators
+					relativePath = relativePath.replace(/\\/g, "/").replace(/^\//, "");
+
+					// Generate module name for internal use (must be valid identifier)
+					const moduleName = options.moduleNameTransform(relativePath);
 
 					// Validate module name
 					if (!moduleName || moduleName.includes("..")) {
@@ -177,7 +262,7 @@ export default function serverActions(userOptions = {}) {
 						console.warn(`Duplicate function names detected in ${id}`);
 					}
 
-					serverFunctions.set(moduleName, { functions: uniqueFunctions, id });
+					serverFunctions.set(moduleName, { functions: uniqueFunctions, id, filePath: relativePath });
 
 					// Discover schemas from module if validation is enabled
 					if (options.validation.enabled) {
@@ -203,7 +288,8 @@ export default function serverActions(userOptions = {}) {
 						}
 
 						uniqueFunctions.forEach((functionName) => {
-							const endpoint = `${options.apiPrefix}/${moduleName}/${functionName}`;
+							const routePath = options.routeTransform(relativePath, functionName);
+							const endpoint = `${options.apiPrefix}/${routePath}`;
 
 							// Apply middleware before the handler
 							app.post(endpoint, ...middlewares, async (req, res) => {
@@ -247,7 +333,7 @@ export default function serverActions(userOptions = {}) {
 					}
 					// OpenAPI endpoints will be set up during configureServer after all modules are loaded
 
-					return generateClientProxy(moduleName, uniqueFunctions, options);
+					return generateClientProxy(moduleName, uniqueFunctions, options, relativePath);
 				} catch (error) {
 					console.error(`Failed to process server file ${id}: ${error.message}`);
 					// Return empty proxy instead of failing the build
@@ -344,11 +430,13 @@ export default function serverActions(userOptions = {}) {
 				// Server functions
 				// --------------------------------------------------
         ${Array.from(serverFunctions.entries())
-		.flatMap(([moduleName, { functions }]) =>
+		.flatMap(([moduleName, { functions, filePath }]) =>
 			functions
 				.map(
-					(functionName) => `
-            app.post('${options.apiPrefix}/${moduleName}/${functionName}', async (req, res) => {
+					(functionName) => {
+						const routePath = options.routeTransform(filePath, functionName);
+						return `
+            app.post('${options.apiPrefix}/${routePath}', async (req, res) => {
               try {
                 const result = await serverActions.${moduleName}.${functionName}(...req.body);
                 res.json(result || "* No response *");
@@ -357,7 +445,8 @@ export default function serverActions(userOptions = {}) {
                 res.status(500).json({ error: error.message });
               }
             });
-          `,
+          `;
+					}
 				)
 				.join("\n")
 				.trim(),
@@ -385,7 +474,7 @@ export default function serverActions(userOptions = {}) {
 	};
 }
 
-function generateClientProxy(moduleName, functions, options) {
+function generateClientProxy(moduleName, functions, options, filePath) {
 	// Add development-only safety checks
 	const isDev = process.env.NODE_ENV !== "production";
 	
@@ -414,6 +503,9 @@ if (typeof window !== 'undefined') {
 	}
 	
 	functions.forEach((functionName) => {
+		// Generate the route path at build time
+		const routePath = options.routeTransform(filePath, functionName);
+		
 		clientProxy += `
       export async function ${functionName}(...args) {
       	console.log("[Vite Server Actions] 🚀 - Executing ${functionName}");
@@ -434,7 +526,7 @@ if (typeof window !== 'undefined') {
         ` : ""}
         
         try {
-          const response = await fetch('${options.apiPrefix}/${moduleName}/${functionName}', {
+          const response = await fetch('${options.apiPrefix}/${routePath}', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(args)

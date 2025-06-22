@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { z } from "zod";
 import express from "express";
-import serverActions from "../src/index.js";
+import serverActions, { pathUtils } from "../src/index.js";
 import fs from "fs/promises";
 import path from "path";
 
@@ -103,14 +103,14 @@ describe("Integration Tests - Validation System", () => {
 
 			// Verify that endpoint was created with validation middleware
 			expect(mockApp.post).toHaveBeenCalledWith(
-				"/api/src_users/createUser",
+				"/api/users/createUser",
 				expect.any(Function), // validation middleware
 				expect.any(Function)  // main handler
 			);
 
 			// Get the endpoint handler arguments
 			const postCall = mockApp.post.mock.calls.find(call => 
-				call[0] === "/api/src_users/createUser"
+				call[0] === "/api/users/createUser"
 			);
 			expect(postCall).toBeDefined();
 			expect(postCall).toHaveLength(3); // path, validation middleware, handler
@@ -155,13 +155,13 @@ describe("Integration Tests - Validation System", () => {
 
 			// Get the validation middleware
 			const postCall = mockApp.post.mock.calls.find(call => 
-				call[0] === "/api/src_users/createUser"
+				call[0] === "/api/users/createUser"
 			);
 			const validationMiddleware = postCall[1];
 
 			// Test invalid request
 			const mockReq = {
-				url: "/api/src_users/createUser",
+				url: "/api/users/createUser",
 				body: [{ 
 					name: "A", // Too short
 					email: "invalid-email", // Invalid format
@@ -249,7 +249,7 @@ describe("Integration Tests - Validation System", () => {
 			await plugin.load("/project/src/users.server.js");
 
 			const postCall = mockApp.post.mock.calls.find(call => 
-				call[0] === "/api/src_users/createUser"
+				call[0] === "/api/users/createUser"
 			);
 			const validationMiddleware = postCall[1];
 
@@ -261,7 +261,7 @@ describe("Integration Tests - Validation System", () => {
 			};
 
 			const mockReq = {
-				url: "/api/src_users/createUser",
+				url: "/api/users/createUser",
 				body: [validData]
 			};
 
@@ -360,7 +360,7 @@ describe("Integration Tests - Validation System", () => {
 					}),
 					paths: expect.objectContaining({
 						"/api/src_users/getUsers": expect.any(Object),
-						"/api/src_users/createUser": expect.any(Object)
+						"/api/users/createUser": expect.any(Object)
 					})
 				})
 			);
@@ -479,7 +479,7 @@ describe("Integration Tests - Validation System", () => {
 			await plugin.load("/project/src/test.server.js");
 
 			const postCall = mockApp.post.mock.calls.find(call => 
-				call[0] === "/api/src_test/testFunction"
+				call[0] === "/api/test/testFunction"
 			);
 
 			// Should have: custom middleware 1, custom middleware 2, validation middleware, handler
@@ -518,7 +518,7 @@ describe("Integration Tests - Validation System", () => {
 			await plugin.load("/project/src/test.server.js");
 
 			const postCall = mockApp.post.mock.calls.find(call => 
-				call[0] === "/api/src_test/testFunction"
+				call[0] === "/api/test/testFunction"
 			);
 
 			// Should have: custom middleware, handler (no validation middleware)
@@ -576,13 +576,13 @@ describe("Integration Tests - Validation System", () => {
 
 			// Verify both endpoints have validation
 			expect(mockApp.post).toHaveBeenCalledWith(
-				"/api/src_users/createUser",
+				"/api/users/createUser",
 				expect.any(Function), // validation middleware
 				expect.any(Function)  // handler
 			);
 
 			expect(mockApp.post).toHaveBeenCalledWith(
-				"/api/src_posts/createPost",
+				"/api/posts/createPost",
 				expect.any(Function), // validation middleware
 				expect.any(Function)  // handler
 			);
@@ -597,8 +597,8 @@ describe("Integration Tests - Validation System", () => {
 			specHandler({}, mockRes);
 
 			const spec = mockRes.json.mock.calls[0][0];
-			expect(spec.paths["/api/src_users/createUser"]).toBeDefined();
-			expect(spec.paths["/api/src_posts/createPost"]).toBeDefined();
+			expect(spec.paths["/api/users/createUser"]).toBeDefined();
+			expect(spec.paths["/api/posts/createPost"]).toBeDefined();
 		});
 	});
 
@@ -631,7 +631,7 @@ describe("Integration Tests - Validation System", () => {
 			await plugin.load("/project/src/test.server.js");
 
 			const postCall = mockApp.post.mock.calls.find(call => 
-				call[0] === "/api/src_test/testFunction"
+				call[0] === "/api/test/testFunction"
 			);
 			const handler = postCall[postCall.length - 1]; // Last function is the main handler
 
@@ -652,6 +652,108 @@ describe("Integration Tests - Validation System", () => {
 				details: "Function error"
 			});
 		});
+	});
+});
+
+describe("Custom route transformation", () => {
+	let mockServer, mockApp;
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		
+		mockApp = mockExpressApp;
+
+		mockServer = {
+			middlewares: {
+				use: vi.fn(),
+			},
+		};
+	});
+
+	it("should allow custom route transformation without function name", async () => {
+		const serverCode = `
+			export async function create(userData) {
+				return { id: 1, ...userData };
+			}
+			
+			export async function update(id, userData) {
+				return { id, ...userData };
+			}
+		`;
+
+		vi.mocked(fs.readFile).mockResolvedValue(serverCode);
+
+		const mockModule = {
+			create: vi.fn().mockResolvedValue({ id: 1, name: "John" }),
+			update: vi.fn().mockResolvedValue({ id: 1, name: "Jane" }),
+		};
+
+		vi.doMock("/project/src/users.server.js", () => mockModule);
+
+		// Custom transformer that strips the function name to make routes like /api/users/create -> /api/users
+		const plugin = serverActions({
+			routeTransform: (filePath, functionName) => {
+				const cleanPath = filePath
+					.replace(/^src\//, "") // Remove src/ prefix
+					.replace(/\.server\.js$/, ""); // Remove .server.js suffix
+				// For 'create' functions, just return the module path
+				if (functionName === 'create') {
+					return cleanPath;
+				}
+				// For other functions, include the function name
+				return `${cleanPath}/${functionName}`;
+			},
+			validation: {
+				enabled: false
+			}
+		});
+
+		plugin.configureServer(mockServer);
+		await plugin.load("/project/src/users.server.js");
+
+		// Verify endpoints were created with custom routes
+		expect(mockApp.post).toHaveBeenCalledWith(
+			"/api/users", // create function -> /api/users (no function name)
+			expect.any(Function)
+		);
+
+		expect(mockApp.post).toHaveBeenCalledWith(
+			"/api/users/update", // update function -> /api/users/update (includes function name)
+			expect.any(Function)
+		);
+	});
+
+	it("should use legacy route format when specified", async () => {
+		const serverCode = `
+			export async function createUser(userData) {
+				return { id: 1, ...userData };
+			}
+		`;
+
+		vi.mocked(fs.readFile).mockResolvedValue(serverCode);
+
+		const mockModule = {
+			createUser: vi.fn(),
+		};
+
+		vi.doMock("/project/src/actions/users.server.js", () => mockModule);
+
+		// Use legacy transformer
+		const plugin = serverActions({
+			routeTransform: pathUtils.createLegacyRoute,
+			validation: {
+				enabled: false
+			}
+		});
+
+		plugin.configureServer(mockServer);
+		await plugin.load("/project/src/actions/users.server.js");
+
+		// Verify legacy format endpoint was created
+		expect(mockApp.post).toHaveBeenCalledWith(
+			"/api/src_actions_users/createUser", // Legacy underscore-separated format
+			expect.any(Function)
+		);
 	});
 });
 
@@ -726,13 +828,13 @@ describe("End-to-end validation workflow", () => {
 
 		// Get the middleware chain
 		const postCall = mockApp.post.mock.calls.find(call => 
-			call[0] === "/api/src_profile/updateUserProfile"
+			call[0] === "/api/profile/updateUserProfile"
 		);
 		const [path, validationMiddleware, handler] = postCall;
 
 		// Test 1: Invalid request (validation should fail)
 		const invalidReq = {
-			url: "/api/src_profile/updateUserProfile",
+			url: "/api/profile/updateUserProfile",
 			body: [
 				"not-a-uuid",
 				{
@@ -774,7 +876,7 @@ describe("End-to-end validation workflow", () => {
 
 		// Test 2: Valid request (should pass validation and execute function)
 		const validReq = {
-			url: "/api/src_profile/updateUserProfile",
+			url: "/api/profile/updateUserProfile",
 			body: [
 				"123e4567-e89b-12d3-a456-426614174000",
 				{
