@@ -1,7 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
 import express from "express";
-// TODO: find a way to not use rollup directly
 import { rollup } from "rollup";
 import { minimatch } from "minimatch";
 import { middleware } from "./middleware.js";
@@ -187,8 +186,6 @@ export default function serverActions(userOptions = {}) {
 								// Delay to appear after Vite's startup messages
 								global.setTimeout(() => {
 									if (viteConfig?.logger) {
-										// Use a more integrated approach with cleaner output matching Vite's style
-										// Use dim green (32m + 2m) to match Vite's faded green arrows
 										console.log(`  \x1b[2;32m➜\x1b[0m  API Docs: http://${host}:${port}${docsPath}`);
 										console.log(`  \x1b[2;32m➜\x1b[0m  OpenAPI:  http://${host}:${port}${options.validation.openAPIOptions.specPath || "/api/openapi.json"}`);
 									} else {
@@ -221,7 +218,6 @@ export default function serverActions(userOptions = {}) {
 				try {
 					const code = await fs.readFile(id, "utf-8");
 
-					// Create a unique module name based on the file path
 					let relativePath = path.relative(process.cwd(), id);
 
 					// If the file is outside the project root, use the absolute path
@@ -405,7 +401,6 @@ export default function serverActions(userOptions = {}) {
 				throw new Error("Failed to bundle server functions");
 			}
 
-			// Get the bundled code
 			const bundledCode = output[0].code;
 
 			// Emit the bundled server functions
@@ -463,8 +458,6 @@ export default function serverActions(userOptions = {}) {
 				// --------------------------------------------------
       `;
 
-			// TODO: Add a way to list all server functions in the console
-
 			this.emitFile({
 				type: "asset",
 				fileName: "server.js",
@@ -503,7 +496,6 @@ if (typeof window !== 'undefined') {
 	}
 	
 	functions.forEach((functionName) => {
-		// Generate the route path at build time
 		const routePath = options.routeTransform(filePath, functionName);
 		
 		clientProxy += `
