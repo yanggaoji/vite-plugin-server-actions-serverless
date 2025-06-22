@@ -40,9 +40,18 @@ export class OpenAPIGenerator {
 		};
 
 		// Generate paths for each server function
-		for (const [moduleName, { functions }] of serverFunctions) {
+		for (const [moduleName, { functions, filePath }] of serverFunctions) {
 			for (const functionName of functions) {
-				const path = `${options.apiPrefix || "/api"}/${moduleName}/${functionName}`;
+				// Use routeTransform if provided, otherwise fall back to legacy format
+				let routePath;
+				if (options.routeTransform && filePath) {
+					routePath = options.routeTransform(filePath, functionName);
+				} else {
+					// Fallback to legacy format for backward compatibility
+					routePath = `${moduleName}/${functionName}`;
+				}
+
+				const path = `${options.apiPrefix || "/api"}/${routePath}`;
 				const schema = schemaDiscovery.getSchema(moduleName, functionName);
 
 				spec.paths[path] = this.generatePathItem(moduleName, functionName, schema);
@@ -205,10 +214,7 @@ export function createSwaggerMiddleware(openAPISpec, options = {}) {
 		...options.swaggerOptions,
 	};
 
-	return [
-		swaggerUi.serve,
-		swaggerUi.setup(openAPISpec, swaggerOptions),
-	];
+	return [swaggerUi.serve, swaggerUi.setup(openAPISpec, swaggerOptions)];
 }
 
 /**
@@ -242,7 +248,9 @@ export function setupOpenAPIEndpoints(app, openAPISpec, options = {}) {
  * @returns {Array} Array of parameter descriptions
  */
 export function parseJSDocParameters(jsdoc) {
-	if (!jsdoc) return [];
+	if (!jsdoc) {
+		return [];
+	}
 
 	const paramRegex = /@param\s+\{([^}]+)\}\s+(\[?[\w.]+\]?)\s*-?\s*(.*)/g;
 	const parameters = [];
@@ -278,10 +286,10 @@ export class EnhancedOpenAPIGenerator extends OpenAPIGenerator {
 	 */
 	generatePathItemWithJSDoc(moduleName, functionName, schema, jsdoc) {
 		const pathItem = this.generatePathItem(moduleName, functionName, schema);
-		
+
 		if (jsdoc) {
 			const jsDocParams = parseJSDocParameters(jsdoc);
-			
+
 			// Extract description from JSDoc
 			const descriptionMatch = jsdoc.match(/\/\*\*\s*\n\s*\*\s*([^@\n]*)/);
 			if (descriptionMatch) {
@@ -337,7 +345,7 @@ export class EnhancedOpenAPIGenerator extends OpenAPIGenerator {
 	 */
 	jsDocTypeToOpenAPISchema(param) {
 		const { type, description } = param;
-		
+
 		switch (type.toLowerCase()) {
 			case "string":
 				return { type: "string", description };
@@ -352,7 +360,7 @@ export class EnhancedOpenAPIGenerator extends OpenAPIGenerator {
 			default:
 				// Handle union types like 'low'|'medium'|'high'
 				if (type.includes("|")) {
-					const enumValues = type.split("|").map(v => v.replace(/['"]/g, "").trim());
+					const enumValues = type.split("|").map((v) => v.replace(/['"]/g, "").trim());
 					return { type: "string", enum: enumValues, description };
 				}
 				return { type: "object", description };
