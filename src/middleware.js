@@ -1,4 +1,5 @@
 import util from "util";
+import { createValidationMiddleware } from "./validation.js";
 
 /**
  * Built-in logging middleware for server actions
@@ -72,7 +73,17 @@ export function loggingMiddleware(req, res, next) {
 	next();
 }
 
+/**
+ * Create validation middleware with custom options
+ * @param {object} options - Validation options
+ * @returns {function} Validation middleware
+ */
+export function createValidationMiddlewareWithOptions(options = {}) {
+	return createValidationMiddleware(options);
+}
+
 // Export a namespace for all built-in middleware
 export const middleware = {
 	logging: loggingMiddleware,
+	validation: createValidationMiddleware,
 };

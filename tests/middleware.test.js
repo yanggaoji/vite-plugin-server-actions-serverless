@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { loggingMiddleware } from "./middleware.js";
+import { loggingMiddleware } from "../src/middleware.js";
 
 describe("loggingMiddleware", () => {
 	let mockReq, mockRes, mockNext;

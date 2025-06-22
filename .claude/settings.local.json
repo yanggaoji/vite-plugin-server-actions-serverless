@@ -15,7 +15,12 @@
       "Bash(npm run check:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(npm test)"
     ],
     "deny": []
   }

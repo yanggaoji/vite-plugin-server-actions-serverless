@@ -5,12 +5,35 @@ import express from "express";
 import { rollup } from "rollup";
 import { minimatch } from "minimatch";
 import { middleware } from "./middleware.js";
+import { 
+	defaultSchemaDiscovery, 
+	createValidationMiddleware 
+} from "./validation.js";
+import { 
+	OpenAPIGenerator, 
+	setupOpenAPIEndpoints 
+} from "./openapi.js";
 
 const DEFAULT_OPTIONS = {
 	apiPrefix: "/api",
 	include: ["**/*.server.js"],
 	exclude: [],
 	middleware: [],
+	validation: {
+		enabled: false,
+		adapter: "zod",
+		generateOpenAPI: false,
+		swaggerUI: false,
+		openAPIOptions: {
+			info: {
+				title: "Server Actions API",
+				version: "1.0.0",
+				description: "Auto-generated API documentation for Vite Server Actions",
+			},
+			docsPath: "/api/docs",
+			specPath: "/api/openapi.json",
+		},
+	},
 };
 
 function shouldProcessFile(filePath, options) {
@@ -28,9 +51,30 @@ function shouldProcessFile(filePath, options) {
 }
 
 export default function serverActions(userOptions = {}) {
-	const options = { ...DEFAULT_OPTIONS, ...userOptions };
+	const options = { 
+		...DEFAULT_OPTIONS, 
+		...userOptions,
+		validation: { ...DEFAULT_OPTIONS.validation, ...userOptions.validation }
+	};
 	const serverFunctions = new Map();
+	const schemaDiscovery = defaultSchemaDiscovery;
 	let app;
+	let openAPIGenerator;
+	let validationMiddleware = null;
+
+	// Initialize OpenAPI generator if enabled
+	if (options.validation.generateOpenAPI) {
+		openAPIGenerator = new OpenAPIGenerator({
+			info: options.validation.openAPIOptions.info,
+		});
+	}
+
+	// Initialize validation middleware if enabled
+	if (options.validation.enabled) {
+		validationMiddleware = createValidationMiddleware({
+			schemaDiscovery,
+		});
+	}
 
 	return {
 		name: "vite-plugin-server-actions",
@@ -38,6 +82,43 @@ export default function serverActions(userOptions = {}) {
 		configureServer(server) {
 			app = express();
 			app.use(express.json());
+
+			// Setup dynamic OpenAPI endpoints in development
+			if (process.env.NODE_ENV !== "production" && options.validation.generateOpenAPI && openAPIGenerator) {
+				// OpenAPI spec endpoint - generates spec dynamically from current serverFunctions
+				app.get(options.validation.openAPIOptions.specPath || "/api/openapi.json", (req, res) => {
+					const openAPISpec = openAPIGenerator.generateSpec(
+						serverFunctions,
+						schemaDiscovery,
+						{ apiPrefix: options.apiPrefix }
+					);
+					res.json(openAPISpec);
+				});
+
+				// Swagger UI setup
+				if (options.validation.swaggerUI) {
+					try {
+						// Dynamic import swagger-ui-express
+						import("swagger-ui-express").then(({ default: swaggerUi }) => {
+							const docsPath = options.validation.openAPIOptions.docsPath || "/api/docs";
+							
+							app.use(docsPath, swaggerUi.serve, swaggerUi.setup(null, {
+								swaggerOptions: {
+									url: options.validation.openAPIOptions.specPath || "/api/openapi.json"
+								}
+							}));
+
+							console.log(`📖 API Documentation: http://localhost:5173${docsPath}`);
+							console.log(`📄 OpenAPI Spec: http://localhost:5173${options.validation.openAPIOptions.specPath || "/api/openapi.json"}`);
+						}).catch((error) => {
+							console.warn("Swagger UI setup failed:", error.message);
+						});
+					} catch (error) {
+						console.warn("Swagger UI setup failed:", error.message);
+					}
+				}
+			}
+
 			server.middlewares.use(app);
 		},
 
@@ -98,13 +179,28 @@ export default function serverActions(userOptions = {}) {
 
 					serverFunctions.set(moduleName, { functions: uniqueFunctions, id });
 
+					// Discover schemas from module if validation is enabled
+					if (options.validation.enabled) {
+						try {
+							const module = await import(id);
+							schemaDiscovery.discoverFromModule(module, moduleName);
+						} catch (error) {
+							console.warn(`Failed to discover schemas from ${id}: ${error.message}`);
+						}
+					}
+
 					if (process.env.NODE_ENV !== "production") {
-						// Normalize middleware to array
+						// Normalize middleware to array (create a fresh copy to avoid mutation)
 						const middlewares = Array.isArray(options.middleware)
-							? options.middleware
+							? [...options.middleware]  // Create a copy
 							: options.middleware
 								? [options.middleware]
 								: [];
+
+						// Add validation middleware if enabled
+						if (validationMiddleware) {
+							middlewares.push(validationMiddleware);
+						}
 
 						uniqueFunctions.forEach((functionName) => {
 							const endpoint = `${options.apiPrefix}/${moduleName}/${functionName}`;
@@ -149,6 +245,8 @@ export default function serverActions(userOptions = {}) {
 							});
 						});
 					}
+					// OpenAPI endpoints will be set up during configureServer after all modules are loaded
+
 					return generateClientProxy(moduleName, uniqueFunctions, options);
 				} catch (error) {
 					console.error(`Failed to process server file ${id}: ${error.message}`);
@@ -395,5 +493,17 @@ if (typeof window !== 'undefined') {
 	return clientProxy;
 }
 
-// Export built-in middleware
+// Export built-in middleware and validation utilities
 export { middleware };
+export { 
+	createValidationMiddleware,
+	ValidationAdapter,
+	ZodAdapter,
+	SchemaDiscovery,
+	adapters
+} from "./validation.js";
+export {
+	OpenAPIGenerator,
+	setupOpenAPIEndpoints,
+	createSwaggerMiddleware
+} from "./openapi.js";

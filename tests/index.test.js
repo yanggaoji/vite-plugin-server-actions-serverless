@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import serverActions from "./index.js";
+import serverActions from "../src/index.js";
 import fs from "fs/promises";
 
 vi.mock("minimatch", () => ({
