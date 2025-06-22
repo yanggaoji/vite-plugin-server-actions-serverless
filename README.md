@@ -15,6 +15,12 @@ client-side code as if they were local functions.
 - 🔗 Seamless client-side proxies for easy usage (e.g. `import {addTodo} from './server/todos.server.js'`)
 - 🛠 Support for both development and production environments ( `vite build` )
 - 🚀 Zero-config setup for instant productivity
+- ✅ Built-in validation with Zod schemas
+- 📖 Automatic OpenAPI documentation generation
+- 🎨 Swagger UI integration for API exploration
+- 🛡️ Development-only safety checks to prevent server code exposure
+- 🔌 Middleware support for authentication, logging, etc.
+- 🎯 Flexible route transformation system
 
 ## 🚀 Quick Start
 
@@ -40,7 +46,14 @@ import serverActions from "vite-plugin-server-actions";
 export default defineConfig({
   plugins: [
     // Add the plugin
-    serverActions(),
+    serverActions({
+      // Optional: Enable validation and API documentation
+      validation: {
+        enabled: true,
+        generateOpenAPI: true,
+        swaggerUI: true,
+      },
+    }),
   ],
 });
 ```
@@ -133,17 +146,20 @@ To see a real-world example of how to use Vite Server Actions, check out the TOD
 your client-side code, it returns a proxy function that sends a request to the server endpoint instead of executing the
 function locally.
 
-### Module Naming
+### Module Naming and Route Generation
 
-To prevent collisions between files with the same name in different directories, the plugin generates unique module names based on the file path:
+By default, the plugin creates clean, hierarchical API routes:
 
-- `src/actions/auth.server.js` → Module name: `src_actions_auth`
-- `src/admin/auth.server.js` → Module name: `src_admin_auth`
+- `src/actions/auth.server.js` → `/api/actions/auth/login`
+- `src/admin/auth.server.js` → `/api/admin/auth/login`
 
-This ensures that server functions are accessible at unique endpoints like:
+The plugin automatically:
 
-- `/api/src_actions_auth/login`
-- `/api/src_admin_auth/login`
+- Removes the `src/` prefix
+- Removes the `.server.js` suffix
+- Creates intuitive, RESTful-style endpoints
+
+You can customize this behavior with the `routeTransform` option (see Configuration).
 
 In _development_, the server actions run as a middleware in the Vite dev server.
 While in _production_, it's bundled into a single file that can be run with Node.js.
@@ -162,12 +178,14 @@ serverActions({
 
 ## 🛠️ Configuration Options
 
-| Option       | Type                                 | Default              | Description                                          |
-| ------------ | ------------------------------------ | -------------------- | ---------------------------------------------------- |
-| `apiPrefix`  | `string`                             | `"/api"`             | The URL prefix for server action endpoints           |
-| `include`    | `string \| string[]`                 | `["**/*.server.js"]` | Glob patterns for files to process as server actions |
-| `exclude`    | `string \| string[]`                 | `[]`                 | Glob patterns for files to exclude from processing   |
-| `middleware` | `RequestHandler \| RequestHandler[]` | `[]`                 | Express middleware to run before server actions      |
+| Option           | Type                                 | Default                  | Description                                           |
+| ---------------- | ------------------------------------ | ------------------------ | ----------------------------------------------------- |
+| `apiPrefix`      | `string`                             | `"/api"`                 | The URL prefix for server action endpoints            |
+| `include`        | `string \| string[]`                 | `["**/*.server.js"]`     | Glob patterns for files to process as server actions  |
+| `exclude`        | `string \| string[]`                 | `[]`                     | Glob patterns for files to exclude from processing    |
+| `middleware`     | `RequestHandler \| RequestHandler[]` | `[]`                     | Express middleware to run before server actions       |
+| `routeTransform` | `(filePath, functionName) => string` | Clean hierarchical paths | Custom function to transform file paths to API routes |
+| `validation`     | `ValidationOptions`                  | `{ enabled: false }`     | Validation and OpenAPI configuration                  |
 
 ### Examples
 
@@ -193,6 +211,31 @@ serverActions({
 ```javascript
 serverActions({
   exclude: ["**/*.test.server.js", "**/*.spec.server.js"],
+});
+```
+
+**Custom route transformation:**
+
+```javascript
+import serverActions, { pathUtils } from "vite-plugin-server-actions";
+
+serverActions({
+  // Use legacy underscore-separated routes
+  routeTransform: pathUtils.createLegacyRoute,
+  // Result: /api/src_actions_todo/create
+});
+
+// Or create your own
+serverActions({
+  routeTransform: (filePath, functionName) => {
+    // Transform: src/actions/todo.server.js -> todos
+    const moduleName = filePath
+      .replace(/^src\/actions\//, "")
+      .replace(/\.server\.js$/, "")
+      .replace(/^(.+)$/, "$1s"); // Pluralize
+    return `${moduleName}/${functionName}`;
+  },
+  // Result: /api/todos/create
 });
 ```
 
@@ -281,6 +324,101 @@ export default defineConfig({
 });
 ```
 
+## ✅ Validation and OpenAPI
+
+Vite Server Actions supports automatic validation with Zod schemas and generates OpenAPI documentation:
+
+### Basic Setup
+
+```javascript
+import serverActions from "vite-plugin-server-actions";
+
+export default defineConfig({
+  plugins: [
+    serverActions({
+      validation: {
+        enabled: true,
+        adapter: "zod", // Currently only Zod is supported
+        generateOpenAPI: true,
+        swaggerUI: true,
+        openAPIOptions: {
+          info: {
+            title: "My API",
+            version: "1.0.0",
+            description: "Auto-generated API documentation",
+          },
+          docsPath: "/api/docs",
+          specPath: "/api/openapi.json",
+        },
+      },
+    }),
+  ],
+});
+```
+
+### Creating Validated Actions
+
+```javascript
+// todo.server.js
+import { z } from "zod";
+
+// Define schemas for your functions
+export const addTodoSchema = {
+  input: z.object({
+    text: z.string().min(1, "Todo text is required"),
+    priority: z.enum(["low", "medium", "high"]).optional(),
+  }),
+  output: z.object({
+    id: z.number(),
+    text: z.string(),
+    priority: z.string(),
+    completed: z.boolean(),
+  }),
+};
+
+export async function addTodo({ text, priority = "medium" }) {
+  // Your input is automatically validated before this function runs
+  const newTodo = {
+    id: Date.now(),
+    text,
+    priority,
+    completed: false,
+  };
+
+  // Save to database...
+
+  return newTodo; // Output is validated before sending response
+}
+```
+
+### Accessing Documentation
+
+When validation is enabled with `swaggerUI: true`, you can access:
+
+- **Swagger UI**: `http://localhost:5173/api/docs` - Interactive API documentation
+- **OpenAPI Spec**: `http://localhost:5173/api/openapi.json` - Raw OpenAPI specification
+
+The documentation is automatically generated from your Zod schemas and includes:
+
+- Request/response schemas
+- Validation rules
+- Example values
+- Error responses
+
+## 🔧 Path Utilities
+
+The plugin exports several utility functions for path transformation:
+
+```javascript
+import { pathUtils } from "vite-plugin-server-actions";
+
+// Available utilities:
+pathUtils.createCleanRoute; // Default: "actions/todo/create"
+pathUtils.createLegacyRoute; // Legacy: "src_actions_todo/create"
+pathUtils.createMinimalRoute; // Minimal: "actions/todo.server/create"
+pathUtils.createModuleName; // Internal module naming
+```
+
 ## TODO
 
 This is a proof of concept, and things are still missing, such as:
@@ -289,6 +427,11 @@ This is a proof of concept, and things are still missing, such as:
 - [x] Add tests
 - [ ] Allow customizing the HTTP method for each action (e.g. `GET`, `POST`, `PUT`, `DELETE`)
 - [x] Make sure name collisions are handled correctly
+- [x] Add validation support with Zod
+- [x] Generate OpenAPI documentation
+- [x] Add Swagger UI integration
+- [x] Add development-only safety checks
+- [x] Add flexible route transformation
 - [ ] Make sure the actions are only available on the server when running in production mode.
 - [ ] Add more examples (Vue, React, etc.)
 - [ ] Publish to npm
@@ -317,6 +460,12 @@ npm run test
 # Run tests once
 npm run test:run
 
+# Run E2E tests with Playwright
+npm run test:e2e
+
+# Run E2E tests with UI
+npm run test:e2e:ui
+
 # Check code quality with ESLint
 npm run lint
 
@@ -337,11 +486,16 @@ npm run example:dev
 
 # Build the example app
 npm run example:build
+
+# Run all checks (tests, lint, typecheck)
+npm run check
 ```
 
 ### Testing
 
-The project uses [Vitest](https://vitest.dev/) for testing. Tests are located in `src/index.test.js` and cover:
+The project uses [Vitest](https://vitest.dev/) for unit testing and [Playwright](https://playwright.dev/) for E2E testing.
+
+**Unit Tests** (`src/index.test.js`):
 
 - Plugin initialization and configuration
 - Server action file processing
@@ -349,6 +503,15 @@ The project uses [Vitest](https://vitest.dev/) for testing. Tests are located in
 - Module name collision prevention
 - Configuration options (apiPrefix, include/exclude)
 - Client proxy generation
+- Route transformation
+- Validation integration
+
+**E2E Tests** (`tests/e2e/`):
+
+- Full integration testing of the example todo app
+- UI interactions and server action calls
+- Data persistence verification
+- API endpoint functionality
 
 To write new tests, follow the existing patterns and ensure you mock external dependencies properly.
 
