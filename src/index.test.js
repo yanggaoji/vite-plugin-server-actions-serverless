@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import serverActions from "./index.js";
 import fs from "fs/promises";
 
@@ -454,6 +454,100 @@ describe("vite-plugin-server-actions", () => {
 
 				// Verify endpoint was created with middleware
 				expect(mockExpressApp.post).toHaveBeenCalled();
+			});
+
+			describe("development safety checks", () => {
+				beforeEach(() => {
+					// Set NODE_ENV to development for these tests
+					process.env.NODE_ENV = "development";
+				});
+
+				afterEach(() => {
+					// Reset NODE_ENV
+					delete process.env.NODE_ENV;
+				});
+
+				it("should add safety checks in development mode", async () => {
+					const mockCode = "export function testFunction() {}";
+					vi.mocked(fs.readFile).mockResolvedValue(mockCode);
+					
+					const plugin = serverActions();
+					
+					const mockServer = {
+						middlewares: {
+							use: vi.fn(),
+						},
+					};
+					plugin.configureServer(mockServer);
+					
+					const result = await plugin.load("/src/test.server.js");
+					
+					// Should contain browser detection
+					expect(result).toContain("if (typeof window !== 'undefined')");
+					// Should contain security warning
+					expect(result).toContain("SECURITY WARNING");
+					// Should contain proxy context check
+					expect(result).toContain("__VITE_SERVER_ACTIONS_PROXY__");
+				});
+
+				it("should validate function arguments in development", async () => {
+					const mockCode = "export function testFunction() {}";
+					vi.mocked(fs.readFile).mockResolvedValue(mockCode);
+					
+					const plugin = serverActions();
+					
+					const mockServer = {
+						middlewares: {
+							use: vi.fn(),
+						},
+					};
+					plugin.configureServer(mockServer);
+					
+					const result = await plugin.load("/src/test.server.js");
+					
+					// Should contain argument validation
+					expect(result).toContain("Functions cannot be serialized");
+				});
+
+				it("should not add safety checks in production", async () => {
+					process.env.NODE_ENV = "production";
+					
+					const mockCode = "export function testFunction() {}";
+					vi.mocked(fs.readFile).mockResolvedValue(mockCode);
+					
+					const plugin = serverActions();
+					
+					const mockServer = {
+						middlewares: {
+							use: vi.fn(),
+						},
+					};
+					plugin.configureServer(mockServer);
+					
+					const result = await plugin.load("/src/test.server.js");
+					
+					// Should NOT contain development checks
+					expect(result).not.toContain("SECURITY WARNING");
+					expect(result).not.toContain("__VITE_SERVER_ACTIONS_PROXY__");
+				});
+
+				it("should warn about direct server imports in transform hook", () => {
+					const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+					
+					const plugin = serverActions();
+					const clientCode = `
+						import { someFunction } from './actions/test.server.js';
+						import utils from './utils.js';
+					`;
+					
+					plugin.transform(clientCode, "/src/App.jsx");
+					
+					expect(consoleWarnSpy).toHaveBeenCalledWith(
+						expect.stringContaining("WARNING: Direct import of server file detected!")
+					);
+					
+					consoleWarnSpy.mockRestore();
+				});
 			});
 		});
 	});

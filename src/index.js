@@ -157,6 +157,26 @@ export default function serverActions(userOptions = {}) {
 				}
 			}
 		},
+		
+		transform(code, id) {
+			// Development-only check: Warn if server files are imported in client files
+			if (process.env.NODE_ENV !== "production" && !id.endsWith(".server.js")) {
+				// Check for suspicious imports of .server.js files
+				const serverImportRegex = /import\s+.*?from\s+['"](.*?\.server\.js)['"]/g;
+				const matches = code.matchAll(serverImportRegex);
+				
+				for (const match of matches) {
+					const importPath = match[1];
+					console.warn(
+						"[Vite Server Actions] ⚠️  WARNING: Direct import of server file detected!\n" +
+						`  File: ${id}\n` +
+						`  Import: ${match[0]}\n` +
+						"  This may expose server-side code to the client. " +
+						"Server actions should only be imported through the Vite plugin transformation."
+					);
+				}
+			}
+		},
 
 		async generateBundle(options, bundle) {
 			// Create a virtual entry point for all server functions
@@ -226,10 +246,10 @@ export default function serverActions(userOptions = {}) {
 				// Server functions
 				// --------------------------------------------------
         ${Array.from(serverFunctions.entries())
-					.flatMap(([moduleName, { functions }]) =>
-						functions
-							.map(
-								(functionName) => `
+		.flatMap(([moduleName, { functions }]) =>
+			functions
+				.map(
+					(functionName) => `
             app.post('${options.apiPrefix}/${moduleName}/${functionName}', async (req, res) => {
               try {
                 const result = await serverActions.${moduleName}.${functionName}(...req.body);
@@ -240,12 +260,12 @@ export default function serverActions(userOptions = {}) {
               }
             });
           `,
-							)
-							.join("\n")
-							.trim(),
-					)
-					.join("\n")
-					.trim()}
+				)
+				.join("\n")
+				.trim(),
+		)
+		.join("\n")
+		.trim()}
 
 				// Start server
 				// --------------------------------------------------
@@ -268,11 +288,52 @@ export default function serverActions(userOptions = {}) {
 }
 
 function generateClientProxy(moduleName, functions, options) {
+	// Add development-only safety checks
+	const isDev = process.env.NODE_ENV !== "production";
+	
 	let clientProxy = `\n// vite-server-actions: ${moduleName}\n`;
+	
+	// Add a guard to prevent direct imports of server code
+	if (isDev) {
+		clientProxy += `
+// Development-only safety check
+if (typeof window !== 'undefined') {
+  // This code is running in the browser
+  const serverFileError = new Error(
+    '[Vite Server Actions] SECURITY WARNING: Server file "${moduleName}" is being imported in client code! ' +
+    'This could expose server-side code to the browser. Only import server actions through the plugin.'
+  );
+  serverFileError.name = 'ServerCodeInClientError';
+  
+  // Check if we're in a server action proxy context
+  if (!window.__VITE_SERVER_ACTIONS_PROXY__) {
+    console.error(serverFileError);
+    // In development, we'll warn but not throw to avoid breaking HMR
+    console.error('Stack trace:', serverFileError.stack);
+  }
+}
+`;
+	}
+	
 	functions.forEach((functionName) => {
 		clientProxy += `
       export async function ${functionName}(...args) {
       	console.log("[Vite Server Actions] 🚀 - Executing ${functionName}");
+        
+        ${isDev ? `
+        // Development-only: Mark that we're in a valid proxy context
+        if (typeof window !== 'undefined') {
+          window.__VITE_SERVER_ACTIONS_PROXY__ = true;
+        }
+        
+        // Validate arguments in development
+        if (args.some(arg => typeof arg === 'function')) {
+          console.warn(
+            '[Vite Server Actions] Warning: Functions cannot be serialized and sent to the server. ' +
+            'Function arguments will be converted to null.'
+          );
+        }
+        ` : ""}
         
         try {
           const response = await fetch('${options.apiPrefix}/${moduleName}/${functionName}', {
@@ -298,10 +359,26 @@ function generateClientProxy(moduleName, functions, options) {
           }
 
           console.log("[Vite Server Actions] ✅ - ${functionName} executed successfully");
-          return await response.json();
+          const result = await response.json();
+          
+          ${isDev ? `
+          // Development-only: Clear the proxy context
+          if (typeof window !== 'undefined') {
+            window.__VITE_SERVER_ACTIONS_PROXY__ = false;
+          }
+          ` : ""}
+          
+          return result;
           
         } catch (error) {
           console.error("[Vite Server Actions] ❗ - Network or execution error in ${functionName}:", error.message);
+          
+          ${isDev ? `
+          // Development-only: Clear the proxy context on error
+          if (typeof window !== 'undefined') {
+            window.__VITE_SERVER_ACTIONS_PROXY__ = false;
+          }
+          ` : ""}
           
           // Re-throw with more context if it's not already our custom error
           if (!error.details) {

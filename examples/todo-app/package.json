@@ -6,8 +6,8 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "format": "npx prettier --write .",
     "preview": "vite preview",
+    "format": "npx prettier --write .",
     "sort": "npx sort-package-json"
   },
   "devDependencies": {
