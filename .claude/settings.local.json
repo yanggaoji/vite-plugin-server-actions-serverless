@@ -1,27 +1,31 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(git checkout:*)",
-      "Bash(npm run test:run:*)",
-      "Bash(npm install:*)",
-      "Bash(npm run lint)",
-      "Bash(npm run typecheck:*)",
-      "Bash(npx husky install)",
-      "Bash(ls:*)",
-      "Bash(npx husky add:*)",
-      "WebFetch(domain:typicode.github.io)",
-      "Bash(cat:*)",
-      "Bash(chmod:*)",
-      "Bash(npm run check:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(npm run lint:*)",
-      "Bash(find:*)",
-      "Bash(grep:*)",
-      "Bash(mkdir:*)",
-      "Bash(mv:*)",
-      "Bash(npm test)"
-    ],
-    "deny": []
-  }
+	"permissions": {
+		"allow": [
+			"Bash(git checkout:*)",
+			"Bash(npm run test:run:*)",
+			"Bash(npm install:*)",
+			"Bash(npm run lint)",
+			"Bash(npm run typecheck:*)",
+			"Bash(npx husky install)",
+			"Bash(ls:*)",
+			"Bash(npx husky add:*)",
+			"WebFetch(domain:typicode.github.io)",
+			"Bash(cat:*)",
+			"Bash(chmod:*)",
+			"Bash(npm run check:*)",
+			"Bash(git add:*)",
+			"Bash(git commit:*)",
+			"Bash(npm run lint:*)",
+			"Bash(find:*)",
+			"Bash(grep:*)",
+			"Bash(mkdir:*)",
+			"Bash(mv:*)",
+			"Bash(npm test)",
+			"Bash(npm run dev:*)",
+			"Bash(timeout:*)",
+			"Bash(sed:*)",
+			"Bash(npx playwright:*)"
+		],
+		"deny": []
+	}
 }
