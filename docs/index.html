@@ -601,6 +601,55 @@ export default defineConfig({
     </div>
 
     <!-- Installation Section -->
+    <section id="installation" class="installation">
+        <div class="container">
+            <div class="installation-inner">
+                <h2>Get Started in Minutes</h2>
+                <div class="install-steps">
+                <div class="install-step">
+                    <h3>
+                        <span class="step-number">1</span>
+                        Install the plugin
+                    </h3>
+                    <div class="code-block">
+                        <span class="code-comment"># Install the plugin</span>
+                        npm install vite-plugin-server-actions
+                    </div>
+                </div>
+
+                <div class="install-step">
+                    <h3>
+                        <span class="step-number">2</span>
+                        Configure Vite
+                    </h3>
+                    <div class="code-block">
+                        <span class="code-comment">// vite.config.js</span><br>
+                        <span class="code-keyword">import</span> { serverActions } <span class="code-keyword">from</span> <span class="code-string">'vite-plugin-server-actions'</span>;<br>
+                        <br>
+                        <span class="code-keyword">export default</span> {<br>
+                        &nbsp;&nbsp;plugins: [serverActions()]<br>
+                        }
+                    </div>
+                </div>
+
+                <div class="install-step">
+                    <h3>
+                        <span class="step-number">3</span>
+                        Create server functions
+                    </h3>
+                    <div class="code-block">
+                        <span class="code-comment">// math.server.js</span><br>
+                        <span class="code-keyword">export async function</span> calculate(a, b) {<br>
+                        &nbsp;&nbsp;<span class="code-keyword">return</span> a + b;<br>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
     <section id="features" class="features">
         <div class="container">
             <div class="features-grid">
@@ -664,55 +713,6 @@ export default defineConfig({
                     <p>Hot reload in development, helpful error messages, and great DX.</p>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="installation" class="installation">
-        <div class="container">
-            <div class="installation-inner">
-                <h2>Get Started in Minutes</h2>
-                <div class="install-steps">
-                <div class="install-step">
-                    <h3>
-                        <span class="step-number">1</span>
-                        Install the plugin
-                    </h3>
-                    <div class="code-block">
-                        <span class="code-comment"># Install the plugin</span>
-                        npm install vite-plugin-server-actions
-                    </div>
-                </div>
-
-                <div class="install-step">
-                    <h3>
-                        <span class="step-number">2</span>
-                        Configure Vite
-                    </h3>
-                    <div class="code-block">
-                        <span class="code-comment">// vite.config.js</span><br>
-                        <span class="code-keyword">import</span> { serverActions } <span class="code-keyword">from</span> <span class="code-string">'vite-plugin-server-actions'</span>;<br>
-                        <br>
-                        <span class="code-keyword">export default</span> {<br>
-                        &nbsp;&nbsp;plugins: [serverActions()]<br>
-                        }
-                    </div>
-                </div>
-
-                <div class="install-step">
-                    <h3>
-                        <span class="step-number">3</span>
-                        Create server functions
-                    </h3>
-                    <div class="code-block">
-                        <span class="code-comment">// math.server.js</span><br>
-                        <span class="code-keyword">export async function</span> calculate(a, b) {<br>
-                        &nbsp;&nbsp;<span class="code-keyword">return</span> a + b;<br>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
         </div>
     </section>
 
