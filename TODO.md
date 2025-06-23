@@ -1,32 +1,5 @@
 # TODO
 
-## Current Tasks
-
-### NPM Publishing Preparation
-
-- [x] Update package.json with proper metadata
-  - [x] Add keywords for discoverability
-  - [x] Update description
-  - [x] Add repository, bugs, and homepage fields
-  - [x] Set proper entry points
-  - [x] Add files field to specify what to publish
-- [x] Create CHANGELOG.md file
-- [x] Create LICENSE file
-- [x] Create .npmignore file
-
-### CI/CD Setup
-
-- [x] Create GitHub Actions workflow for automated testing
-  - [x] Run unit tests on push/PR
-  - [x] Run E2E tests
-  - [x] Run linting and type checking
-- [x] Add workflow for automated npm publishing on release
-- [x] Add PR check workflow for commit linting and bundle size
-
-### E2E Integration Tests
-
-- [x] Add file upload tests to E2E integration tests for todo app
-
 ## Future Tasks
 
 ### Configuration Enhancements
@@ -52,17 +25,44 @@
 ### Features
 
 - [ ] Add support for streaming responses
-- [ ] Add WebSocket support for real-time server actions (alterantive transport mechnaism isntead of HTTP fetch calls from the client-side)
+- [ ] Add WebSocket support for real-time server actions (alternative transport mechanism instead of HTTP fetch calls from the client-side)
 - [ ] Add request/response interceptors
 - [ ] Add rate limiting middleware example
 
-## Completed Tasks
+## Completed Tasks (v1.0.0)
 
+### NPM Publishing Preparation
+- [x] Update package.json with proper metadata
+  - [x] Add keywords for discoverability
+  - [x] Update description
+  - [x] Add repository, bugs, and homepage fields
+  - [x] Set proper entry points
+  - [x] Add files field to specify what to publish
+- [x] Create CHANGELOG.md file
+- [x] Create LICENSE file
+- [x] Create .npmignore file
+
+### CI/CD Setup
+- [x] Create GitHub Actions workflow for automated testing
+  - [x] Run unit tests on push/PR
+  - [x] Run E2E tests
+  - [x] Run linting and type checking
+- [x] Add workflow for automated npm publishing on release
+- [x] Add PR check workflow for commit linting and bundle size
+
+### E2E Integration Tests
+- [x] Add file upload tests to E2E integration tests for todo app
+
+### Production Features
 - [x] Production build validation and OpenAPI support
-- [x] README rewrite for production release
-- [x] Create CONTRIBUTING.md
 - [x] Fix TypeScript definitions
 - [x] Add validation context to middleware
+
+### Documentation
+- [x] README rewrite for production release
+- [x] Create CONTRIBUTING.md
+
+### Example App Enhancements
 - [x] File Upload Feature for Todo App
   - [x] Add priority field to todo items
   - [x] Add file upload capability to todos
