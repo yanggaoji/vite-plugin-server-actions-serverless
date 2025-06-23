@@ -14,31 +14,41 @@ export interface ValidationOptions {
 	 * @default "zod"
 	 */
 	adapter?: "zod";
-	
+}
+
+export interface OpenAPIOptions {
 	/**
-	 * Generate OpenAPI documentation
+	 * Enable OpenAPI documentation generation
 	 * @default false
 	 */
-	generateOpenAPI?: boolean;
+	enabled?: boolean;
+	
+	/**
+	 * OpenAPI specification info
+	 */
+	info?: {
+		title?: string;
+		version?: string;
+		description?: string;
+	};
+	
+	/**
+	 * Path to serve the Swagger UI documentation
+	 * @default "/api/docs"
+	 */
+	docsPath?: string;
+	
+	/**
+	 * Path to serve the OpenAPI JSON specification
+	 * @default "/api/openapi.json"
+	 */
+	specPath?: string;
 	
 	/**
 	 * Enable Swagger UI
-	 * @default false
+	 * @default true when OpenAPI is enabled
 	 */
 	swaggerUI?: boolean;
-	
-	/**
-	 * OpenAPI generation options
-	 */
-	openAPIOptions?: {
-		info?: {
-			title?: string;
-			version?: string;
-			description?: string;
-		};
-		docsPath?: string;
-		specPath?: string;
-	};
 }
 
 export interface ServerActionOptions {
@@ -86,6 +96,11 @@ export interface ServerActionOptions {
 	 * Validation configuration
 	 */
 	validation?: ValidationOptions;
+	
+	/**
+	 * OpenAPI documentation configuration
+	 */
+	openAPI?: OpenAPIOptions;
 }
 
 export interface ServerActionsPlugin extends Plugin {

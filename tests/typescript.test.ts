@@ -8,7 +8,7 @@ import serverActions, {
   adapters,
   OpenAPIGenerator
 } from "../src/index.js";
-import type { ServerActionOptions, ValidationOptions } from "../index";
+import type { ServerActionOptions, ValidationOptions, OpenAPIOptions } from "../index";
 import type { RequestHandler } from "express";
 import { z } from "zod";
 
@@ -24,17 +24,17 @@ describe("TypeScript definitions", () => {
       validation: {
         enabled: true,
         adapter: "zod",
-        generateOpenAPI: true,
+      },
+      openAPI: {
+        enabled: true,
         swaggerUI: true,
-        openAPIOptions: {
-          info: {
-            title: "My API",
-            version: "1.0.0",
-            description: "Test API"
-          },
-          docsPath: "/docs",
-          specPath: "/openapi.json"
-        }
+        info: {
+          title: "My API",
+          version: "1.0.0",
+          description: "Test API"
+        },
+        docsPath: "/docs",
+        specPath: "/openapi.json"
       }
     };
 
@@ -102,20 +102,24 @@ describe("TypeScript definitions", () => {
     const validationOptions: ValidationOptions = {
       enabled: true,
       adapter: "zod", // Should only accept "zod"
-      generateOpenAPI: true,
-      swaggerUI: false,
-      openAPIOptions: {
-        info: {
-          title: "API",
-          version: "2.0.0",
-          description: "Description"
-        },
-        docsPath: "/api-docs",
-        specPath: "/spec.json"
-      }
     };
 
-    const plugin = serverActions({ validation: validationOptions });
+    const openAPIOptions: OpenAPIOptions = {
+      enabled: true,
+      swaggerUI: false,
+      info: {
+        title: "API",
+        version: "2.0.0",
+        description: "Description"
+      },
+      docsPath: "/api-docs",
+      specPath: "/spec.json"
+    };
+
+    const plugin = serverActions({ 
+      validation: validationOptions,
+      openAPI: openAPIOptions 
+    });
     expect(plugin.name).toBe("vite-plugin-server-actions");
   });
 });

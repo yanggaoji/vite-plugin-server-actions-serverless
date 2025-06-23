@@ -233,7 +233,9 @@ const user = await fetch("/api/user/getUser", {
 serverActions({
   validation: {
     enabled: true,
-    generateOpenAPI: true,
+  },
+  openAPI: {
+    enabled: true,
     swaggerUI: true,
   },
 });
@@ -392,7 +394,9 @@ Add validation to any server function by attaching a Zod schema. The plugin auto
 serverActions({
   validation: {
     enabled: true,
-    generateOpenAPI: true,
+  },
+  openAPI: {
+    enabled: true,
     swaggerUI: true,
   },
 });

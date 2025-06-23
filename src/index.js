@@ -76,17 +76,6 @@ const DEFAULT_OPTIONS = {
 	validation: {
 		enabled: false,
 		adapter: "zod",
-		generateOpenAPI: false,
-		swaggerUI: false,
-		openAPIOptions: {
-			info: {
-				title: "Server Actions API",
-				version: "1.0.0",
-				description: "Auto-generated API documentation for Vite Server Actions",
-			},
-			docsPath: "/api/docs",
-			specPath: "/api/openapi.json",
-		},
 	},
 };
 
@@ -109,7 +98,20 @@ export default function serverActions(userOptions = {}) {
 		...DEFAULT_OPTIONS,
 		...userOptions,
 		validation: { ...DEFAULT_OPTIONS.validation, ...userOptions.validation },
+		openAPI: { 
+			enabled: false,
+			info: {
+				title: "Server Actions API",
+				version: "1.0.0",
+				description: "Auto-generated API documentation for Vite Server Actions",
+			},
+			docsPath: "/api/docs",
+			specPath: "/api/openapi.json",
+			swaggerUI: true,
+			...userOptions.openAPI,
+		},
 	};
+	
 	const serverFunctions = new Map();
 	const schemaDiscovery = defaultSchemaDiscovery;
 	let app;
@@ -118,9 +120,9 @@ export default function serverActions(userOptions = {}) {
 	let viteConfig = null;
 
 	// Initialize OpenAPI generator if enabled
-	if (options.validation.generateOpenAPI) {
+	if (options.openAPI.enabled) {
 		openAPIGenerator = new OpenAPIGenerator({
-			info: options.validation.openAPIOptions.info,
+			info: options.openAPI.info,
 		});
 	}
 
@@ -144,9 +146,9 @@ export default function serverActions(userOptions = {}) {
 			app.use(express.json());
 
 			// Setup dynamic OpenAPI endpoints in development
-			if (process.env.NODE_ENV !== "production" && options.validation.generateOpenAPI && openAPIGenerator) {
+			if (process.env.NODE_ENV !== "production" && options.openAPI.enabled && openAPIGenerator) {
 				// OpenAPI spec endpoint - generates spec dynamically from current serverFunctions
-				app.get(options.validation.openAPIOptions.specPath || "/api/openapi.json", (req, res) => {
+				app.get(options.openAPI.specPath, (req, res) => {
 					const openAPISpec = openAPIGenerator.generateSpec(serverFunctions, schemaDiscovery, {
 						apiPrefix: options.apiPrefix,
 						routeTransform: options.routeTransform,
@@ -163,19 +165,19 @@ export default function serverActions(userOptions = {}) {
 				});
 
 				// Swagger UI setup
-				if (options.validation.swaggerUI) {
+				if (options.openAPI.swaggerUI) {
 					try {
 						// Dynamic import swagger-ui-express
 						import("swagger-ui-express")
 							.then(({ default: swaggerUi }) => {
-								const docsPath = options.validation.openAPIOptions.docsPath || "/api/docs";
+								const docsPath = options.openAPI.docsPath;
 
 								app.use(
 									docsPath,
 									swaggerUi.serve,
 									swaggerUi.setup(null, {
 										swaggerOptions: {
-											url: options.validation.openAPIOptions.specPath || "/api/openapi.json",
+											url: options.openAPI.specPath,
 										},
 									}),
 								);
@@ -192,12 +194,12 @@ export default function serverActions(userOptions = {}) {
 										if (viteConfig?.logger) {
 											console.log(`  \x1b[2;32m➜\x1b[0m  API Docs: http://${host}:${port}${docsPath}`);
 											console.log(
-												`  \x1b[2;32m➜\x1b[0m  OpenAPI:  http://${host}:${port}${options.validation.openAPIOptions.specPath || "/api/openapi.json"}`,
+												`  \x1b[2;32m➜\x1b[0m  OpenAPI:  http://${host}:${port}${options.openAPI.specPath}`,
 											);
 										} else {
 											console.log(`📖 API Documentation: http://${host}:${port}${docsPath}`);
 											console.log(
-												`📄 OpenAPI Spec: http://${host}:${port}${options.validation.openAPIOptions.specPath || "/api/openapi.json"}`,
+												`📄 OpenAPI Spec: http://${host}:${port}${options.openAPI.specPath}`,
 											);
 										}
 									}, 50); // Small delay to appear after Vite's ready message
@@ -442,7 +444,7 @@ export default function serverActions(userOptions = {}) {
 
 			// Generate OpenAPI spec if enabled
 			let openAPISpec = null;
-			if (options.validation.generateOpenAPI) {
+			if (options.openAPI.enabled) {
 				openAPISpec = openAPIGenerator.generateSpec(serverFunctions, schemaDiscovery, {
 					apiPrefix: options.apiPrefix,
 					routeTransform: options.routeTransform,
@@ -463,8 +465,8 @@ export default function serverActions(userOptions = {}) {
 			const serverCode = `
         import express from 'express';
         import * as serverActions from './actions.js';
-        ${options.validation.generateOpenAPI && options.validation.swaggerUI ? "import swaggerUi from 'swagger-ui-express';" : ""}
-        ${options.validation.generateOpenAPI ? "import { readFileSync } from 'fs';\nimport { fileURLToPath } from 'url';\nimport { dirname, join } from 'path';\n\nconst __filename = fileURLToPath(import.meta.url);\nconst __dirname = dirname(__filename);\nconst openAPISpec = JSON.parse(readFileSync(join(__dirname, 'openapi.json'), 'utf-8'));" : ""}
+        ${options.openAPI.enabled && options.openAPI.swaggerUI ? "import swaggerUi from 'swagger-ui-express';" : ""}
+        ${options.openAPI.enabled ? "import { readFileSync } from 'fs';\nimport { fileURLToPath } from 'url';\nimport { dirname, join } from 'path';\n\nconst __filename = fileURLToPath(import.meta.url);\nconst __dirname = dirname(__filename);\nconst openAPISpec = JSON.parse(readFileSync(join(__dirname, 'openapi.json'), 'utf-8'));" : ""}
         ${validationCode.imports}
 
         const app = express();
@@ -505,19 +507,19 @@ export default function serverActions(userOptions = {}) {
 					.trim()}
 
 				${
-					options.validation.generateOpenAPI
+					options.openAPI.enabled
 						? `
 				// OpenAPI endpoints
 				// --------------------------------------------------
-				app.get('${options.validation.openAPIOptions?.specPath || "/api/openapi.json"}', (req, res) => {
+				app.get('${options.openAPI.specPath}', (req, res) => {
 					res.json(openAPISpec);
 				});
 				
 				${
-					options.validation.swaggerUI
+					options.openAPI.swaggerUI
 						? `
 				// Swagger UI
-				app.use('${options.validation.openAPIOptions?.docsPath || "/api/docs"}', swaggerUi.serve, swaggerUi.setup(openAPISpec));
+				app.use('${options.openAPI.docsPath}', swaggerUi.serve, swaggerUi.setup(openAPISpec));
 				`
 						: ""
 				}
@@ -531,10 +533,10 @@ export default function serverActions(userOptions = {}) {
         app.listen(port, () => {
 					console.log(\`🚀 Server listening: http://localhost:\${port}\`);
 					${
-						options.validation.generateOpenAPI
+						options.openAPI.enabled
 							? `
-					console.log(\`📖 API Documentation: http://localhost:\${port}${options.validation.openAPIOptions?.docsPath || "/api/docs"}\`);
-					console.log(\`📄 OpenAPI Spec: http://localhost:\${port}${options.validation.openAPIOptions?.specPath || "/api/openapi.json"}\`);
+					console.log(\`📖 API Documentation: http://localhost:\${port}${options.openAPI.docsPath}\`);
+					console.log(\`📄 OpenAPI Spec: http://localhost:\${port}${options.openAPI.specPath}\`);
 					`
 							: ""
 					}

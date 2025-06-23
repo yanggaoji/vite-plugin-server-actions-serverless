@@ -336,16 +336,16 @@ describe("Integration Tests - Validation System", () => {
 			const plugin = serverActions({
 				validation: {
 					enabled: true,
-					generateOpenAPI: true,
+				},
+				openAPI: {
+					enabled: true,
 					swaggerUI: true,
-					openAPIOptions: {
-						info: {
-							title: "Test API",
-							version: "1.0.0",
-						},
-						docsPath: "/api/docs",
-						specPath: "/api/openapi.json",
+					info: {
+						title: "Test API",
+						version: "1.0.0",
 					},
+					docsPath: "/api/docs",
+					specPath: "/api/openapi.json",
 				},
 			});
 
@@ -420,7 +420,9 @@ describe("Integration Tests - Validation System", () => {
 			const plugin = serverActions({
 				validation: {
 					enabled: true,
-					generateOpenAPI: true,
+				},
+				openAPI: {
+					enabled: true,
 				},
 			});
 
@@ -583,7 +585,9 @@ describe("Integration Tests - Validation System", () => {
 			const plugin = serverActions({
 				validation: {
 					enabled: true,
-					generateOpenAPI: true,
+				},
+				openAPI: {
+					enabled: true,
 				},
 			});
 
@@ -832,7 +836,10 @@ describe("End-to-end validation workflow", () => {
 		const plugin = serverActions({
 			validation: {
 				enabled: true,
-				generateOpenAPI: true,
+				enabled: true,
+			},
+			openAPI: {
+				enabled: true,
 			},
 		});
 

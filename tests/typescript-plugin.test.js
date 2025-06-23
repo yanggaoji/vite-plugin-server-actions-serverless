@@ -110,17 +110,17 @@ describe("TypeScript configuration options", () => {
 			validation: {
 				enabled: true,
 				adapter: "zod",
-				generateOpenAPI: true,
+			},
+			openAPI: {
+				enabled: true,
 				swaggerUI: true,
-				openAPIOptions: {
-					info: {
-						title: "TypeScript API",
-						version: "2.0.0",
-						description: "API with full TypeScript support",
-					},
-					docsPath: "/api/v2/docs",
-					specPath: "/api/v2/spec.json",
+				info: {
+					title: "TypeScript API",
+					version: "2.0.0",
+					description: "API with full TypeScript support",
 				},
+				docsPath: "/api/v2/docs",
+				specPath: "/api/v2/spec.json",
 			},
 		};
 
