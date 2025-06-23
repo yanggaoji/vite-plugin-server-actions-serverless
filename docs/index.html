@@ -484,8 +484,24 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            nav {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            .nav-links {
+                display: flex !important;
+                width: 100%;
+                justify-content: center;
+                margin-top: 1rem;
+            }
+            
             .nav-links a:not(.github-link) {
                 display: none;
+            }
+
+            .github-link {
+                margin: 0 auto;
             }
 
             .hero-content {
