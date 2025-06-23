@@ -280,14 +280,14 @@ serverActions({
 
 ### All Configuration Options
 
-| Option           | Type         | Default              | Description                  |
-| ---------------- | ------------ | -------------------- | ---------------------------- |
-| `apiPrefix`      | `string`     | `"/api"`             | URL prefix for all endpoints |
-| `include`        | `string[]`   | `["**/*.server.js"]` | Files to process             |
-| `exclude`        | `string[]`   | `[]`                 | Files to ignore              |
-| `middleware`     | `Function[]` | `[]`                 | Express middleware stack     |
-| `routeTransform` | `Function`   | See below            | Customize URL generation     |
-| `validation`     | `Object`     | `{ enabled: false }` | Validation settings          |
+| Option           | Type         | Default              | Description                    |
+| ---------------- | ------------ | -------------------- | ------------------------------ |
+| `apiPrefix`      | `string`     | `"/api"`             | URL prefix for all endpoints   |
+| `include`        | `string[]`   | `["**/*.server.js"]` | Files to process               |
+| `exclude`        | `string[]`   | `[]`                 | Files to ignore                |
+| `middleware`     | `Function[]` | `[]`                 | Express middleware stack       |
+| `routeTransform` | `Function`   | See below            | Customize URL generation       |
+| `validation`     | `Object`     | `{ enabled: false }` | Validation settings            |
 | `openAPI`        | `Object`     | `{ enabled: false }` | OpenAPI documentation settings |
 
 #### Route Transform Options
@@ -303,22 +303,23 @@ pathUtils.createMinimalRoute; // auth.server.js → /api/auth.server/login
 
 #### Validation Options
 
-| Option    | Type      | Default  | Description                           |
-| --------- | --------- | -------- | ------------------------------------- |
-| `enabled` | `boolean` | `false`  | Enable request validation             |
-| `adapter` | `string`  | `"zod"`  | Validation library adapter (only zod) |
+| Option    | Type      | Default | Description                           |
+| --------- | --------- | ------- | ------------------------------------- |
+| `enabled` | `boolean` | `false` | Enable request validation             |
+| `adapter` | `string`  | `"zod"` | Validation library adapter (only zod) |
 
 #### OpenAPI Options
 
-| Option       | Type      | Default            | Description                        |
-| ------------ | --------- | ------------------ | ---------------------------------- |
-| `enabled`    | `boolean` | `false`            | Enable OpenAPI generation          |
-| `swaggerUI`  | `boolean` | `true`             | Enable Swagger UI when OpenAPI is enabled |
-| `info`       | `Object`  | See below          | OpenAPI specification info         |
-| `docsPath`   | `string`  | `"/api/docs"`      | Path for Swagger UI                |
-| `specPath`   | `string`  | `"/api/openapi.json"` | Path for OpenAPI JSON spec      |
+| Option      | Type      | Default               | Description                               |
+| ----------- | --------- | --------------------- | ----------------------------------------- |
+| `enabled`   | `boolean` | `false`               | Enable OpenAPI generation                 |
+| `swaggerUI` | `boolean` | `true`                | Enable Swagger UI when OpenAPI is enabled |
+| `info`      | `Object`  | See below             | OpenAPI specification info                |
+| `docsPath`  | `string`  | `"/api/docs"`         | Path for Swagger UI                       |
+| `specPath`  | `string`  | `"/api/openapi.json"` | Path for OpenAPI JSON spec                |
 
 Default `info` object:
+
 ```javascript
 {
   title: "Server Actions API",

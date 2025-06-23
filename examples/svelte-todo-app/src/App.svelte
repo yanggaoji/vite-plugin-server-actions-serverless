@@ -1,7 +1,6 @@
 <script>
 	import { onMount } from "svelte";
 	import { addTodo, deleteTodo, getTodos, updateTodo } from "./actions/todo.server.js";
-	import { login } from "./actions/auth.server.js";
 
 	let todos = [];
 	let newTodoText = "";
@@ -11,7 +10,6 @@
 	let selectedFile = null;
 
 	onMount(() => {
-		login("admin", "admin");
 		loadTodos();
 	});
 
@@ -75,7 +73,7 @@
 </script>
 
 <main>
-	<h1>Todo List</h1>
+	<h1>Todo List - Svelte Edition</h1>
 
 	<form class="todo-form" data-testid="todo-form" on:submit|preventDefault={handleAddTodo}>
 		<div class="form-group">

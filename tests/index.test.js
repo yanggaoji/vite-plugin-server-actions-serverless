@@ -531,22 +531,16 @@ describe("vite-plugin-server-actions", () => {
 					expect(result).not.toContain("__VITE_SERVER_ACTIONS_PROXY__");
 				});
 
-				it("should warn about direct server imports in transform hook", () => {
-					const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
+				it("should not interfere with imports in transform hook", () => {
 					const plugin = serverActions();
 					const clientCode = `
 						import { someFunction } from './actions/test.server.js';
 						import utils from './utils.js';
 					`;
 
-					plugin.transform(clientCode, "/src/App.jsx");
-
-					expect(consoleWarnSpy).toHaveBeenCalledWith(
-						expect.stringContaining("WARNING: Direct import of server file detected!"),
-					);
-
-					consoleWarnSpy.mockRestore();
+					// Transform hook should return null since transformation is handled in load hook
+					const result = plugin.transform(clientCode, "/src/App.jsx");
+					expect(result).toBeNull();
 				});
 			});
 		});

@@ -1,82 +1,60 @@
 <template>
-  <div class="container">
+  <main>
     <h1>Todo List - Vue Edition</h1>
 
-    <div v-if="error" class="error">{{ error }}</div>
 
-    <form @submit.prevent="handleSubmit" class="todo-form">
+    <form @submit.prevent="handleSubmit" class="todo-form" data-testid="todo-form">
       <div class="form-group">
-        <label for="todo-text">Task</label>
         <input
-          id="todo-text"
+          class="todo-input"
           v-model="formData.text"
           type="text"
           placeholder="What needs to be done?"
           data-testid="todo-input"
-          required
         />
-      </div>
-
-      <div class="form-group">
-        <label for="todo-description">Description (optional)</label>
         <textarea
-          id="todo-description"
+          class="todo-description"
           v-model="formData.description"
-          placeholder="Add more details..."
+          placeholder="Add a description (optional)"
           data-testid="todo-description"
+          rows="2"
         ></textarea>
-      </div>
-
-      <div class="form-group">
-        <label for="priority">Priority</label>
-        <select
-          id="priority"
-          v-model="formData.priority"
-          data-testid="priority-select"
-        >
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="file-input">Attachment (optional)</label>
-        <div class="file-input-wrapper">
-          <input
-            id="file-input"
-            type="file"
-            @change="handleFileChange"
-            data-testid="file-input"
-          />
-          <label for="file-input" class="file-label">
+        <div class="form-row">
+          <select
+            class="priority-select"
+            v-model="formData.priority"
+            data-testid="priority-select"
+          >
+            <option value="low">🟢 Low</option>
+            <option value="medium">🟡 Medium</option>
+            <option value="high">🔴 High</option>
+          </select>
+          <label class="file-label">
+            <input
+              type="file"
+              class="file-input"
+              @change="handleFileChange"
+              data-testid="file-input"
+              accept="image/*,text/*,.pdf,.doc,.docx"
+            />
             <span class="file-label-text">
-              {{ fileName || "Choose file" }}
+              {{ fileName ? `📎 ${fileName}` : "📎 Attach file" }}
             </span>
           </label>
         </div>
       </div>
-
-      <div class="form-actions">
-        <button
-          type="submit"
-          class="btn btn-primary"
-          :disabled="loading || !formData.text"
-          data-testid="add-button"
-        >
-          {{ loading ? "Adding..." : "Add Todo" }}
-        </button>
-      </div>
+      <button
+        type="submit"
+        class="todo-button"
+        :disabled="loading || !formData.text"
+        data-testid="add-button"
+      >
+        Add Todo
+      </button>
     </form>
 
-    <div v-if="loadingTodos" class="loading">Loading todos...</div>
-
-    <div v-else-if="todos.length === 0" class="empty-state">
-      <p>No todos yet. Create your first one!</p>
-    </div>
-
-    <div v-else class="todo-list">
-      <div
+    <ul v-if="todos.length > 0" class="todo-list">
+      <li
         v-for="todo in todos"
         :key="todo.id"
         class="todo-item"
@@ -86,21 +64,20 @@
           type="checkbox"
           :checked="todo.completed"
           @change="handleToggle(todo)"
-          class="todo-checkbox"
           data-testid="todo-checkbox"
         />
 
         <div class="todo-content">
           <div class="todo-header">
-            <p
-              class="todo-text"
+            <span
               :class="{ completed: todo.completed }"
               data-testid="todo-text"
             >
               {{ todo.text }}
-            </p>
+            </span>
             <span
-              class="todo-priority"
+              v-if="todo.priority"
+              class="priority"
               :class="`priority-${todo.priority}`"
               data-testid="todo-priority"
             >
@@ -110,12 +87,12 @@
 
           <p
             v-if="todo.description"
-            class="todo-description"
+            class="todo-description-text"
           >
-            <span class="todo-description-text">{{ todo.description }}</span>
+            {{ todo.description }}
           </p>
 
-          <div v-if="todo.filepath" class="todo-file">
+          <div v-if="todo.filepath" class="file-preview">
             <a
               v-if="isImage(todo.filepath)"
               :href="todo.filepath"
@@ -125,7 +102,7 @@
               <img
                 :src="todo.filepath"
                 :alt="todo.text"
-                class="todo-file-preview"
+                class="preview-image"
                 data-testid="todo-file-preview"
               />
             </a>
@@ -134,31 +111,29 @@
               :href="todo.filepath"
               target="_blank"
               rel="noopener noreferrer"
+              class="file-link"
               data-testid="todo-file"
             >
-              📎 {{ getFileName(todo.filepath) }}
+              📎 View file
             </a>
           </div>
         </div>
 
-        <div class="todo-actions">
-          <button
-            @click="handleDelete(todo.id)"
-            class="btn-small btn-danger"
-            data-testid="delete-button"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+        <button
+          @click="handleDelete(todo.id)"
+          class="delete-button"
+          data-testid="delete-button"
+        >
+          Delete
+        </button>
+      </li>
+    </ul>
+  </main>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import { getTodos, addTodo, updateTodo, deleteTodo } from "./actions/todo.server.js";
-import { login } from "./actions/auth.server.js";
 
 // State
 const todos = ref([]);

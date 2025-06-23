@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { getTodos, addTodo, updateTodo, deleteTodo } from "./actions/todo.server.js";
-import { login } from "./actions/auth.server.js";
 
 function App() {
   const [todos, setTodos] = useState([]);
@@ -136,121 +135,98 @@ function App() {
   };
 
   return (
-    <div className="container">
+    <main>
       <h1>Todo List - React Edition</h1>
 
-      {error && <div className="error">{error}</div>}
 
-      <form onSubmit={handleSubmit} className="todo-form">
+      <form onSubmit={handleSubmit} className="todo-form" data-testid="todo-form">
         <div className="form-group">
-          <label htmlFor="todo-text">Task</label>
           <input
-            id="todo-text"
+            className="todo-input"
             type="text"
             value={formData.text}
             onChange={(e) => setFormData({ ...formData, text: e.target.value })}
             placeholder="What needs to be done?"
             data-testid="todo-input"
-            required
           />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="todo-description">Description (optional)</label>
           <textarea
-            id="todo-description"
+            className="todo-description"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Add more details..."
+            placeholder="Add a description (optional)"
             data-testid="todo-description"
+            rows="2"
           />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="priority">Priority</label>
-          <select
-            id="priority"
-            value={formData.priority}
-            onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-            data-testid="priority-select"
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="file-input">Attachment (optional)</label>
-          <div className="file-input-wrapper">
-            <input
-              id="file-input"
-              type="file"
-              onChange={handleFileChange}
-              data-testid="file-input"
-            />
-            <label htmlFor="file-input" className="file-label">
+          <div className="form-row">
+            <select
+              className="priority-select"
+              value={formData.priority}
+              onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+              data-testid="priority-select"
+            >
+              <option value="low">🟢 Low</option>
+              <option value="medium">🟡 Medium</option>
+              <option value="high">🔴 High</option>
+            </select>
+            <label className="file-label">
+              <input
+                type="file"
+                className="file-input"
+                onChange={handleFileChange}
+                data-testid="file-input"
+                accept="image/*,text/*,.pdf,.doc,.docx"
+              />
               <span className="file-label-text">
-                {fileName || "Choose file"}
+                {fileName ? `📎 ${fileName}` : "📎 Attach file"}
               </span>
             </label>
           </div>
         </div>
-
-        <div className="form-actions">
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={loading || !formData.text}
-            data-testid="add-button"
-          >
-            {loading ? "Adding..." : "Add Todo"}
-          </button>
-        </div>
+        <button
+          type="submit"
+          className="todo-button"
+          disabled={loading || !formData.text}
+          data-testid="add-button"
+        >
+          Add Todo
+        </button>
       </form>
 
-      {loadingTodos ? (
-        <div className="loading">Loading todos...</div>
-      ) : todos.length === 0 ? (
-        <div className="empty-state">
-          <p>No todos yet. Create your first one!</p>
-        </div>
-      ) : (
-        <div className="todo-list">
+      {todos.length > 0 && (
+        <ul className="todo-list">
           {todos.map((todo) => (
-            <div key={todo.id} className="todo-item" data-testid="todo-item">
+            <li key={todo.id} className="todo-item" data-testid="todo-item">
               <input
                 type="checkbox"
                 checked={todo.completed}
                 onChange={() => handleToggle(todo)}
-                className="todo-checkbox"
                 data-testid="todo-checkbox"
               />
 
               <div className="todo-content">
                 <div className="todo-header">
-                  <p
-                    className={`todo-text ${todo.completed ? "completed" : ""}`}
+                  <span
+                    className={todo.completed ? "completed" : ""}
                     data-testid="todo-text"
                   >
                     {todo.text}
-                  </p>
-                  <span
-                    className={`todo-priority priority-${todo.priority}`}
-                    data-testid="todo-priority"
-                  >
-                    {todo.priority}
                   </span>
+                  {todo.priority && (
+                    <span
+                      className={`priority priority-${todo.priority}`}
+                      data-testid="todo-priority"
+                    >
+                      {todo.priority}
+                    </span>
+                  )}
                 </div>
 
                 {todo.description && (
-                  <p className="todo-description">
-                    <span className="todo-description-text">{todo.description}</span>
-                  </p>
+                  <p className="todo-description-text">{todo.description}</p>
                 )}
 
                 {todo.filepath && (
-                  <div className="todo-file">
+                  <div className="file-preview">
                     {isImage(todo.filepath) ? (
                       <a
                         href={todo.filepath}
@@ -260,7 +236,7 @@ function App() {
                         <img
                           src={todo.filepath}
                           alt={todo.text}
-                          className="todo-file-preview"
+                          className="preview-image"
                           data-testid="todo-file-preview"
                         />
                       </a>
@@ -269,29 +245,28 @@ function App() {
                         href={todo.filepath}
                         target="_blank"
                         rel="noopener noreferrer"
+                        className="file-link"
                         data-testid="todo-file"
                       >
-                        📎 {getFileName(todo.filepath)}
+                        📎 View file
                       </a>
                     )}
                   </div>
                 )}
               </div>
 
-              <div className="todo-actions">
-                <button
-                  onClick={() => handleDelete(todo.id)}
-                  className="btn-small btn-danger"
-                  data-testid="delete-button"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
+              <button
+                onClick={() => handleDelete(todo.id)}
+                className="delete-button"
+                data-testid="delete-button"
+              >
+                Delete
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-    </div>
+    </main>
   );
 }
 

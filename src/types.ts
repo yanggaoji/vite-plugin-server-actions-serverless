@@ -7,13 +7,13 @@ export interface ServerActionOptions {
 	 * @default "/api"
 	 */
 	apiPrefix?: string;
-	
+
 	/**
 	 * Include patterns for server action files
 	 * @default "**\/*.server.js"
 	 */
 	include?: string | string[];
-	
+
 	/**
 	 * Exclude patterns for server action files
 	 */
@@ -33,4 +33,3 @@ export interface ServerModule {
 export interface ServerActionsPlugin extends Plugin {
 	name: "vite-plugin-server-actions";
 }
-

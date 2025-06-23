@@ -54,7 +54,8 @@ test.describe("Todo App Integration", () => {
 		await expect(page).toHaveTitle(new RegExp(`TODO Example ${framework}`, "i"));
 
 		// Check for main UI elements
-		await expect(page.locator("h1")).toContainText("Todo List");
+		const frameworkTitle = framework.charAt(0).toUpperCase() + framework.slice(1);
+		await expect(page.locator("h1")).toContainText(`Todo List - ${frameworkTitle} Edition`);
 		await expect(page.getByTestId("todo-input")).toBeVisible();
 		await expect(page.getByTestId("add-button")).toContainText("Add Todo");
 	});
@@ -192,8 +193,6 @@ test.describe("API Integration", () => {
 		expect(spec.paths).toHaveProperty("/api/actions/todo/addTodo");
 		expect(spec.paths).toHaveProperty("/api/actions/todo/updateTodo");
 		expect(spec.paths).toHaveProperty("/api/actions/todo/deleteTodo");
-		expect(spec.paths).toHaveProperty("/api/actions/auth/login");
-		expect(spec.paths).toHaveProperty("/api/actions/auth/logout");
 	});
 
 	test("should have accessible API documentation", async ({ page }) => {
@@ -210,7 +209,6 @@ test.describe("API Integration", () => {
 		// Should show API endpoints
 		await expect(page.getByText("/api/actions/todo/getTodos")).toBeVisible();
 		await expect(page.getByText("/api/actions/todo/addTodo")).toBeVisible();
-		await expect(page.getByText("/api/actions/auth/login")).toBeVisible();
 	});
 
 	test("should validate API requests", async ({ page }) => {

@@ -98,7 +98,7 @@ export default function serverActions(userOptions = {}) {
 		...DEFAULT_OPTIONS,
 		...userOptions,
 		validation: { ...DEFAULT_OPTIONS.validation, ...userOptions.validation },
-		openAPI: { 
+		openAPI: {
 			enabled: false,
 			info: {
 				title: "Server Actions API",
@@ -111,7 +111,7 @@ export default function serverActions(userOptions = {}) {
 			...userOptions.openAPI,
 		},
 	};
-	
+
 	const serverFunctions = new Map();
 	const schemaDiscovery = defaultSchemaDiscovery;
 	let app;
@@ -193,14 +193,10 @@ export default function serverActions(userOptions = {}) {
 									global.setTimeout(() => {
 										if (viteConfig?.logger) {
 											console.log(`  \x1b[2;32m➜\x1b[0m  API Docs: http://${host}:${port}${docsPath}`);
-											console.log(
-												`  \x1b[2;32m➜\x1b[0m  OpenAPI:  http://${host}:${port}${options.openAPI.specPath}`,
-											);
+											console.log(`  \x1b[2;32m➜\x1b[0m  OpenAPI:  http://${host}:${port}${options.openAPI.specPath}`);
 										} else {
 											console.log(`📖 API Documentation: http://${host}:${port}${docsPath}`);
-											console.log(
-												`📄 OpenAPI Spec: http://${host}:${port}${options.openAPI.specPath}`,
-											);
+											console.log(`📄 OpenAPI Spec: http://${host}:${port}${options.openAPI.specPath}`);
 										}
 									}, 50); // Small delay to appear after Vite's ready message
 								});
@@ -371,23 +367,9 @@ export default function serverActions(userOptions = {}) {
 		},
 
 		transform(code, id) {
-			// Development-only check: Warn if server files are imported in client files
-			if (process.env.NODE_ENV !== "production" && !id.endsWith(".server.js")) {
-				// Check for suspicious imports of .server.js files
-				const serverImportRegex = /import\s+.*?from\s+['"](.*?\.server\.js)['"]/g;
-				const matches = code.matchAll(serverImportRegex);
-
-				for (const match of matches) {
-					const importPath = match[1];
-					console.warn(
-						"[Vite Server Actions] ⚠️  WARNING: Direct import of server file detected!\n" +
-							`  File: ${id}\n` +
-							`  Import: ${match[0]}\n` +
-							"  This may expose server-side code to the client. " +
-							"Server actions should only be imported through the Vite plugin transformation.",
-					);
-				}
-			}
+			// This hook is not needed since we handle the transformation in the load hook
+			// The warning was incorrectly flagging legitimate imports that are being transformed
+			return null;
 		},
 
 		async generateBundle(outputOptions, bundle) {

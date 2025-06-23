@@ -138,7 +138,7 @@ describe("Production Build", () => {
 			if (response.ok) {
 				const spec = await response.json();
 				expect(spec.openapi).toBe("3.0.3");
-				expect(spec.info.title).toBe("Todo App API");
+				expect(spec.info.title).toBe("Svelte Todo App API");
 				expect(spec.paths).toBeDefined();
 
 				// Check if paths are using the correct format
