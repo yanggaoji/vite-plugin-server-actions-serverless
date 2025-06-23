@@ -27,7 +27,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/HelgeSverre/vite-plugin-server-actions"
+    "url": "git+https://github.com/HelgeSverre/vite-plugin-server-actions.git"
   },
   "license": "MIT",
   "author": {
@@ -70,7 +70,8 @@
     "test:e2e:ui": "playwright test --ui",
     "typecheck": "tsc --noEmit",
     "check": "npm run test:run && npm run lint && npm run typecheck",
-    "prepublishOnly": "npm run check"
+    "prepublishOnly": "npm run check",
+    "deploy:docs": "cd docs && vc --prod"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.4",
