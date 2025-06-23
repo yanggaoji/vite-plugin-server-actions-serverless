@@ -34,6 +34,12 @@ async function readTodos() {
 			// File doesn't exist, return an empty array
 			return [];
 		}
+		if (error instanceof SyntaxError) {
+			// JSON is corrupted, reset to empty array
+			console.error("Corrupted todos.json, resetting to empty array");
+			await writeTodos([]);
+			return [];
+		}
 		console.error("Error reading todos:", error);
 		throw error;
 	}
