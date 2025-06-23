@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is **Vite Server Actions** - a Vite plugin that enables creating server-side functions and calling them from client-side code as seamless proxies. It's currently experimental and a proof of concept.
+This is **Vite Server Actions** - a Vite plugin that enables creating server-side functions and calling them from client-side code as seamless proxies. It includes built-in validation with Zod schemas and automatic OpenAPI documentation generation.
 
 ## Core Architecture
 
@@ -18,8 +18,11 @@ The plugin works by:
 
 Key files:
 
-- `src/index.js` - Main plugin implementation with Rollup integration
-- `examples/todo-app/` - Working Svelte example demonstrating the plugin
+- `src/index.js` - Main plugin implementation with Vite/Rollup integration
+- `src/validation.js` - Validation middleware and schema discovery system
+- `src/openapi.js` - OpenAPI spec generation and Swagger UI integration
+- `src/build-utils.js` - Production build utilities for validation code generation
+- `examples/todo-app/` - Working Svelte example demonstrating all features
 
 ## Development Commands
 
@@ -64,6 +67,23 @@ Into client-side proxy functions that POST to `/api/todo/addTodo`.
 
 The build process generates:
 
-- `dist/actions.js` - Bundled server functions
-- `dist/server.js` - Express server with API endpoints
+- `dist/actions.js` - Bundled server functions with attached Zod schemas
+- `dist/server.js` - Express server with API endpoints, validation middleware, and OpenAPI support
+- `dist/openapi.json` - OpenAPI 3.0 specification (if validation is enabled)
 - Client bundles with proxy functions replacing server imports
+
+## Validation and OpenAPI
+
+When validation is enabled:
+
+1. Functions can have attached Zod schemas: `myFunction.schema = z.object({...})`
+2. Schemas are automatically discovered and used for request validation
+3. OpenAPI spec is generated from schemas with proper types and descriptions
+4. Swagger UI is available at `/api/docs` for interactive API exploration
+5. Validation works in both development and production modes
+
+## Testing
+
+- Unit tests: `npm test` - Tests plugin functionality, validation, OpenAPI generation
+- E2E tests: `npm run test:e2e` - Tests the todo app example with Playwright
+- Production build test: `tests/production-build.test.js` - Verifies production features
