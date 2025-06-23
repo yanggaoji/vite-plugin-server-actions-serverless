@@ -1,11 +1,25 @@
 {
   "name": "vite-plugin-server-actions",
-  "version": "0.1.1",
-  "description": "Automatically proxy imported backend functions to a server endpoint in Vite",
+  "version": "1.0.0",
+  "description": "Server actions for Vite - call backend functions directly from your frontend with automatic API generation, TypeScript support, and zero configuration",
   "keywords": [
+    "vite",
     "vite-plugin",
+    "server-actions",
     "server",
-    "actions"
+    "backend",
+    "api",
+    "rpc",
+    "typescript",
+    "openapi",
+    "swagger",
+    "validation",
+    "zod",
+    "full-stack",
+    "serverless",
+    "functions",
+    "middleware",
+    "express"
   ],
   "homepage": "https://github.com/HelgeSverre/vite-plugin-server-actions",
   "bugs": {
@@ -24,6 +38,21 @@
   "type": "module",
   "main": "src/index.js",
   "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "types": "./index.d.ts"
+    }
+  },
+  "files": [
+    "src",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "scripts": {
     "example:build": "npm run build --prefix examples/todo-app",
     "example:dev": "npm run dev --prefix examples/todo-app",

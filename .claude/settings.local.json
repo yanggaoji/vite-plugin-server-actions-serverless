@@ -31,7 +31,9 @@
 			"Bash(npm test:*)",
 			"Bash(npm run build:*)",
 			"Bash(PORT=3001 node dist/server.js)",
-			"Bash(killall:*)"
+			"Bash(killall:*)",
+			"Bash(convert:*)",
+			"Bash(npm run test:e2e:*)"
 		],
 		"deny": []
 	}

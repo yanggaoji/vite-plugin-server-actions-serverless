@@ -4,25 +4,28 @@
 
 ### NPM Publishing Preparation
 
-- [ ] Update package.json with proper metadata
-  - [ ] Add keywords for discoverability
-  - [ ] Update description
-  - [ ] Add repository, bugs, and homepage fields
-  - [ ] Set proper entry points
-  - [ ] Add files field to specify what to publish
-- [ ] Create CHANGELOG.md file
+- [x] Update package.json with proper metadata
+  - [x] Add keywords for discoverability
+  - [x] Update description
+  - [x] Add repository, bugs, and homepage fields
+  - [x] Set proper entry points
+  - [x] Add files field to specify what to publish
+- [x] Create CHANGELOG.md file
+- [x] Create LICENSE file
+- [x] Create .npmignore file
 
 ### CI/CD Setup
 
-- [ ] Create GitHub Actions workflow for automated testing
-  - [ ] Run unit tests on push/PR
-  - [ ] Run E2E tests
-  - [ ] Run linting and type checking
-- [ ] Add workflow for automated npm publishing on release
+- [x] Create GitHub Actions workflow for automated testing
+  - [x] Run unit tests on push/PR
+  - [x] Run E2E tests
+  - [x] Run linting and type checking
+- [x] Add workflow for automated npm publishing on release
+- [x] Add PR check workflow for commit linting and bundle size
 
 ### E2E Integration Tests
 
-- [ ] Add file upload tests to E2E integration tests for todo app
+- [x] Add file upload tests to E2E integration tests for todo app
 
 ## Future Tasks
 
@@ -48,9 +51,8 @@
 
 ### Features
 
-- [ ] Allow customizing HTTP method for each action (GET, POST, PUT, DELETE)
 - [ ] Add support for streaming responses
-- [ ] Add WebSocket support for real-time server actions
+- [ ] Add WebSocket support for real-time server actions (alterantive transport mechnaism isntead of HTTP fetch calls from the client-side)
 - [ ] Add request/response interceptors
 - [ ] Add rate limiting middleware example
 
