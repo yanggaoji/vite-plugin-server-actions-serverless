@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vite Server Actions - Seamless Server Functions for Vite</title>
+    <meta name="description" content="Write server-side functions and call them from your client code as if they were local. Built-in validation, TypeScript support, and automatic API documentation.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23000'/%3E%3Cpath d='M17 4L9 17h7l-1 11 9-16h-7l1-8z' fill='%23fbbf24'/%3E%3C/svg%3E">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Vite Server Actions">
+    <meta property="og:description" content="Write server-side functions and call them from your client code as if they were local.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://serveractions.dev">
+    <meta property="og:image" content="https://serveractions.dev/og-image.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Vite Server Actions">
+    <meta name="twitter:description" content="Write server-side functions and call them from your client code as if they were local.">
+    <meta name="twitter:image" content="https://serveractions.dev/og-image.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    
+    <style>
+        :root {
+            --primary: #0070f3;
+            --primary-dark: #0051cc;
+            --primary-light: #3291ff;
+            --secondary: #666;
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-200: #eaeaea;
+            --gray-300: #d4d4d4;
+            --gray-400: #a1a1a1;
+            --gray-500: #737373;
+            --gray-600: #525252;
+            --gray-700: #404040;
+            --gray-800: #262626;
+            --gray-900: #171717;
+            --gradient: linear-gradient(180deg, #fff 0%, #fafafa 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--gray-900);
+            background: #ffffff;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: #fff;
+            padding: 0 0 4rem;
+            position: relative;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 0;
+            margin-bottom: 4rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--gray-900);
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: #000;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .logo-icon svg {
+            width: 24px;
+            height: 24px;
+            color: #fbbf24;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:not(.github-link) {
+            color: var(--gray-600);
+        }
+
+        .nav-links a:not(.github-link):hover {
+            color: var(--primary);
+        }
+
+        .github-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--gray-900);
+            color: #ffffff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .github-link:hover {
+            background: var(--gray-800);
+            transform: translateY(-1px);
+        }
+
+        /* Hero Content */
+        .hero-content {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 4rem;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            color: var(--gray-900);
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--gray-600);
+            margin-bottom: 2rem;
+            line-height: 1.8;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--gray-900);
+            color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary:hover {
+            background: var(--gray-800);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        /* Code Example */
+        .code-example {
+            background: var(--gray-900);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 6rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .code-example::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: var(--gray-800);
+            border-bottom: 1px solid var(--gray-700);
+            border-radius: 12px 12px 0 0;
+        }
+
+        .code-dots {
+            position: absolute;
+            top: 14px;
+            left: 20px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .code-dots span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--gray-600);
+        }
+
+        .code-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-top: 3rem;
+        }
+
+        .code-tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--gray-700);
+            color: var(--gray-400);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .code-tab.active {
+            background: var(--gray-800);
+            border-color: var(--gray-700);
+            color: white;
+        }
+
+        .code-content {
+            display: none;
+        }
+
+        .code-content.active {
+            display: block;
+        }
+
+        pre {
+            margin: 0;
+            overflow-x: auto;
+            background: transparent !important;
+        }
+
+        pre code {
+            font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+            font-size: 0.875rem;
+            line-height: 1.7;
+            background: transparent !important;
+        }
+        
+        .code-example pre[class*="language-"] {
+            background: transparent;
+            margin: 0;
+        }
+
+        /* Features */
+        .features {
+            padding: 2rem 0 4rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 6rem;
+        }
+
+        .feature {
+            padding: 2rem;
+            background: var(--gray-50);
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .feature {
+            transition: none;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .feature-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--gray-700);
+        }
+
+        .feature h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature p {
+            color: var(--gray-600);
+            line-height: 1.7;
+        }
+
+        /* Installation */
+        .installation {
+            padding: 4rem 0;
+            margin: 2rem 0 4rem;
+        }
+
+        .installation-inner {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .installation h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 3rem;
+            color: var(--gray-900);
+        }
+
+        .install-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .install-step {
+            background: var(--gray-50);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .install-step h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            color: var(--gray-900);
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background: var(--gray-900);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .code-block {
+            background: var(--gray-900);
+            color: var(--gray-100);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            line-height: 1.5;
+        }
+        
+        .code-comment {
+            color: #6a9955;
+            font-style: italic;
+        }
+        
+        .code-keyword {
+            color: #c586c0;
+        }
+        
+        .code-string {
+            color: #ce9178;
+        }
+
+        /* Advanced Features */
+        .advanced-features {
+            padding: 4rem 0;
+            background: #fff;
+        }
+
+        .advanced-features h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--gray-900);
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--gray-600);
+            font-size: 1.125rem;
+            margin-bottom: 3rem;
+        }
+
+        .advanced-example {
+            margin-bottom: 3rem;
+        }
+
+        .advanced-example h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--gray-900);
+        }
+
+
+        /* Footer */
+        footer {
+            padding: 3rem 0;
+            text-align: center;
+            color: var(--gray-500);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        footer a {
+            color: var(--gray-700);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links a:not(.github-link) {
+                display: none;
+            }
+
+            .hero-content {
+                margin-bottom: 2rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero">
+        <div class="container">
+            <nav>
+                <a href="/" class="logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    Server Actions
+                </a>
+                <div class="nav-links">
+                    <a href="#features">Features</a>
+                    <a href="#installation">Installation</a>
+                    <a href="https://github.com/HelgeSverre/vite-plugin-server-actions" class="github-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        GitHub
+                    </a>
+                </div>
+            </nav>
+
+            <div class="hero-content">
+                <h1>Server Functions Made Simple</h1>
+                <p class="subtitle">
+                    Write server-side functions and call them from your client code as if they were local. 
+                    Built-in validation, TypeScript support, and automatic API documentation.
+                </p>
+                <div class="cta-buttons">
+                    <a href="#installation" class="btn btn-primary">
+                        Get Started
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </a>
+                    <a href="https://github.com/HelgeSverre/vite-plugin-server-actions/tree/main/examples" class="btn btn-secondary">
+                        View Examples
+                    </a>
+                </div>
+            </div>
+
+            <!-- Code Example -->
+            <div class="code-example">
+                <div class="code-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <div class="code-tabs">
+                    <button class="code-tab active" onclick="showTab('server')">greet.server.js</button>
+                    <button class="code-tab" onclick="showTab('client')">App.vue</button>
+                    <button class="code-tab" onclick="showTab('config')">vite.config.js</button>
+                </div>
+                
+                <div id="server" class="code-content active">
+                    <pre><code class="language-javascript">// greet.server.js
+export async function greet(name) {
+  return `Hello, ${name}!`;
+}
+
+export async function getTime() {
+  return new Date().toLocaleTimeString();
+}</code></pre>
+                </div>
+
+                <div id="client" class="code-content">
+                    <pre><code class="language-javascript">// App.vue
+import { greet, getTime } from './greet.server.js';
+
+export default {
+  methods: {
+    async sayHello() {
+      // Call server functions like regular functions
+      const message = await greet('World');
+      const time = await getTime();
+      
+      this.greeting = `${message} The time is ${time}`;
+    }
+  }
+}</code></pre>
+                </div>
+
+                <div id="config" class="code-content">
+                    <pre><code class="language-javascript">// vite.config.js
+import { defineConfig } from 'vite';
+import { serverActions } from 'vite-plugin-server-actions';
+
+export default defineConfig({
+  plugins: [
+    serverActions()
+  ]
+});</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Installation Section -->
+    <section id="installation" class="installation">
+        <div class="container">
+            <div class="installation-inner">
+                <h2>Get Started in Minutes</h2>
+                <div class="install-steps">
+                <div class="install-step">
+                    <h3>
+                        <span class="step-number">1</span>
+                        Install the plugin
+                    </h3>
+                    <div class="code-block">
+                        <span class="code-comment"># Install the plugin</span><br>
+                        npm install vite-plugin-server-actions
+                    </div>
+                </div>
+
+                <div class="install-step">
+                    <h3>
+                        <span class="step-number">2</span>
+                        Configure Vite
+                    </h3>
+                    <div class="code-block">
+                        <span class="code-comment">// vite.config.js</span><br>
+                        <span class="code-keyword">import</span> { serverActions } <span class="code-keyword">from</span> <span class="code-string">'vite-plugin-server-actions'</span>;<br>
+                        <br>
+                        <span class="code-keyword">export default</span> {<br>
+                        &nbsp;&nbsp;plugins: [<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;serverActions()<br>
+                        &nbsp;&nbsp;]<br>
+                        }
+                    </div>
+                </div>
+
+                <div class="install-step">
+                    <h3>
+                        <span class="step-number">3</span>
+                        Create server functions
+                    </h3>
+                    <div class="code-block">
+                        <span class="code-comment">// math.server.js</span><br>
+                        <span class="code-keyword">export async function</span> calculate(a, b) {<br>
+                        &nbsp;&nbsp;<span class="code-keyword">return</span> a + b;<br>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="features-grid">
+                <div class="feature">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                        </svg>
+                    </div>
+                    <h3>Simple to Start</h3>
+                    <p>Just name your files .server.js and export functions. No configuration needed.</p>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </div>
+                    <h3>Framework Agnostic</h3>
+                    <p>Works with React, Vue, Svelte, or vanilla JavaScript. Use your favorite tools.</p>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                        </svg>
+                    </div>
+                    <h3>Auto Import Magic</h3>
+                    <p>Import server functions directly in your client code. Vite handles the rest.</p>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                    </div>
+                    <h3>Type-Safe</h3>
+                    <p>Full TypeScript support with automatic type inference across client and server.</p>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+                        </svg>
+                    </div>
+                    <h3>Production Ready</h3>
+                    <p>Optimized builds with tree-shaking and automatic Express server generation.</p>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                        </svg>
+                    </div>
+                    <h3>Developer Friendly</h3>
+                    <p>Hot reload in development, helpful error messages, and great DX.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advanced Features Section -->
+    <section class="advanced-features">
+        <div class="container">
+            <h2>Advanced Features</h2>
+            <p class="section-subtitle">Take it further with validation, TypeScript, and automatic documentation</p>
+            
+            <div class="advanced-example">
+                <h3>Built-in Validation with Zod</h3>
+                <div class="code-example">
+                    <div class="code-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="code-tabs">
+                        <button class="code-tab active" onclick="showAdvancedTab('zod-server')">todo.server.js</button>
+                        <button class="code-tab" onclick="showAdvancedTab('zod-client')">App.svelte</button>
+                        <button class="code-tab" onclick="showAdvancedTab('zod-config')">vite.config.js</button>
+                    </div>
+                    
+                    <div id="zod-server" class="code-content active">
+                        <pre><code class="language-javascript">import { z } from 'zod';
+
+// Define validation schema
+const TodoSchema = z.object({
+  text: z.string().min(1).max(100),
+  priority: z.enum(['low', 'medium', 'high']).optional(),
+  fileData: z.string().optional(),
+  fileName: z.string().optional()
+});
+
+// Server function with automatic validation
+export async function addTodo(todo) {
+  const newTodo = {
+    id: Date.now(),
+    ...todo,
+    completed: false,
+    createdAt: new Date()
+  };
+  
+  await db.todos.create(newTodo);
+  return newTodo;
+}
+
+// Attach schema for validation
+addTodo.schema = z.tuple([TodoSchema]);</code></pre>
+                    </div>
+
+                    <div id="zod-client" class="code-content">
+                        <pre><code class="language-javascript">// Import server function like any other module
+import { addTodo } from './todo.server.js';
+
+async function handleSubmit() {
+  try {
+    // Call it like a normal function!
+    const todo = await addTodo({
+      text: todoText,
+      priority: 'high'
+    });
+    
+    // TypeScript knows the return type
+    console.log('Created:', todo);
+  } catch (error) {
+    // Validation errors are thrown automatically
+    console.error('Validation failed:', error);
+  }
+}</code></pre>
+                    </div>
+
+                    <div id="zod-config" class="code-content">
+                        <pre><code class="language-javascript">import { defineConfig } from 'vite';
+import { serverActions } from 'vite-plugin-server-actions';
+
+export default defineConfig({
+  plugins: [
+    serverActions({
+      // Enable validation with Zod
+      validation: {
+        enabled: true,
+        adapter: 'zod'
+      },
+      
+      // Generate OpenAPI documentation
+      openAPI: {
+        enabled: true,
+        info: {
+          title: 'My App API',
+          version: '1.0.0'
+        }
+      }
+    })
+  ]
+});</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>
+                Built with ❤️ by <a href="https://github.com/HelgeSverre">Helge Sverre</a> • 
+                <a href="https://github.com/HelgeSverre/vite-plugin-server-actions">GitHub</a> • 
+                <a href="https://www.npmjs.com/package/vite-plugin-server-actions">npm</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script>
+        function showTab(tabName) {
+            // Hide all content
+            document.querySelectorAll('.code-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.code-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Re-highlight code
+            Prism.highlightAll();
+        }
+
+        function showAdvancedTab(tabName) {
+            // Hide all content in advanced section
+            document.querySelectorAll('#zod-server, #zod-client, #zod-config').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all advanced tabs
+            document.querySelectorAll('.advanced-example .code-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Re-highlight code
+            Prism.highlightAll();
+        }
+    </script>
+</body>
+</html>

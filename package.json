@@ -1,11 +1,25 @@
 {
   "name": "vite-plugin-server-actions",
-  "version": "0.1.1",
-  "description": "Automatically proxy imported backend functions to a server endpoint in Vite",
+  "version": "1.0.0",
+  "description": "Server actions for Vite - call backend functions directly from your frontend with automatic API generation, TypeScript support, and zero configuration",
   "keywords": [
+    "vite",
     "vite-plugin",
+    "server-actions",
     "server",
-    "actions"
+    "backend",
+    "api",
+    "rpc",
+    "typescript",
+    "openapi",
+    "swagger",
+    "validation",
+    "zod",
+    "full-stack",
+    "serverless",
+    "functions",
+    "middleware",
+    "express"
   ],
   "homepage": "https://github.com/HelgeSverre/vite-plugin-server-actions",
   "bugs": {
@@ -23,19 +37,68 @@
   },
   "type": "module",
   "main": "src/index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "types": "./index.d.ts"
+    }
+  },
+  "files": [
+    "src",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "scripts": {
-    "example:build": "npm run build --prefix examples/todo-app",
-    "example:dev": "npm run dev --prefix examples/todo-app",
+    "example:svelte:build": "npm run build --prefix examples/svelte-todo-app",
+    "example:svelte:dev": "npm run dev --prefix examples/svelte-todo-app",
+    "example:vue:build": "npm run build --prefix examples/vue-todo-app",
+    "example:vue:dev": "npm run dev --prefix examples/vue-todo-app",
+    "example:react:build": "npm run build --prefix examples/react-todo-app",
+    "example:react:dev": "npm run dev --prefix examples/react-todo-app",
     "format": "npx prettier --write src/ README.md",
-    "sort": "npx sort-package-json"
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "sort": "npx sort-package-json",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run test:run && npm run lint && npm run typecheck",
+    "prepublishOnly": "npm run check"
+  },
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.4",
+    "express": "^4.21.0",
+    "minimatch": "^10.0.3",
+    "rollup": "^4.0.0",
+    "swagger-ui-express": "^5.0.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
-    "express": "^4.21.0",
-    "prettier": "^3.3.3",
-    "vitest": "^0.34.0"
+    "@apidevtools/swagger-parser": "^12.0.0",
+    "@eslint/js": "^9.29.0",
+    "@playwright/test": "^1.53.1",
+    "@stoplight/spectral-core": "^1.20.0",
+    "@stoplight/spectral-rulesets": "^1.22.0",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.3",
+    "@types/swagger-ui-express": "^4.1.6",
+    "@vitest/runner": "^3.2.4",
+    "eslint": "^9.29.0",
+    "playwright": "^1.53.1",
+    "prettier": "^3.6.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
   },
   "peerDependencies": {
-    "vite": "^2.0.0 || ^3.0.0 || ^4.0.0 || ^5.0.0"
+    "vite": "^2.0.0 || ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0"
   },
   "readme": "README.md"
 }
