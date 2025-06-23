@@ -25,7 +25,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
     <!-- Prism.js for syntax highlighting -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
@@ -62,12 +62,13 @@
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
         }
 
         /* Hero Section */
         .hero {
             background: #fff;
-            padding: 2rem 0 4rem;
+            padding: 0 0 4rem;
             position: relative;
             border-bottom: 1px solid var(--gray-200);
         }
@@ -123,13 +124,16 @@
         }
 
         .nav-links a {
-            color: var(--gray-600);
             text-decoration: none;
             font-weight: 500;
             transition: color 0.2s;
         }
 
-        .nav-links a:hover {
+        .nav-links a:not(.github-link) {
+            color: var(--gray-600);
+        }
+
+        .nav-links a:not(.github-link):hover {
             color: var(--primary);
         }
 
@@ -139,7 +143,7 @@
             gap: 0.5rem;
             padding: 0.5rem 1rem;
             background: var(--gray-900);
-            color: white;
+            color: #ffffff;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 500;
@@ -291,6 +295,7 @@
         }
 
         pre code {
+            font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
             font-size: 0.875rem;
             line-height: 1.7;
             background: transparent !important;
@@ -409,7 +414,7 @@
             color: var(--gray-100);
             padding: 1rem;
             border-radius: 8px;
-            font-family: 'Consolas', 'Monaco', monospace;
+            font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
             font-size: 0.875rem;
             overflow-x: auto;
             line-height: 1.5;
@@ -612,7 +617,7 @@ export default defineConfig({
                         Install the plugin
                     </h3>
                     <div class="code-block">
-                        <span class="code-comment"># Install the plugin</span>
+                        <span class="code-comment"># Install the plugin</span><br>
                         npm install vite-plugin-server-actions
                     </div>
                 </div>
@@ -627,7 +632,9 @@ export default defineConfig({
                         <span class="code-keyword">import</span> { serverActions } <span class="code-keyword">from</span> <span class="code-string">'vite-plugin-server-actions'</span>;<br>
                         <br>
                         <span class="code-keyword">export default</span> {<br>
-                        &nbsp;&nbsp;plugins: [serverActions()]<br>
+                        &nbsp;&nbsp;plugins: [<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;serverActions()<br>
+                        &nbsp;&nbsp;]<br>
                         }
                     </div>
                 </div>
