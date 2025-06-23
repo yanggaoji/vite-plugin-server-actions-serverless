@@ -1,4 +1,8 @@
 import { z } from "zod";
+import { extendZodWithOpenApi, OpenAPIRegistry, OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
+
+// Extend Zod with OpenAPI support
+extendZodWithOpenApi(z);
 
 /**
  * Base validation adapter interface
@@ -71,8 +75,28 @@ export class ZodAdapter extends ValidationAdapter {
 
 	toOpenAPISchema(schema) {
 		try {
-			// Use zod-to-openapi for conversion
-			return this._zodToOpenAPISchema(schema);
+			// Use @asteasolutions/zod-to-openapi for conversion
+			const registry = new OpenAPIRegistry();
+			const schemaName = "_TempSchema";
+
+			// The library requires schemas to be registered with openapi metadata
+			// For simple conversion, we'll create a temporary registry
+			const extendedSchema = schema.openapi ? schema : schema;
+			registry.register(schemaName, extendedSchema);
+
+			// Generate the OpenAPI components
+			const generator = new OpenApiGeneratorV3(registry.definitions);
+			const components = generator.generateComponents();
+
+			// Extract the schema from components
+			const openAPISchema = components.components?.schemas?.[schemaName];
+
+			if (!openAPISchema) {
+				// Fallback for schemas that couldn't be converted
+				return { type: "object", description: "Schema conversion not supported" };
+			}
+
+			return openAPISchema;
 		} catch (error) {
 			console.warn(`Failed to convert Zod schema to OpenAPI: ${error.message}`);
 			return { type: "object", description: "Schema conversion failed" };
@@ -130,151 +154,6 @@ export class ZodAdapter extends ValidationAdapter {
 				schema: this.toOpenAPISchema(schema),
 			},
 		];
-	}
-
-	_zodToOpenAPISchema(schema) {
-		if (!schema || typeof schema._def === "undefined") {
-			return { type: "object" };
-		}
-
-		const def = schema._def;
-
-		switch (def.typeName) {
-			case "ZodString":
-				return {
-					type: "string",
-					description: schema.description,
-					...(def.checks && this._getStringConstraints(def.checks)),
-				};
-
-			case "ZodNumber":
-				return {
-					type: "number",
-					description: schema.description,
-					...(def.checks && this._getNumberConstraints(def.checks)),
-				};
-
-			case "ZodBoolean":
-				return {
-					type: "boolean",
-					description: schema.description,
-				};
-
-			case "ZodArray":
-				return {
-					type: "array",
-					items: this.toOpenAPISchema(def.type),
-					description: schema.description,
-				};
-
-			case "ZodObject":
-				const properties = {};
-				const required = [];
-
-				for (const [key, value] of Object.entries(def.shape())) {
-					properties[key] = this.toOpenAPISchema(value);
-					if (!value.isOptional()) {
-						required.push(key);
-					}
-				}
-
-				return {
-					type: "object",
-					properties,
-					required: required.length > 0 ? required : undefined,
-					description: schema.description,
-				};
-
-			case "ZodEnum":
-				return {
-					type: "string",
-					enum: def.values,
-					description: schema.description,
-				};
-
-			case "ZodOptional":
-				return this.toOpenAPISchema(def.innerType);
-
-			case "ZodNullable":
-				const baseSchema = this.toOpenAPISchema(def.innerType);
-				return {
-					...baseSchema,
-					nullable: true,
-				};
-
-			case "ZodUnion":
-				return {
-					oneOf: def.options.map((option) => this.toOpenAPISchema(option)),
-					description: schema.description,
-				};
-
-			case "ZodLiteral":
-				return {
-					type: typeof def.value,
-					enum: [def.value],
-					description: schema.description,
-				};
-
-			case "ZodTuple":
-				return {
-					type: "array",
-					items: {
-						oneOf: def.items.map((item) => this.toOpenAPISchema(item)),
-					},
-					minItems: def.items.length,
-					maxItems: def.items.length,
-					description: schema.description,
-				};
-
-			default:
-				console.warn(`Unsupported Zod type: ${def.typeName}`);
-				return {
-					type: "object",
-					description: schema.description || `Unsupported type: ${def.typeName}`,
-				};
-		}
-	}
-
-	_getStringConstraints(checks) {
-		const constraints = {};
-		for (const check of checks) {
-			switch (check.kind) {
-				case "min":
-					constraints.minLength = check.value;
-					break;
-				case "max":
-					constraints.maxLength = check.value;
-					break;
-				case "email":
-					constraints.format = "email";
-					break;
-				case "url":
-					constraints.format = "uri";
-					break;
-				case "regex":
-					constraints.pattern = check.regex.source;
-					break;
-			}
-		}
-		return constraints;
-	}
-
-	_getNumberConstraints(checks) {
-		const constraints = {};
-		for (const check of checks) {
-			switch (check.kind) {
-				case "min":
-					constraints.minimum = check.value;
-					break;
-				case "max":
-					constraints.maximum = check.value;
-					break;
-				case "int":
-					constraints.type = "integer";
-					break;
-			}
-		}
-		return constraints;
 	}
 }
 
@@ -352,13 +231,20 @@ export function createValidationMiddleware(options = {}) {
 	const schemaDiscovery = options.schemaDiscovery || new SchemaDiscovery(adapter);
 
 	return async function validationMiddleware(req, res, next) {
-		// Extract module and function name from URL
-		const urlParts = req.url.split("/");
-		const functionName = urlParts[urlParts.length - 1];
-		const moduleName = urlParts[urlParts.length - 2];
+		let moduleName, functionName, schema;
 
-		// Get schema for this function
-		const schema = schemaDiscovery.getSchema(moduleName, functionName);
+		// Check for context from route setup
+		if (req.validationContext) {
+			moduleName = req.validationContext.moduleName;
+			functionName = req.validationContext.functionName;
+			schema = req.validationContext.schema;
+		} else {
+			// Fallback to URL parsing and schema discovery
+			const urlParts = req.url.split("/");
+			functionName = urlParts[urlParts.length - 1];
+			moduleName = urlParts[urlParts.length - 2];
+			schema = schemaDiscovery.getSchema(moduleName, functionName);
+		}
 
 		if (!schema) {
 			// No schema defined, skip validation
@@ -400,7 +286,7 @@ export function createValidationMiddleware(options = {}) {
 			} else {
 				req.body = [result.data];
 			}
-			
+
 			next();
 		} catch (error) {
 			console.error("Validation middleware error:", error);

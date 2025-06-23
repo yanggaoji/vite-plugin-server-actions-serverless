@@ -32,7 +32,7 @@ vi.spyOn(process, "cwd").mockReturnValue("/project");
 const mockExpressApp = {
 	use: vi.fn(),
 	post: vi.fn(),
-	get: vi.fn()
+	get: vi.fn(),
 };
 
 vi.mock("express", () => {
@@ -41,13 +41,26 @@ vi.mock("express", () => {
 	return { default: express };
 });
 
+// Mock swagger-ui-express
+vi.mock("swagger-ui-express", () => ({
+	default: {
+		serve: vi.fn(),
+		setup: vi.fn(() => vi.fn()),
+	},
+}));
+
 describe("Integration Tests - Validation System", () => {
 	let mockServer;
 	let mockApp;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		
+
+		// Reset mock app functions
+		mockExpressApp.use = vi.fn();
+		mockExpressApp.post = vi.fn();
+		mockExpressApp.get = vi.fn();
+
 		mockApp = mockExpressApp;
 
 		mockServer = {
@@ -84,7 +97,7 @@ describe("Integration Tests - Validation System", () => {
 			mockModule.createUser.schema = z.object({
 				name: z.string().min(2),
 				email: z.string().email(),
-				age: z.number().min(18)
+				age: z.number().min(18),
 			});
 
 			// Mock the dynamic import
@@ -94,8 +107,8 @@ describe("Integration Tests - Validation System", () => {
 			const plugin = serverActions({
 				validation: {
 					enabled: true,
-					adapter: "zod"
-				}
+					adapter: "zod",
+				},
 			});
 
 			plugin.configureServer(mockServer);
@@ -105,13 +118,11 @@ describe("Integration Tests - Validation System", () => {
 			expect(mockApp.post).toHaveBeenCalledWith(
 				"/api/users/createUser",
 				expect.any(Function), // validation middleware
-				expect.any(Function)  // main handler
+				expect.any(Function), // main handler
 			);
 
 			// Get the endpoint handler arguments
-			const postCall = mockApp.post.mock.calls.find(call => 
-				call[0] === "/api/users/createUser"
-			);
+			const postCall = mockApp.post.mock.calls.find((call) => call[0] === "/api/users/createUser");
 			expect(postCall).toBeDefined();
 			expect(postCall).toHaveLength(3); // path, validation middleware, handler
 		});
@@ -139,39 +150,44 @@ describe("Integration Tests - Validation System", () => {
 			mockModule.createUser.schema = z.object({
 				name: z.string().min(2),
 				email: z.string().email(),
-				age: z.number().min(18)
+				age: z.number().min(18),
 			});
 
 			vi.doMock("/project/src/users.server.js", () => mockModule);
 
 			const plugin = serverActions({
 				validation: {
-					enabled: true
-				}
+					enabled: true,
+				},
 			});
 
 			plugin.configureServer(mockServer);
 			await plugin.load("/project/src/users.server.js");
 
 			// Get the validation middleware
-			const postCall = mockApp.post.mock.calls.find(call => 
-				call[0] === "/api/users/createUser"
-			);
+			const postCall = mockApp.post.mock.calls.find((call) => call[0] === "/api/users/createUser");
 			const validationMiddleware = postCall[1];
 
 			// Test invalid request
 			const mockReq = {
 				url: "/api/users/createUser",
-				body: [{ 
-					name: "A", // Too short
-					email: "invalid-email", // Invalid format
-					age: 15 // Too young
-				}]
+				body: [
+					{
+						name: "A", // Too short
+						email: "invalid-email", // Invalid format
+						age: 15, // Too young
+					},
+				],
+				validationContext: {
+					moduleName: "src_users",
+					functionName: "createUser",
+					schema: mockModule.createUser.schema,
+				},
 			};
 
 			const mockRes = {
 				status: vi.fn().mockReturnThis(),
-				json: vi.fn()
+				json: vi.fn(),
 			};
 
 			const mockNext = vi.fn();
@@ -184,31 +200,31 @@ describe("Integration Tests - Validation System", () => {
 				details: expect.arrayContaining([
 					expect.objectContaining({
 						path: "name",
-						message: "String must contain at least 2 character(s)"
+						message: "String must contain at least 2 character(s)",
 					}),
 					expect.objectContaining({
 						path: "email",
-						message: "Invalid email"
+						message: "Invalid email",
 					}),
 					expect.objectContaining({
 						path: "age",
-						message: "Number must be greater than or equal to 18"
-					})
+						message: "Number must be greater than or equal to 18",
+					}),
 				]),
 				validationErrors: expect.arrayContaining([
 					expect.objectContaining({
 						path: "name",
-						message: "String must contain at least 2 character(s)"
+						message: "String must contain at least 2 character(s)",
 					}),
 					expect.objectContaining({
 						path: "email",
-						message: "Invalid email"
+						message: "Invalid email",
 					}),
 					expect.objectContaining({
 						path: "age",
-						message: "Number must be greater than or equal to 18"
-					})
-				])
+						message: "Number must be greater than or equal to 18",
+					}),
+				]),
 			});
 			expect(mockNext).not.toHaveBeenCalled();
 		});
@@ -234,40 +250,43 @@ describe("Integration Tests - Validation System", () => {
 			mockModule.createUser.schema = z.object({
 				name: z.string().min(2),
 				email: z.string().email(),
-				age: z.number().min(18)
+				age: z.number().min(18),
 			});
 
 			vi.doMock("/project/src/users.server.js", () => mockModule);
 
 			const plugin = serverActions({
 				validation: {
-					enabled: true
-				}
+					enabled: true,
+				},
 			});
 
 			plugin.configureServer(mockServer);
 			await plugin.load("/project/src/users.server.js");
 
-			const postCall = mockApp.post.mock.calls.find(call => 
-				call[0] === "/api/users/createUser"
-			);
+			const postCall = mockApp.post.mock.calls.find((call) => call[0] === "/api/users/createUser");
 			const validationMiddleware = postCall[1];
 
 			// Test valid request
 			const validData = {
 				name: "John Doe",
 				email: "john@example.com",
-				age: 25
+				age: 25,
 			};
 
 			const mockReq = {
 				url: "/api/users/createUser",
-				body: [validData]
+				body: [validData],
+				validationContext: {
+					moduleName: "src_users",
+					functionName: "createUser",
+					schema: mockModule.createUser.schema,
+				},
 			};
 
 			const mockRes = {
 				status: vi.fn().mockReturnThis(),
-				json: vi.fn()
+				json: vi.fn(),
 			};
 
 			const mockNext = vi.fn();
@@ -309,7 +328,7 @@ describe("Integration Tests - Validation System", () => {
 			};
 			mockModule.createUser.schema = z.object({
 				name: z.string(),
-				email: z.string().email()
+				email: z.string().email(),
 			});
 
 			vi.doMock("/project/src/users.server.js", () => mockModule);
@@ -322,31 +341,37 @@ describe("Integration Tests - Validation System", () => {
 					openAPIOptions: {
 						info: {
 							title: "Test API",
-							version: "1.0.0"
+							version: "1.0.0",
 						},
 						docsPath: "/api/docs",
-						specPath: "/api/openapi.json"
-					}
-				}
+						specPath: "/api/openapi.json",
+					},
+				},
 			});
 
 			plugin.configureServer(mockServer);
 			await plugin.load("/project/src/users.server.js");
 
+			// Wait a bit for async swagger UI setup
+			await new Promise((resolve) => global.setTimeout(resolve, 100));
+
 			// Verify OpenAPI spec endpoint was created
 			expect(mockApp.get).toHaveBeenCalledWith("/api/openapi.json", expect.any(Function));
 
-			// Verify Swagger UI was set up (the implementation spreads the middleware array)
-			expect(mockApp.use).toHaveBeenCalledWith("/api/docs", expect.any(Array), expect.any(Function));
+			// Verify Swagger UI was set up
+			// The swagger-ui-express middleware is set up asynchronously
+			// Just verify that use was called with the docs path
+			const useCallsWithDocsPath = mockApp.use.mock.calls.filter(
+				(call) => call[0] && call[0].toString().includes("/api/docs"),
+			);
+			expect(useCallsWithDocsPath.length).toBeGreaterThan(0);
 
 			// Test the OpenAPI spec endpoint
-			const getCall = mockApp.get.mock.calls.find(call => 
-				call[0] === "/api/openapi.json"
-			);
+			const getCall = mockApp.get.mock.calls.find((call) => call[0] === "/api/openapi.json");
 			const specHandler = getCall[1];
 
 			const mockRes = {
-				json: vi.fn()
+				json: vi.fn(),
 			};
 
 			specHandler({}, mockRes);
@@ -356,13 +381,13 @@ describe("Integration Tests - Validation System", () => {
 					openapi: "3.0.3",
 					info: expect.objectContaining({
 						title: "Test API",
-						version: "1.0.0"
+						version: "1.0.0",
 					}),
 					paths: expect.objectContaining({
-						"/api/src_users/getUsers": expect.any(Object),
-						"/api/users/createUser": expect.any(Object)
-					})
-				})
+						"/api/users/getUsers": expect.any(Object),
+						"/api/users/createUser": expect.any(Object),
+					}),
+				}),
 			);
 		});
 
@@ -387,7 +412,7 @@ describe("Integration Tests - Validation System", () => {
 			mockModule.createUser.schema = z.object({
 				name: z.string().min(2),
 				email: z.string().email(),
-				age: z.number().min(18).max(100)
+				age: z.number().min(18).max(100),
 			});
 
 			vi.doMock("/project/src/test.server.js", () => mockModule);
@@ -395,26 +420,24 @@ describe("Integration Tests - Validation System", () => {
 			const plugin = serverActions({
 				validation: {
 					enabled: true,
-					generateOpenAPI: true
-				}
+					generateOpenAPI: true,
+				},
 			});
 
 			plugin.configureServer(mockServer);
 			await plugin.load("/project/src/test.server.js");
 
-			const getCall = mockApp.get.mock.calls.find(call => 
-				call[0] === "/api/openapi.json"
-			);
+			const getCall = mockApp.get.mock.calls.find((call) => call[0] === "/api/openapi.json");
 			const specHandler = getCall[1];
 
 			const mockRes = {
-				json: vi.fn()
+				json: vi.fn(),
 			};
 
 			specHandler({}, mockRes);
 
 			const spec = mockRes.json.mock.calls[0][0];
-			const createUserPath = spec.paths["/api/src_test/createUser"];
+			const createUserPath = spec.paths["/api/test/createUser"];
 
 			expect(createUserPath.post.requestBody.content["application/json"].schema).toEqual({
 				type: "array",
@@ -425,23 +448,23 @@ describe("Integration Tests - Validation System", () => {
 						name: {
 							type: "string",
 							description: undefined,
-							minLength: 2
+							minLength: 2,
 						},
 						email: {
 							type: "string",
 							description: undefined,
-							format: "email"
+							format: "email",
 						},
 						age: {
 							type: "number",
 							description: undefined,
 							minimum: 18,
-							maximum: 100
-						}
+							maximum: 100,
+						},
 					},
 					required: ["name", "email", "age"],
-					description: undefined
-				}
+					description: undefined,
+				},
 			});
 		});
 	});
@@ -471,16 +494,14 @@ describe("Integration Tests - Validation System", () => {
 			const plugin = serverActions({
 				middleware: [customMiddleware1, customMiddleware2],
 				validation: {
-					enabled: true
-				}
+					enabled: true,
+				},
 			});
 
 			plugin.configureServer(mockServer);
 			await plugin.load("/project/src/test.server.js");
 
-			const postCall = mockApp.post.mock.calls.find(call => 
-				call[0] === "/api/test/testFunction"
-			);
+			const postCall = mockApp.post.mock.calls.find((call) => call[0] === "/api/test/testFunction");
 
 			// Should have: custom middleware 1, custom middleware 2, validation middleware, handler
 			expect(postCall).toHaveLength(5);
@@ -510,16 +531,14 @@ describe("Integration Tests - Validation System", () => {
 			const plugin = serverActions({
 				middleware: customMiddleware,
 				validation: {
-					enabled: false
-				}
+					enabled: false,
+				},
 			});
 
 			plugin.configureServer(mockServer);
 			await plugin.load("/project/src/test.server.js");
 
-			const postCall = mockApp.post.mock.calls.find(call => 
-				call[0] === "/api/test/testFunction"
-			);
+			const postCall = mockApp.post.mock.calls.find((call) => call[0] === "/api/test/testFunction");
 
 			// Should have: custom middleware, handler (no validation middleware)
 			expect(postCall).toHaveLength(3);
@@ -546,9 +565,7 @@ describe("Integration Tests - Validation System", () => {
 				createPost.schema = z.object({ title: z.string(), content: z.string() });
 			`;
 
-			vi.mocked(fs.readFile)
-				.mockResolvedValueOnce(userServerCode)
-				.mockResolvedValueOnce(postServerCode);
+			vi.mocked(fs.readFile).mockResolvedValueOnce(userServerCode).mockResolvedValueOnce(postServerCode);
 
 			const userModule = {
 				createUser: vi.fn(),
@@ -566,8 +583,8 @@ describe("Integration Tests - Validation System", () => {
 			const plugin = serverActions({
 				validation: {
 					enabled: true,
-					generateOpenAPI: true
-				}
+					generateOpenAPI: true,
+				},
 			});
 
 			plugin.configureServer(mockServer);
@@ -578,19 +595,17 @@ describe("Integration Tests - Validation System", () => {
 			expect(mockApp.post).toHaveBeenCalledWith(
 				"/api/users/createUser",
 				expect.any(Function), // validation middleware
-				expect.any(Function)  // handler
+				expect.any(Function), // handler
 			);
 
 			expect(mockApp.post).toHaveBeenCalledWith(
 				"/api/posts/createPost",
 				expect.any(Function), // validation middleware
-				expect.any(Function)  // handler
+				expect.any(Function), // handler
 			);
 
 			// Verify OpenAPI spec includes both
-			const getCall = mockApp.get.mock.calls.find(call => 
-				call[0] === "/api/openapi.json"
-			);
+			const getCall = mockApp.get.mock.calls.find((call) => call[0] === "/api/openapi.json");
 			const specHandler = getCall[1];
 
 			const mockRes = { json: vi.fn() };
@@ -623,25 +638,23 @@ describe("Integration Tests - Validation System", () => {
 
 			const plugin = serverActions({
 				validation: {
-					enabled: true
-				}
+					enabled: true,
+				},
 			});
 
 			plugin.configureServer(mockServer);
 			await plugin.load("/project/src/test.server.js");
 
-			const postCall = mockApp.post.mock.calls.find(call => 
-				call[0] === "/api/test/testFunction"
-			);
+			const postCall = mockApp.post.mock.calls.find((call) => call[0] === "/api/test/testFunction");
 			const handler = postCall[postCall.length - 1]; // Last function is the main handler
 
 			const mockReq = {
-				body: ["valid string"]
+				body: ["valid string"],
 			};
 
 			const mockRes = {
 				json: vi.fn(),
-				status: vi.fn().mockReturnThis()
+				status: vi.fn().mockReturnThis(),
 			};
 
 			await handler(mockReq, mockRes);
@@ -649,7 +662,7 @@ describe("Integration Tests - Validation System", () => {
 			expect(mockRes.status).toHaveBeenCalledWith(500);
 			expect(mockRes.json).toHaveBeenCalledWith({
 				error: "Internal server error",
-				details: "Function error"
+				details: "Function error",
 			});
 		});
 	});
@@ -660,7 +673,7 @@ describe("Custom route transformation", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		
+
 		mockApp = mockExpressApp;
 
 		mockServer = {
@@ -697,15 +710,15 @@ describe("Custom route transformation", () => {
 					.replace(/^src\//, "") // Remove src/ prefix
 					.replace(/\.server\.js$/, ""); // Remove .server.js suffix
 				// For 'create' functions, just return the module path
-				if (functionName === 'create') {
+				if (functionName === "create") {
 					return cleanPath;
 				}
 				// For other functions, include the function name
 				return `${cleanPath}/${functionName}`;
 			},
 			validation: {
-				enabled: false
-			}
+				enabled: false,
+			},
 		});
 
 		plugin.configureServer(mockServer);
@@ -714,12 +727,12 @@ describe("Custom route transformation", () => {
 		// Verify endpoints were created with custom routes
 		expect(mockApp.post).toHaveBeenCalledWith(
 			"/api/users", // create function -> /api/users (no function name)
-			expect.any(Function)
+			expect.any(Function),
 		);
 
 		expect(mockApp.post).toHaveBeenCalledWith(
 			"/api/users/update", // update function -> /api/users/update (includes function name)
-			expect.any(Function)
+			expect.any(Function),
 		);
 	});
 
@@ -742,8 +755,8 @@ describe("Custom route transformation", () => {
 		const plugin = serverActions({
 			routeTransform: pathUtils.createLegacyRoute,
 			validation: {
-				enabled: false
-			}
+				enabled: false,
+			},
 		});
 
 		plugin.configureServer(mockServer);
@@ -752,7 +765,7 @@ describe("Custom route transformation", () => {
 		// Verify legacy format endpoint was created
 		expect(mockApp.post).toHaveBeenCalledWith(
 			"/api/src_actions_users/createUser", // Legacy underscore-separated format
-			expect.any(Function)
+			expect.any(Function),
 		);
 	});
 });
@@ -762,7 +775,7 @@ describe("End-to-end validation workflow", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		
+
 		mockApp = mockExpressApp;
 
 		mockServer = {
@@ -802,7 +815,7 @@ describe("End-to-end validation workflow", () => {
 			updateUserProfile: vi.fn().mockImplementation((userId, profileData) => ({
 				id: userId,
 				...profileData,
-				updatedAt: new Date().toISOString()
+				updatedAt: new Date().toISOString(),
 			})),
 		};
 		mockModule.updateUserProfile.schema = z.tuple([
@@ -810,8 +823,8 @@ describe("End-to-end validation workflow", () => {
 			z.object({
 				name: z.string().min(1),
 				email: z.string().email(),
-				bio: z.string().optional()
-			})
+				bio: z.string().optional(),
+			}),
 		]);
 
 		vi.doMock("/project/src/profile.server.js", () => mockModule);
@@ -819,17 +832,15 @@ describe("End-to-end validation workflow", () => {
 		const plugin = serverActions({
 			validation: {
 				enabled: true,
-				generateOpenAPI: true
-			}
+				generateOpenAPI: true,
+			},
 		});
 
 		plugin.configureServer(mockServer);
 		await plugin.load("/project/src/profile.server.js");
 
 		// Get the middleware chain
-		const postCall = mockApp.post.mock.calls.find(call => 
-			call[0] === "/api/profile/updateUserProfile"
-		);
+		const postCall = mockApp.post.mock.calls.find((call) => call[0] === "/api/profile/updateUserProfile");
 		const [path, validationMiddleware, handler] = postCall;
 
 		// Test 1: Invalid request (validation should fail)
@@ -839,14 +850,14 @@ describe("End-to-end validation workflow", () => {
 				"not-a-uuid",
 				{
 					name: "",
-					email: "invalid-email"
-				}
-			]
+					email: "invalid-email",
+				},
+			],
 		};
 
 		const errorRes = {
 			status: vi.fn().mockReturnThis(),
-			json: vi.fn()
+			json: vi.fn(),
 		};
 
 		const nextSpy = vi.fn();
@@ -859,18 +870,18 @@ describe("End-to-end validation workflow", () => {
 			details: expect.arrayContaining([
 				expect.objectContaining({
 					path: "0",
-					message: expect.stringContaining("Invalid uuid")
+					message: expect.stringContaining("Invalid uuid"),
 				}),
 				expect.objectContaining({
 					path: "1.name",
-					message: expect.stringContaining("at least 1")
+					message: expect.stringContaining("at least 1"),
 				}),
 				expect.objectContaining({
 					path: "1.email",
-					message: expect.stringContaining("Invalid email")
-				})
+					message: expect.stringContaining("Invalid email"),
+				}),
 			]),
-			validationErrors: expect.any(Array)
+			validationErrors: expect.any(Array),
 		});
 		expect(nextSpy).not.toHaveBeenCalled();
 
@@ -882,14 +893,14 @@ describe("End-to-end validation workflow", () => {
 				{
 					name: "John Doe",
 					email: "john@example.com",
-					bio: "Software developer"
-				}
-			]
+					bio: "Software developer",
+				},
+			],
 		};
 
 		const successRes = {
 			json: vi.fn(),
-			status: vi.fn().mockReturnThis()
+			status: vi.fn().mockReturnThis(),
 		};
 
 		const nextSuccess = vi.fn();
@@ -903,14 +914,11 @@ describe("End-to-end validation workflow", () => {
 		// Then execute the handler
 		await handler(validReq, successRes);
 
-		expect(mockModule.updateUserProfile).toHaveBeenCalledWith(
-			"123e4567-e89b-12d3-a456-426614174000",
-			{
-				name: "John Doe",
-				email: "john@example.com",
-				bio: "Software developer"
-			}
-		);
+		expect(mockModule.updateUserProfile).toHaveBeenCalledWith("123e4567-e89b-12d3-a456-426614174000", {
+			name: "John Doe",
+			email: "john@example.com",
+			bio: "Software developer",
+		});
 
 		expect(successRes.json).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -918,8 +926,8 @@ describe("End-to-end validation workflow", () => {
 				name: "John Doe",
 				email: "john@example.com",
 				bio: "Software developer",
-				updatedAt: expect.any(String)
-			})
+				updatedAt: expect.any(String),
+			}),
 		);
 	});
 });

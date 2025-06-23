@@ -4,14 +4,8 @@ import express from "express";
 import { rollup } from "rollup";
 import { minimatch } from "minimatch";
 import { middleware } from "./middleware.js";
-import { 
-	defaultSchemaDiscovery, 
-	createValidationMiddleware 
-} from "./validation.js";
-import { 
-	OpenAPIGenerator, 
-	setupOpenAPIEndpoints 
-} from "./openapi.js";
+import { defaultSchemaDiscovery, createValidationMiddleware } from "./validation.js";
+import { OpenAPIGenerator, setupOpenAPIEndpoints } from "./openapi.js";
 
 // Utility functions for path transformation
 export const pathUtils = {
@@ -62,7 +56,7 @@ export const pathUtils = {
 	createMinimalRoute: (filePath, functionName) => {
 		const minimalPath = filePath.replace(/\.js$/, ""); // Just remove .js
 		return `${minimalPath}/${functionName}`;
-	}
+	},
 };
 
 const DEFAULT_OPTIONS = {
@@ -110,10 +104,10 @@ function shouldProcessFile(filePath, options) {
 }
 
 export default function serverActions(userOptions = {}) {
-	const options = { 
-		...DEFAULT_OPTIONS, 
+	const options = {
+		...DEFAULT_OPTIONS,
 		...userOptions,
-		validation: { ...DEFAULT_OPTIONS.validation, ...userOptions.validation }
+		validation: { ...DEFAULT_OPTIONS.validation, ...userOptions.validation },
 	};
 	const serverFunctions = new Map();
 	const schemaDiscovery = defaultSchemaDiscovery;
@@ -152,14 +146,10 @@ export default function serverActions(userOptions = {}) {
 			if (process.env.NODE_ENV !== "production" && options.validation.generateOpenAPI && openAPIGenerator) {
 				// OpenAPI spec endpoint - generates spec dynamically from current serverFunctions
 				app.get(options.validation.openAPIOptions.specPath || "/api/openapi.json", (req, res) => {
-					const openAPISpec = openAPIGenerator.generateSpec(
-						serverFunctions,
-						schemaDiscovery,
-						{ 
-							apiPrefix: options.apiPrefix,
-							routeTransform: options.routeTransform
-						}
-					);
+					const openAPISpec = openAPIGenerator.generateSpec(serverFunctions, schemaDiscovery, {
+						apiPrefix: options.apiPrefix,
+						routeTransform: options.routeTransform,
+					});
 					res.json(openAPISpec);
 				});
 
@@ -167,36 +157,46 @@ export default function serverActions(userOptions = {}) {
 				if (options.validation.swaggerUI) {
 					try {
 						// Dynamic import swagger-ui-express
-						import("swagger-ui-express").then(({ default: swaggerUi }) => {
-							const docsPath = options.validation.openAPIOptions.docsPath || "/api/docs";
-							
-							app.use(docsPath, swaggerUi.serve, swaggerUi.setup(null, {
-								swaggerOptions: {
-									url: options.validation.openAPIOptions.specPath || "/api/openapi.json"
-								}
-							}));
+						import("swagger-ui-express")
+							.then(({ default: swaggerUi }) => {
+								const docsPath = options.validation.openAPIOptions.docsPath || "/api/docs";
 
-							// Wait for server to start and get the actual port, then log URLs
-							server.httpServer?.on('listening', () => {
-								const address = server.httpServer.address();
-								const port = address?.port || 5173;
-								// Always use localhost for consistent display
-								const host = 'localhost';
-								
-								// Delay to appear after Vite's startup messages
-								global.setTimeout(() => {
-									if (viteConfig?.logger) {
-										console.log(`  \x1b[2;32m➜\x1b[0m  API Docs: http://${host}:${port}${docsPath}`);
-										console.log(`  \x1b[2;32m➜\x1b[0m  OpenAPI:  http://${host}:${port}${options.validation.openAPIOptions.specPath || "/api/openapi.json"}`);
-									} else {
-										console.log(`📖 API Documentation: http://${host}:${port}${docsPath}`);
-										console.log(`📄 OpenAPI Spec: http://${host}:${port}${options.validation.openAPIOptions.specPath || "/api/openapi.json"}`);
-									}
-								}, 50); // Small delay to appear after Vite's ready message
+								app.use(
+									docsPath,
+									swaggerUi.serve,
+									swaggerUi.setup(null, {
+										swaggerOptions: {
+											url: options.validation.openAPIOptions.specPath || "/api/openapi.json",
+										},
+									}),
+								);
+
+								// Wait for server to start and get the actual port, then log URLs
+								server.httpServer?.on("listening", () => {
+									const address = server.httpServer.address();
+									const port = address?.port || 5173;
+									// Always use localhost for consistent display
+									const host = "localhost";
+
+									// Delay to appear after Vite's startup messages
+									global.setTimeout(() => {
+										if (viteConfig?.logger) {
+											console.log(`  \x1b[2;32m➜\x1b[0m  API Docs: http://${host}:${port}${docsPath}`);
+											console.log(
+												`  \x1b[2;32m➜\x1b[0m  OpenAPI:  http://${host}:${port}${options.validation.openAPIOptions.specPath || "/api/openapi.json"}`,
+											);
+										} else {
+											console.log(`📖 API Documentation: http://${host}:${port}${docsPath}`);
+											console.log(
+												`📄 OpenAPI Spec: http://${host}:${port}${options.validation.openAPIOptions.specPath || "/api/openapi.json"}`,
+											);
+										}
+									}, 50); // Small delay to appear after Vite's ready message
+								});
+							})
+							.catch((error) => {
+								console.warn("Swagger UI setup failed:", error.message);
 							});
-						}).catch((error) => {
-							console.warn("Swagger UI setup failed:", error.message);
-						});
 					} catch (error) {
 						console.warn("Swagger UI setup failed:", error.message);
 					}
@@ -273,7 +273,7 @@ export default function serverActions(userOptions = {}) {
 					if (process.env.NODE_ENV !== "production") {
 						// Normalize middleware to array (create a fresh copy to avoid mutation)
 						const middlewares = Array.isArray(options.middleware)
-							? [...options.middleware]  // Create a copy
+							? [...options.middleware] // Create a copy
 							: options.middleware
 								? [options.middleware]
 								: [];
@@ -287,8 +287,28 @@ export default function serverActions(userOptions = {}) {
 							const routePath = options.routeTransform(relativePath, functionName);
 							const endpoint = `${options.apiPrefix}/${routePath}`;
 
+							// Create a context-aware validation middleware if validation is enabled
+							const contextMiddlewares = [...middlewares];
+							if (validationMiddleware && options.validation.enabled) {
+								// Replace the generic validation middleware with a context-aware one
+								const lastIdx = contextMiddlewares.length - 1;
+								if (contextMiddlewares[lastIdx] === validationMiddleware) {
+									contextMiddlewares[lastIdx] = (req, res, next) => {
+										// Add context to request for validation
+										// Get the schema directly from schemaDiscovery
+										const schema = schemaDiscovery.getSchema(moduleName, functionName);
+										req.validationContext = {
+											moduleName, // For error messages
+											functionName, // For error messages
+											schema, // Direct schema access
+										};
+										return validationMiddleware(req, res, next);
+									};
+								}
+							}
+
 							// Apply middleware before the handler
-							app.post(endpoint, ...middlewares, async (req, res) => {
+							app.post(endpoint, ...contextMiddlewares, async (req, res) => {
 								try {
 									const module = await import(id);
 
@@ -337,22 +357,22 @@ export default function serverActions(userOptions = {}) {
 				}
 			}
 		},
-		
+
 		transform(code, id) {
 			// Development-only check: Warn if server files are imported in client files
 			if (process.env.NODE_ENV !== "production" && !id.endsWith(".server.js")) {
 				// Check for suspicious imports of .server.js files
 				const serverImportRegex = /import\s+.*?from\s+['"](.*?\.server\.js)['"]/g;
 				const matches = code.matchAll(serverImportRegex);
-				
+
 				for (const match of matches) {
 					const importPath = match[1];
 					console.warn(
 						"[Vite Server Actions] ⚠️  WARNING: Direct import of server file detected!\n" +
-						`  File: ${id}\n` +
-						`  Import: ${match[0]}\n` +
-						"  This may expose server-side code to the client. " +
-						"Server actions should only be imported through the Vite plugin transformation."
+							`  File: ${id}\n` +
+							`  Import: ${match[0]}\n` +
+							"  This may expose server-side code to the client. " +
+							"Server actions should only be imported through the Vite plugin transformation.",
 					);
 				}
 			}
@@ -425,12 +445,11 @@ export default function serverActions(userOptions = {}) {
 				// Server functions
 				// --------------------------------------------------
         ${Array.from(serverFunctions.entries())
-		.flatMap(([moduleName, { functions, filePath }]) =>
-			functions
-				.map(
-					(functionName) => {
-						const routePath = options.routeTransform(filePath, functionName);
-						return `
+					.flatMap(([moduleName, { functions, filePath }]) =>
+						functions
+							.map((functionName) => {
+								const routePath = options.routeTransform(filePath, functionName);
+								return `
             app.post('${options.apiPrefix}/${routePath}', async (req, res) => {
               try {
                 const result = await serverActions.${moduleName}.${functionName}(...req.body);
@@ -441,13 +460,12 @@ export default function serverActions(userOptions = {}) {
               }
             });
           `;
-					}
-				)
-				.join("\n")
-				.trim(),
-		)
-		.join("\n")
-		.trim()}
+							})
+							.join("\n")
+							.trim(),
+					)
+					.join("\n")
+					.trim()}
 
 				// Start server
 				// --------------------------------------------------
@@ -470,9 +488,9 @@ export default function serverActions(userOptions = {}) {
 function generateClientProxy(moduleName, functions, options, filePath) {
 	// Add development-only safety checks
 	const isDev = process.env.NODE_ENV !== "production";
-	
+
 	let clientProxy = `\n// vite-server-actions: ${moduleName}\n`;
-	
+
 	// Add a guard to prevent direct imports of server code
 	if (isDev) {
 		clientProxy += `
@@ -494,15 +512,17 @@ if (typeof window !== 'undefined') {
 }
 `;
 	}
-	
+
 	functions.forEach((functionName) => {
 		const routePath = options.routeTransform(filePath, functionName);
-		
+
 		clientProxy += `
       export async function ${functionName}(...args) {
       	console.log("[Vite Server Actions] 🚀 - Executing ${functionName}");
         
-        ${isDev ? `
+        ${
+					isDev
+						? `
         // Development-only: Mark that we're in a valid proxy context
         if (typeof window !== 'undefined') {
           window.__VITE_SERVER_ACTIONS_PROXY__ = true;
@@ -515,7 +535,9 @@ if (typeof window !== 'undefined') {
             'Function arguments will be converted to null.'
           );
         }
-        ` : ""}
+        `
+						: ""
+				}
         
         try {
           const response = await fetch('${options.apiPrefix}/${routePath}', {
@@ -543,24 +565,32 @@ if (typeof window !== 'undefined') {
           console.log("[Vite Server Actions] ✅ - ${functionName} executed successfully");
           const result = await response.json();
           
-          ${isDev ? `
+          ${
+						isDev
+							? `
           // Development-only: Clear the proxy context
           if (typeof window !== 'undefined') {
             window.__VITE_SERVER_ACTIONS_PROXY__ = false;
           }
-          ` : ""}
+          `
+							: ""
+					}
           
           return result;
           
         } catch (error) {
           console.error("[Vite Server Actions] ❗ - Network or execution error in ${functionName}:", error.message);
           
-          ${isDev ? `
+          ${
+						isDev
+							? `
           // Development-only: Clear the proxy context on error
           if (typeof window !== 'undefined') {
             window.__VITE_SERVER_ACTIONS_PROXY__ = false;
           }
-          ` : ""}
+          `
+							: ""
+					}
           
           // Re-throw with more context if it's not already our custom error
           if (!error.details) {
@@ -579,15 +609,5 @@ if (typeof window !== 'undefined') {
 
 // Export built-in middleware and validation utilities
 export { middleware };
-export { 
-	createValidationMiddleware,
-	ValidationAdapter,
-	ZodAdapter,
-	SchemaDiscovery,
-	adapters
-} from "./validation.js";
-export {
-	OpenAPIGenerator,
-	setupOpenAPIEndpoints,
-	createSwaggerMiddleware
-} from "./openapi.js";
+export { createValidationMiddleware, ValidationAdapter, ZodAdapter, SchemaDiscovery, adapters } from "./validation.js";
+export { OpenAPIGenerator, setupOpenAPIEndpoints, createSwaggerMiddleware } from "./openapi.js";

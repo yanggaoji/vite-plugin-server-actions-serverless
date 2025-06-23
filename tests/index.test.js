@@ -109,9 +109,9 @@ describe("vite-plugin-server-actions", () => {
 
 			expect(result).toContain("getTodos");
 			expect(result).toContain("addTodo");
-			// Module name is now based on relative path: src/todo.server.js -> src_todo
-			expect(result).toContain("fetch('/api/src_todo/getTodos'");
-			expect(result).toContain("fetch('/api/src_todo/addTodo'");
+			// Default route format is now clean hierarchical: src/todo.server.js -> todo
+			expect(result).toContain("fetch('/api/todo/getTodos'");
+			expect(result).toContain("fetch('/api/todo/addTodo'");
 		});
 
 		it("should not process non-server files", async () => {
@@ -159,7 +159,7 @@ describe("vite-plugin-server-actions", () => {
 			const result = await plugin.load("/src/test.server.js");
 
 			expect(result).toContain("export async function testFunction");
-			expect(result).toContain("fetch('/api/src_test/testFunction'");
+			expect(result).toContain("fetch('/api/test/testFunction'");
 			expect(result).toContain("method: 'POST'");
 			expect(result).toContain("Content-Type': 'application/json'");
 		});
@@ -309,8 +309,8 @@ describe("vite-plugin-server-actions", () => {
 
 			const result = await plugin.load("/src/test.server.js");
 
-			expect(result).toContain("fetch('/custom-api/src_test/testFunction'");
-			expect(result).not.toContain("fetch('/api/src_test/testFunction'");
+			expect(result).toContain("fetch('/custom-api/test/testFunction'");
+			expect(result).not.toContain("fetch('/api/test/testFunction'");
 		});
 
 		it("should respect include patterns", async () => {
@@ -398,8 +398,8 @@ describe("vite-plugin-server-actions", () => {
 				expect(result2).toContain("vite-server-actions: src_user_auth");
 
 				// API endpoints should be unique
-				expect(result1).toContain("fetch('/api/src_admin_auth/testFunction'");
-				expect(result2).toContain("fetch('/api/src_user_auth/testFunction'");
+				expect(result1).toContain("fetch('/api/admin/auth/testFunction'");
+				expect(result2).toContain("fetch('/api/user/auth/testFunction'");
 			});
 		});
 
@@ -470,18 +470,18 @@ describe("vite-plugin-server-actions", () => {
 				it("should add safety checks in development mode", async () => {
 					const mockCode = "export function testFunction() {}";
 					vi.mocked(fs.readFile).mockResolvedValue(mockCode);
-					
+
 					const plugin = serverActions();
-					
+
 					const mockServer = {
 						middlewares: {
 							use: vi.fn(),
 						},
 					};
 					plugin.configureServer(mockServer);
-					
+
 					const result = await plugin.load("/src/test.server.js");
-					
+
 					// Should contain browser detection
 					expect(result).toContain("if (typeof window !== 'undefined')");
 					// Should contain security warning
@@ -493,39 +493,39 @@ describe("vite-plugin-server-actions", () => {
 				it("should validate function arguments in development", async () => {
 					const mockCode = "export function testFunction() {}";
 					vi.mocked(fs.readFile).mockResolvedValue(mockCode);
-					
+
 					const plugin = serverActions();
-					
+
 					const mockServer = {
 						middlewares: {
 							use: vi.fn(),
 						},
 					};
 					plugin.configureServer(mockServer);
-					
+
 					const result = await plugin.load("/src/test.server.js");
-					
+
 					// Should contain argument validation
 					expect(result).toContain("Functions cannot be serialized");
 				});
 
 				it("should not add safety checks in production", async () => {
 					process.env.NODE_ENV = "production";
-					
+
 					const mockCode = "export function testFunction() {}";
 					vi.mocked(fs.readFile).mockResolvedValue(mockCode);
-					
+
 					const plugin = serverActions();
-					
+
 					const mockServer = {
 						middlewares: {
 							use: vi.fn(),
 						},
 					};
 					plugin.configureServer(mockServer);
-					
+
 					const result = await plugin.load("/src/test.server.js");
-					
+
 					// Should NOT contain development checks
 					expect(result).not.toContain("SECURITY WARNING");
 					expect(result).not.toContain("__VITE_SERVER_ACTIONS_PROXY__");
@@ -533,19 +533,19 @@ describe("vite-plugin-server-actions", () => {
 
 				it("should warn about direct server imports in transform hook", () => {
 					const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-					
+
 					const plugin = serverActions();
 					const clientCode = `
 						import { someFunction } from './actions/test.server.js';
 						import utils from './utils.js';
 					`;
-					
+
 					plugin.transform(clientCode, "/src/App.jsx");
-					
+
 					expect(consoleWarnSpy).toHaveBeenCalledWith(
-						expect.stringContaining("WARNING: Direct import of server file detected!")
+						expect.stringContaining("WARNING: Direct import of server file detected!"),
 					);
-					
+
 					consoleWarnSpy.mockRestore();
 				});
 			});

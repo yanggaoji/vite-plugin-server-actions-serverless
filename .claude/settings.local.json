@@ -24,7 +24,11 @@
 			"Bash(npm run dev:*)",
 			"Bash(timeout:*)",
 			"Bash(sed:*)",
-			"Bash(npx playwright:*)"
+			"Bash(npx playwright:*)",
+			"WebFetch(domain:github.com)",
+			"Bash(node:*)",
+			"Bash(rm:*)",
+			"Bash(npm test:*)"
 		],
 		"deny": []
 	}
