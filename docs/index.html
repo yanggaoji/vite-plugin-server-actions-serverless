@@ -303,7 +303,7 @@
 
         /* Features */
         .features {
-            padding: 4rem 0;
+            padding: 2rem 0 4rem;
         }
 
         .features-grid {
@@ -320,11 +320,8 @@
             transition: all 0.2s;
         }
 
-        .feature:hover {
-            background: white;
-            border: 1px solid var(--gray-200);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            transform: translateY(-1px);
+        .feature {
+            transition: none;
         }
 
         .feature-icon {
@@ -358,7 +355,7 @@
         /* Installation */
         .installation {
             padding: 4rem 0;
-            margin: 4rem 0;
+            margin: 2rem 0 4rem;
         }
 
         .installation-inner {
@@ -415,6 +412,20 @@
             font-family: 'Consolas', 'Monaco', monospace;
             font-size: 0.875rem;
             overflow-x: auto;
+            line-height: 1.5;
+        }
+        
+        .code-comment {
+            color: #6a9955;
+            font-style: italic;
+        }
+        
+        .code-keyword {
+            color: #c586c0;
+        }
+        
+        .code-string {
+            color: #ce9178;
         }
 
         /* Advanced Features */
@@ -447,27 +458,6 @@
             color: var(--gray-900);
         }
 
-        .advanced-features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .advanced-feature {
-            text-align: center;
-        }
-
-        .advanced-feature h4 {
-            font-size: 1.125rem;
-            margin-bottom: 0.5rem;
-            color: var(--gray-900);
-        }
-
-        .advanced-feature p {
-            color: var(--gray-600);
-            line-height: 1.6;
-        }
 
         /* Footer */
         footer {
@@ -517,7 +507,7 @@
                 <a href="/" class="logo">
                     <div class="logo-icon">
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>
                         </svg>
                     </div>
                     Server Actions
@@ -610,7 +600,7 @@ export default defineConfig({
         </div>
     </div>
 
-    <!-- Features Section -->
+    <!-- Installation Section -->
     <section id="features" class="features">
         <div class="container">
             <div class="features-grid">
@@ -677,7 +667,7 @@ export default defineConfig({
         </div>
     </section>
 
-    <!-- Installation Section -->
+    <!-- Features Section -->
     <section id="installation" class="installation">
         <div class="container">
             <div class="installation-inner">
@@ -689,6 +679,7 @@ export default defineConfig({
                         Install the plugin
                     </h3>
                     <div class="code-block">
+                        <span class="code-comment"># Install the plugin</span>
                         npm install vite-plugin-server-actions
                     </div>
                 </div>
@@ -699,9 +690,10 @@ export default defineConfig({
                         Configure Vite
                     </h3>
                     <div class="code-block">
-                        // vite.config.js<br>
-                        import { serverActions } from 'vite-plugin-server-actions';<br><br>
-                        export default {<br>
+                        <span class="code-comment">// vite.config.js</span><br>
+                        <span class="code-keyword">import</span> { serverActions } <span class="code-keyword">from</span> <span class="code-string">'vite-plugin-server-actions'</span>;<br>
+                        <br>
+                        <span class="code-keyword">export default</span> {<br>
                         &nbsp;&nbsp;plugins: [serverActions()]<br>
                         }
                     </div>
@@ -713,8 +705,9 @@ export default defineConfig({
                         Create server functions
                     </h3>
                     <div class="code-block">
-                        export async function calculate(a, b) {<br>
-                        &nbsp;&nbsp;return a + b;<br>
+                        <span class="code-comment">// math.server.js</span><br>
+                        <span class="code-keyword">export async function</span> calculate(a, b) {<br>
+                        &nbsp;&nbsp;<span class="code-keyword">return</span> a + b;<br>
                         }
                     </div>
                 </div>
@@ -817,21 +810,6 @@ export default defineConfig({
   ]
 });</code></pre>
                     </div>
-                </div>
-            </div>
-            
-            <div class="advanced-features-grid">
-                <div class="advanced-feature">
-                    <h4>🔒 Type-Safe Validation</h4>
-                    <p>Define schemas once and get automatic validation on both client and server</p>
-                </div>
-                <div class="advanced-feature">
-                    <h4>📚 Auto-Generated API Docs</h4>
-                    <p>Get Swagger UI and OpenAPI spec automatically from your Zod schemas</p>
-                </div>
-                <div class="advanced-feature">
-                    <h4>🎯 Better Error Messages</h4>
-                    <p>Clear validation errors with field-level details for better UX</p>
                 </div>
             </div>
         </div>
