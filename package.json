@@ -51,7 +51,7 @@
     "LICENSE"
   ],
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "scripts": {
     "example:svelte:build": "npm run build --prefix examples/svelte-todo-app",
@@ -69,7 +69,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "typecheck": "tsc --noEmit",
-    "check": "npm run test:run && npm run lint && npm run typecheck"
+    "check": "npm run test:run && npm run lint && npm run typecheck",
+    "prepublishOnly": "npm run check"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.4",
@@ -91,12 +92,13 @@
     "@vitest/runner": "^3.2.4",
     "eslint": "^9.29.0",
     "playwright": "^1.53.1",
-    "prettier": "^3.3.3",
+    "prettier": "^3.6.0",
     "typescript": "^5.8.3",
-    "vitest": "^0.34.0"
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
   },
   "peerDependencies": {
-    "vite": "^2.0.0 || ^3.0.0 || ^4.0.0 || ^5.0.0"
+    "vite": "^2.0.0 || ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0"
   },
   "readme": "README.md"
 }

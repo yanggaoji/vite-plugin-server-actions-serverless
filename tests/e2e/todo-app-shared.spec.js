@@ -51,10 +51,10 @@ test.describe("Todo App Integration", () => {
 		const framework = getFrameworkName();
 		
 		// Check that the page loads correctly
-		await expect(page).toHaveTitle(new RegExp(`TODO Example ${framework}`, "i"));
+		const frameworkTitle = framework.charAt(0).toUpperCase() + framework.slice(1);
+		await expect(page).toHaveTitle(new RegExp(`TODO Example ${frameworkTitle}`, "i"));
 
 		// Check for main UI elements
-		const frameworkTitle = framework.charAt(0).toUpperCase() + framework.slice(1);
 		await expect(page.locator("h1")).toContainText(`Todo List - ${frameworkTitle} Edition`);
 		await expect(page.getByTestId("todo-input")).toBeVisible();
 		await expect(page.getByTestId("add-button")).toContainText("Add Todo");
@@ -153,6 +153,9 @@ test.describe("Todo App Integration", () => {
 		if (framework === 'svelte') {
 			// Svelte doesn't disable the button, so just verify no todo is created
 			await page.getByTestId("add-button").click();
+			
+			// Wait for potential network activity
+			await page.waitForTimeout(500);
 		} else {
 			// Vue and React disable the button when input is empty
 			await expect(page.getByTestId("add-button")).toBeDisabled();
