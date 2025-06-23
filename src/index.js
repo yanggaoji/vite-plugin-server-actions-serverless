@@ -6,6 +6,7 @@ import { minimatch } from "minimatch";
 import { middleware } from "./middleware.js";
 import { defaultSchemaDiscovery, createValidationMiddleware } from "./validation.js";
 import { OpenAPIGenerator, setupOpenAPIEndpoints } from "./openapi.js";
+import { generateValidationCode } from "./build-utils.js";
 
 // Utility functions for path transformation
 export const pathUtils = {
@@ -150,6 +151,14 @@ export default function serverActions(userOptions = {}) {
 						apiPrefix: options.apiPrefix,
 						routeTransform: options.routeTransform,
 					});
+
+					// Add a note if no functions are found
+					if (serverFunctions.size === 0) {
+						openAPISpec.info.description =
+							(openAPISpec.info.description || "") +
+							"\n\nNote: No server functions found yet. Try refreshing after accessing your app to trigger module loading.";
+					}
+
 					res.json(openAPISpec);
 				});
 
@@ -260,8 +269,8 @@ export default function serverActions(userOptions = {}) {
 
 					serverFunctions.set(moduleName, { functions: uniqueFunctions, id, filePath: relativePath });
 
-					// Discover schemas from module if validation is enabled
-					if (options.validation.enabled) {
+					// Discover schemas from module if validation is enabled (development only)
+					if (options.validation.enabled && process.env.NODE_ENV !== "production") {
 						try {
 							const module = await import(id);
 							schemaDiscovery.discoverFromModule(module, moduleName);
@@ -270,7 +279,8 @@ export default function serverActions(userOptions = {}) {
 						}
 					}
 
-					if (process.env.NODE_ENV !== "production") {
+					// Setup routes in development mode only
+					if (process.env.NODE_ENV !== "production" && app) {
 						// Normalize middleware to array (create a fresh copy to avoid mutation)
 						const middlewares = Array.isArray(options.middleware)
 							? [...options.middleware] // Create a copy
@@ -378,7 +388,7 @@ export default function serverActions(userOptions = {}) {
 			}
 		},
 
-		async generateBundle(options, bundle) {
+		async generateBundle(outputOptions, bundle) {
 			// Create a virtual entry point for all server functions
 			const virtualEntryId = "virtual:server-actions-entry";
 			let virtualModuleContent = "";
@@ -430,12 +440,36 @@ export default function serverActions(userOptions = {}) {
 				source: bundledCode,
 			});
 
+			// Generate OpenAPI spec if enabled
+			let openAPISpec = null;
+			if (options.validation.generateOpenAPI) {
+				openAPISpec = openAPIGenerator.generateSpec(serverFunctions, schemaDiscovery, {
+					apiPrefix: options.apiPrefix,
+					routeTransform: options.routeTransform,
+				});
+
+				// Emit OpenAPI spec as a separate file
+				this.emitFile({
+					type: "asset",
+					fileName: "openapi.json",
+					source: JSON.stringify(openAPISpec, null, 2),
+				});
+			}
+
+			// Generate validation code if enabled
+			const validationCode = generateValidationCode(options, serverFunctions);
+
 			// Generate server.js
 			const serverCode = `
         import express from 'express';
         import * as serverActions from './actions.js';
+        ${options.validation.generateOpenAPI && options.validation.swaggerUI ? "import swaggerUi from 'swagger-ui-express';" : ""}
+        ${options.validation.generateOpenAPI ? "import { readFileSync } from 'fs';\nimport { fileURLToPath } from 'url';\nimport { dirname, join } from 'path';\n\nconst __filename = fileURLToPath(import.meta.url);\nconst __dirname = dirname(__filename);\nconst openAPISpec = JSON.parse(readFileSync(join(__dirname, 'openapi.json'), 'utf-8'));" : ""}
+        ${validationCode.imports}
 
         const app = express();
+        ${validationCode.setup}
+        ${validationCode.middlewareFactory}
 
         // Middleware
         // --------------------------------------------------
@@ -449,8 +483,11 @@ export default function serverActions(userOptions = {}) {
 						functions
 							.map((functionName) => {
 								const routePath = options.routeTransform(filePath, functionName);
+								const middlewareCall = options.validation?.enabled
+									? `createContextualValidationMiddleware('${moduleName}', '${functionName}'), `
+									: "";
 								return `
-            app.post('${options.apiPrefix}/${routePath}', async (req, res) => {
+            app.post('${options.apiPrefix}/${routePath}', ${middlewareCall}async (req, res) => {
               try {
                 const result = await serverActions.${moduleName}.${functionName}(...req.body);
                 res.json(result || "* No response *");
@@ -467,10 +504,41 @@ export default function serverActions(userOptions = {}) {
 					.join("\n")
 					.trim()}
 
+				${
+					options.validation.generateOpenAPI
+						? `
+				// OpenAPI endpoints
+				// --------------------------------------------------
+				app.get('${options.validation.openAPIOptions?.specPath || "/api/openapi.json"}', (req, res) => {
+					res.json(openAPISpec);
+				});
+				
+				${
+					options.validation.swaggerUI
+						? `
+				// Swagger UI
+				app.use('${options.validation.openAPIOptions?.docsPath || "/api/docs"}', swaggerUi.serve, swaggerUi.setup(openAPISpec));
+				`
+						: ""
+				}
+				`
+						: ""
+				}
+
 				// Start server
 				// --------------------------------------------------
         const port = process.env.PORT || 3000;
-        app.listen(port, () => console.log(\`🚀 Server listening: http://localhost:\${port}\`));
+        app.listen(port, () => {
+					console.log(\`🚀 Server listening: http://localhost:\${port}\`);
+					${
+						options.validation.generateOpenAPI
+							? `
+					console.log(\`📖 API Documentation: http://localhost:\${port}${options.validation.openAPIOptions?.docsPath || "/api/docs"}\`);
+					console.log(\`📄 OpenAPI Spec: http://localhost:\${port}${options.validation.openAPIOptions?.specPath || "/api/openapi.json"}\`);
+					`
+							: ""
+					}
+				});
 
         // List all server functions
 				// --------------------------------------------------

@@ -1,0 +1,27 @@
+import { test, expect } from "@playwright/test";
+
+test.describe("OpenAPI endpoint", () => {
+	test("should return OpenAPI spec with todo endpoints", async ({ request, baseURL }) => {
+		// The dev server is already running via webServer config
+		const response = await request.get(`${baseURL}/api/openapi.json`);
+		expect(response.ok()).toBeTruthy();
+
+		const spec = await response.json();
+		console.log("OpenAPI spec paths:", Object.keys(spec.paths || {}));
+
+		expect(spec.openapi).toBe("3.0.3");
+		expect(spec.info.title).toBe("Todo App API");
+		expect(spec.paths).toBeDefined();
+
+		// Check for expected endpoints with clean routes
+		const paths = Object.keys(spec.paths || {});
+		expect(paths.length).toBeGreaterThan(0);
+
+		// With pathUtils.createCleanRoute, the paths should be:
+		// src/actions/todo.server.js -> actions/todo
+		expect(spec.paths["/api/actions/todo/getTodos"]).toBeDefined();
+		expect(spec.paths["/api/actions/todo/addTodo"]).toBeDefined();
+		expect(spec.paths["/api/actions/todo/updateTodo"]).toBeDefined();
+		expect(spec.paths["/api/actions/todo/deleteTodo"]).toBeDefined();
+	});
+});
