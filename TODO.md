@@ -4,15 +4,14 @@
 
 ### Configuration Enhancements
 
-- [ ] Don't nest configuration for openapi under validation, remember to update readme and tests
 - [ ] Add configurable output server filename (default to server.js)
 - [ ] Add ability to disable openapi.json and swagger-ui separately
 - [ ] Allow configuring the output filename/location for openapi.json and swagger-ui when building
 
 ### Additional Examples
 
-- [ ] Add Vue.js example todo app (exact replica of Svelte functionality)
-- [ ] Add React example todo app (exact replica of Svelte functionality)
+- [x] Add Vue.js example todo app (exact replica of Svelte functionality)
+- [x] Add React example todo app (exact replica of Svelte functionality)
 - [ ] Add Riot.js example todo app (exact replica of Svelte functionality)
 - [ ] Add Alpine.js example todo app (exact replica of Svelte functionality)
 
@@ -49,6 +48,7 @@
   - [x] Run linting and type checking
 - [x] Add workflow for automated npm publishing on release
 - [x] Add PR check workflow for commit linting and bundle size
+- [x] Remove Husky in favor of GitHub Actions CI
 
 ### E2E Integration Tests
 - [x] Add file upload tests to E2E integration tests for todo app
@@ -57,6 +57,12 @@
 - [x] Production build validation and OpenAPI support
 - [x] Fix TypeScript definitions
 - [x] Add validation context to middleware
+
+### Configuration Updates
+- [x] Don't nest configuration for openapi under validation
+- [x] Update TypeScript definitions for separated config
+- [x] Update all tests to use new configuration structure
+- [x] Update README documentation for new config options
 
 ### Documentation
 - [x] README rewrite for production release
@@ -71,3 +77,8 @@
   - [x] Store files in public/uploads folder
   - [x] Add filepath field to todo.json
   - [x] Generate colorful test images
+- [x] Create Vue.js example todo app with identical functionality to Svelte
+- [x] Create React example todo app with identical functionality to Svelte
+- [x] Unify visual styling across all three framework examples
+- [x] Add framework-specific titles to distinguish apps
+- [x] Remove unused authentication code from examples
