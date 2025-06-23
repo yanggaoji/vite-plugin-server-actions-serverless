@@ -158,9 +158,9 @@ export declare class ZodAdapter implements ValidationAdapter {
 
 export declare class SchemaDiscovery {
 	constructor();
-	addSchema(moduleName: string, functionName: string, schemaName: string, schema: any): void;
-	getSchema(moduleName: string, functionName: string, schemaName: string): any;
-	hasSchema(moduleName: string, functionName: string, schemaName: string): boolean;
+	registerSchema(moduleName: string, functionName: string, schema: any): void;
+	getSchema(moduleName: string, functionName: string): any;
+	getAllSchemas(): Map<string, any>;
 	discoverFromModule(module: any, moduleName: string): void;
 }
 

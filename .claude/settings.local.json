@@ -33,7 +33,8 @@
 			"Bash(PORT=3001 node dist/server.js)",
 			"Bash(killall:*)",
 			"Bash(convert:*)",
-			"Bash(npm run test:e2e:*)"
+			"Bash(npm run test:e2e:*)",
+			"Bash(act push:*)"
 		],
 		"deny": []
 	}

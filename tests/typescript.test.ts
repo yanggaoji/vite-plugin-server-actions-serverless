@@ -6,10 +6,9 @@ import serverActions, {
   ZodAdapter,
   SchemaDiscovery,
   adapters,
-  OpenAPIGenerator,
-  type ServerActionOptions,
-  type ValidationOptions 
+  OpenAPIGenerator
 } from "../src/index.js";
+import type { ServerActionOptions, ValidationOptions } from "../index";
 import type { RequestHandler } from "express";
 import { z } from "zod";
 
@@ -19,9 +18,9 @@ describe("TypeScript definitions", () => {
       apiPrefix: "/api",
       include: ["**/*.server.js", "**/*.server.ts"],
       exclude: ["**/node_modules/**"],
-      middleware: [(req, res, next) => next()],
-      moduleNameTransform: (filePath) => filePath.replace(/\//g, "_"),
-      routeTransform: (filePath, functionName) => `${filePath}/${functionName}`,
+      middleware: [(req: any, res: any, next: any) => next()],
+      moduleNameTransform: (filePath: string) => filePath.replace(/\//g, "_"),
+      routeTransform: (filePath: string, functionName: string) => `${filePath}/${functionName}`,
       validation: {
         enabled: true,
         adapter: "zod",
