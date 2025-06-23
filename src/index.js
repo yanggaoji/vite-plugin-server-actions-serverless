@@ -401,7 +401,7 @@ export default function serverActions(userOptions = {}) {
 					{
 						name: "external-modules",
 						resolveId(source) {
-							if (!source.endsWith(".server.js") && !source.startsWith(".") && !path.isAbsolute(source)) {
+							if (!shouldProcessFile(source, options) && !source.startsWith(".") && !path.isAbsolute(source)) {
 								return { id: source, external: true };
 							}
 						},
