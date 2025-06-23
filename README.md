@@ -286,6 +286,7 @@ serverActions({
 | `middleware`     | `Function[]` | `[]`                 | Express middleware stack     |
 | `routeTransform` | `Function`   | See below            | Customize URL generation     |
 | `validation`     | `Object`     | `{ enabled: false }` | Validation settings          |
+| `openAPI`        | `Object`     | `{ enabled: false }` | OpenAPI documentation settings |
 
 #### Route Transform Options
 
@@ -296,6 +297,32 @@ import { pathUtils } from "vite-plugin-server-actions";
 pathUtils.createCleanRoute; // (default) auth.server.js → /api/auth/login
 pathUtils.createLegacyRoute; // auth.server.js → /api/auth_server/login
 pathUtils.createMinimalRoute; // auth.server.js → /api/auth.server/login
+```
+
+#### Validation Options
+
+| Option    | Type      | Default  | Description                           |
+| --------- | --------- | -------- | ------------------------------------- |
+| `enabled` | `boolean` | `false`  | Enable request validation             |
+| `adapter` | `string`  | `"zod"`  | Validation library adapter (only zod) |
+
+#### OpenAPI Options
+
+| Option       | Type      | Default            | Description                        |
+| ------------ | --------- | ------------------ | ---------------------------------- |
+| `enabled`    | `boolean` | `false`            | Enable OpenAPI generation          |
+| `swaggerUI`  | `boolean` | `true`             | Enable Swagger UI when OpenAPI is enabled |
+| `info`       | `Object`  | See below          | OpenAPI specification info         |
+| `docsPath`   | `string`  | `"/api/docs"`      | Path for Swagger UI                |
+| `specPath`   | `string`  | `"/api/openapi.json"` | Path for OpenAPI JSON spec      |
+
+Default `info` object:
+```javascript
+{
+  title: "Server Actions API",
+  version: "1.0.0",
+  description: "Auto-generated API documentation for Vite Server Actions"
+}
 ```
 
 ## 🔍 Built-in Middleware

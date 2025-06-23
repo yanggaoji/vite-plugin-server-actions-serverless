@@ -66,17 +66,17 @@ const validationMiddleware = createValidationMiddleware({ schemaDiscovery });
 
 // Register schemas from server actions
 ${Array.from(serverFunctions.entries())
-	.map(([moduleName, { functions }]) => {
-		return functions
-			.map(
-				(fn) => `
+		.map(([moduleName, { functions }]) => {
+			return functions
+				.map(
+					(fn) => `
 if (serverActions.${moduleName}.${fn}.schema) {
   schemaDiscovery.registerSchema('${moduleName}', '${fn}', serverActions.${moduleName}.${fn}.schema);
 }`,
-			)
-			.join("\n");
-	})
-	.join("\n")}
+				)
+				.join("\n");
+		})
+		.join("\n")}
 `;
 
 	// Generate middleware factory
