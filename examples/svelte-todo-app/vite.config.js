@@ -27,9 +27,7 @@ export default defineConfig({
 				specPath: "/api/openapi.json",
 			},
 			// Add logging middleware to see validation in action
-			middleware: [
-				middleware.logging,
-			],
+			middleware: [middleware.logging],
 		}),
 	],
 });

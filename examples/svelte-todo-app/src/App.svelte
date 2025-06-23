@@ -28,10 +28,10 @@
 	async function handleAddTodo() {
 		if (!newTodoText.trim()) return;
 
-		const todoData = { 
+		const todoData = {
 			text: newTodoText,
 			description: newTodoDescription || undefined,
-			priority: newTodoPriority 
+			priority: newTodoPriority,
 		};
 
 		// Handle file upload if selected
@@ -41,15 +41,15 @@
 				reader.onload = (e) => resolve(e.target.result);
 				reader.readAsDataURL(selectedFile);
 			});
-			
+
 			// Extract base64 data (remove data:image/...;base64, prefix)
-			todoData.fileData = fileData.split(',')[1];
+			todoData.fileData = fileData.split(",")[1];
 			todoData.fileName = selectedFile.name;
 		}
 
 		await addTodo(todoData);
 		await loadTodos();
-		
+
 		// Reset form
 		newTodoText = "";
 		newTodoDescription = "";
@@ -77,11 +77,16 @@
 
 	<form class="todo-form" data-testid="todo-form" on:submit|preventDefault={handleAddTodo}>
 		<div class="form-group">
-			<input class="todo-input" data-testid="todo-input" bind:value={newTodoText} placeholder="What needs to be done?" />
-			<textarea 
-				class="todo-description" 
-				data-testid="todo-description" 
-				bind:value={newTodoDescription} 
+			<input
+				class="todo-input"
+				data-testid="todo-input"
+				bind:value={newTodoText}
+				placeholder="What needs to be done?"
+			/>
+			<textarea
+				class="todo-description"
+				data-testid="todo-description"
+				bind:value={newTodoDescription}
 				placeholder="Add a description (optional)"
 				rows="2"
 			></textarea>
@@ -92,10 +97,10 @@
 					<option value="high">🔴 High</option>
 				</select>
 				<label class="file-label">
-					<input 
-						type="file" 
-						class="file-input" 
-						data-testid="file-input" 
+					<input
+						type="file"
+						class="file-input"
+						data-testid="file-input"
 						bind:this={fileInput}
 						on:change={handleFileSelect}
 						accept="image/*,text/*,.pdf,.doc,.docx"
@@ -117,7 +122,12 @@
 		<ul class="todo-list">
 			{#each todos as todo}
 				<li class="todo-item" data-testid="todo-item">
-					<input type="checkbox" data-testid="todo-checkbox" checked={todo.completed} on:change={() => handleToggleTodo(todo.id)} />
+					<input
+						type="checkbox"
+						data-testid="todo-checkbox"
+						checked={todo.completed}
+						on:change={() => handleToggleTodo(todo.id)}
+					/>
 					<div class="todo-content">
 						<div class="todo-header">
 							<span class:completed={todo.completed} data-testid="todo-text">{todo.text}</span>
@@ -132,7 +142,12 @@
 							<div class="file-preview">
 								{#if todo.filepath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)}
 									<a href={todo.filepath} target="_blank" rel="noopener noreferrer">
-										<img src={todo.filepath} alt="Attached file" class="preview-image" data-testid="todo-file-preview" />
+										<img
+											src={todo.filepath}
+											alt="Attached file"
+											class="preview-image"
+											data-testid="todo-file-preview"
+										/>
 									</a>
 								{:else}
 									<a href={todo.filepath} target="_blank" class="file-link" data-testid="todo-file">📎 View file</a>
@@ -140,7 +155,9 @@
 							</div>
 						{/if}
 					</div>
-					<button class="delete-button" data-testid="delete-button" on:click={() => handleDeleteTodo(todo.id)}>Delete</button>
+					<button class="delete-button" data-testid="delete-button" on:click={() => handleDeleteTodo(todo.id)}
+						>Delete</button
+					>
 				</li>
 			{/each}
 		</ul>
@@ -198,11 +215,11 @@
 		.todo-form {
 			flex-direction: column;
 		}
-		
+
 		.form-row {
 			flex-wrap: wrap;
 		}
-		
+
 		.todo-button {
 			width: 100%;
 		}

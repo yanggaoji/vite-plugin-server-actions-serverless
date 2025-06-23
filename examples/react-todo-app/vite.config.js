@@ -3,20 +3,20 @@ import react from "@vitejs/plugin-react";
 import serverActions from "../../src/index.js";
 
 export default defineConfig({
-  plugins: [
-    react(),
-    serverActions({
-      validation: {
-        enabled: true,
-      },
-      openAPI: {
-        enabled: true,
-        info: {
-          title: "React Todo App API",
-          version: "1.0.0",
-          description: "API documentation for the React Todo App",
-        },
-      },
-    }),
-  ],
+	plugins: [
+		react(),
+		serverActions({
+			validation: {
+				enabled: true,
+			},
+			openAPI: {
+				enabled: true,
+				info: {
+					title: "React Todo App API",
+					version: "1.0.0",
+					description: "API documentation for the React Todo App",
+				},
+			},
+		}),
+	],
 });

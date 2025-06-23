@@ -6,23 +6,39 @@ const TODO_FILE = path.join(process.cwd(), "todos.json");
 
 // Validation schemas
 const TodoSchema = z.object({
-	text: z.string().min(1, "Todo text is required").max(500, "Todo text must be less than 500 characters"),
-	description: z.string().max(800, "Description must be less than 800 characters").optional(),
+	text: z
+		.string()
+		.min(1, "Todo text is required")
+		.max(500, "Todo text must be less than 500 characters"),
+	description: z
+		.string()
+		.max(800, "Description must be less than 800 characters")
+		.optional(),
 	priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
 	fileData: z.string().optional(), // Base64 encoded file data
 	fileName: z.string().optional(), // Original filename for extension
 });
 
 const TodoUpdateSchema = z.object({
-	text: z.string().min(1, "Todo text is required").max(500, "Todo text must be less than 500 characters").optional(),
-	description: z.string().max(800, "Description must be less than 800 characters").optional(),
+	text: z
+		.string()
+		.min(1, "Todo text is required")
+		.max(500, "Todo text must be less than 500 characters")
+		.optional(),
+	description: z
+		.string()
+		.max(800, "Description must be less than 800 characters")
+		.optional(),
 	completed: z.boolean().optional(),
 	priority: z.enum(["low", "medium", "high"]).optional(),
 	fileData: z.string().optional(), // Base64 encoded file data for updating
 	fileName: z.string().optional(), // Original filename for extension
 });
 
-const TodoIdSchema = z.number().int().positive("Todo ID must be a positive integer");
+const TodoIdSchema = z
+	.number()
+	.int()
+	.positive("Todo ID must be a positive integer");
 
 async function readTodos() {
 	try {
@@ -74,31 +90,33 @@ export async function getTodos() {
  */
 export async function addTodo(todo) {
 	const todos = await readTodos();
-	const newTodo = { 
-		id: Date.now(), 
+	const newTodo = {
+		id: Date.now(),
 		text: todo.text,
 		description: todo.description || null,
-		completed: false, 
+		completed: false,
 		priority: todo.priority || "medium",
-		createdAt: new Date().toISOString()
+		createdAt: new Date().toISOString(),
 	};
-	
+
 	// Handle file upload if provided
 	if (todo.fileData && todo.fileName) {
 		const extension = path.extname(todo.fileName);
 		const filename = `${newTodo.id}${extension}`;
 		const filepath = path.join(process.cwd(), "public", "uploads", filename);
-		
+
 		// Ensure uploads directory exists
-		await fs.mkdir(path.join(process.cwd(), "public", "uploads"), { recursive: true });
-		
+		await fs.mkdir(path.join(process.cwd(), "public", "uploads"), {
+			recursive: true,
+		});
+
 		// Save the file
 		const buffer = Buffer.from(todo.fileData, "base64");
 		await fs.writeFile(filepath, buffer);
-		
+
 		newTodo.filepath = `/uploads/${filename}`;
 	}
-	
+
 	todos.push(newTodo);
 	await writeTodos(todos);
 	return newTodo;
@@ -121,38 +139,48 @@ export async function updateTodo(id, updates) {
 	const index = todos.findIndex((todo) => todo.id === id);
 	if (index !== -1) {
 		const oldTodo = todos[index];
-		
+
 		// Handle file update if provided
 		if (updates.fileData && updates.fileName) {
 			// Delete old file if exists
 			if (oldTodo.filepath) {
 				try {
-					const oldFilePath = path.join(process.cwd(), "public", oldTodo.filepath.slice(1)); // Remove leading /
+					const oldFilePath = path.join(
+						process.cwd(),
+						"public",
+						oldTodo.filepath.slice(1)
+					); // Remove leading /
 					await fs.unlink(oldFilePath);
 				} catch (error) {
 					console.warn("Failed to delete old file:", error);
 				}
 			}
-			
+
 			// Save new file
 			const extension = path.extname(updates.fileName);
 			const filename = `${id}${extension}`;
 			const filepath = path.join(process.cwd(), "public", "uploads", filename);
-			
+
 			// Ensure uploads directory exists
-			await fs.mkdir(path.join(process.cwd(), "public", "uploads"), { recursive: true });
-			
+			await fs.mkdir(path.join(process.cwd(), "public", "uploads"), {
+				recursive: true,
+			});
+
 			// Save the file
 			const buffer = Buffer.from(updates.fileData, "base64");
 			await fs.writeFile(filepath, buffer);
-			
+
 			updates.filepath = `/uploads/${filename}`;
 			// Remove the fileData and fileName from updates
 			delete updates.fileData;
 			delete updates.fileName;
 		}
-		
-		todos[index] = { ...oldTodo, ...updates, updatedAt: new Date().toISOString() };
+
+		todos[index] = {
+			...oldTodo,
+			...updates,
+			updatedAt: new Date().toISOString(),
+		};
 		await writeTodos(todos);
 		return todos[index];
 	}
@@ -167,17 +195,21 @@ export async function updateTodo(id, updates) {
 export async function deleteTodo(id) {
 	const todos = await readTodos();
 	const todoToDelete = todos.find((todo) => todo.id === id);
-	
+
 	// Delete associated file if exists
 	if (todoToDelete && todoToDelete.filepath) {
 		try {
-			const filePath = path.join(process.cwd(), "public", todoToDelete.filepath.slice(1)); // Remove leading /
+			const filePath = path.join(
+				process.cwd(),
+				"public",
+				todoToDelete.filepath.slice(1)
+			); // Remove leading /
 			await fs.unlink(filePath);
 		} catch (error) {
 			console.warn("Failed to delete file:", error);
 		}
 	}
-	
+
 	const newTodos = todos.filter((todo) => todo.id !== id);
 	await writeTodos(newTodos);
 }
