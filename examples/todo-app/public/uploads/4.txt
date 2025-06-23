@@ -1,0 +1,17 @@
+Side Project TODO List
+=====================
+
+[ ] Set up development environment
+[ ] Design database schema  
+[ ] Create API endpoints
+[ ] Build frontend components
+[ ] Add authentication
+[ ] Write tests (someday...)
+[ ] Deploy to production
+[ ] Celebrate! 🎉
+
+Started: March 2019
+Last touched: June 2019
+Status: "In Progress" 😅
+
+Note to self: This time I'll definitely finish it!

@@ -5,6 +5,10 @@
 
 	let todos = [];
 	let newTodoText = "";
+	let newTodoDescription = "";
+	let newTodoPriority = "medium";
+	let fileInput;
+	let selectedFile = null;
 
 	onMount(() => {
 		login("admin", "admin");
@@ -16,12 +20,44 @@
 		todos = await getTodos();
 	}
 
+	async function handleFileSelect(event) {
+		const file = event.target.files[0];
+		if (file) {
+			selectedFile = file;
+		}
+	}
+
 	async function handleAddTodo() {
 		if (!newTodoText.trim()) return;
 
-		await addTodo({ text: newTodoText });
+		const todoData = { 
+			text: newTodoText,
+			description: newTodoDescription || undefined,
+			priority: newTodoPriority 
+		};
+
+		// Handle file upload if selected
+		if (selectedFile) {
+			const reader = new FileReader();
+			const fileData = await new Promise((resolve) => {
+				reader.onload = (e) => resolve(e.target.result);
+				reader.readAsDataURL(selectedFile);
+			});
+			
+			// Extract base64 data (remove data:image/...;base64, prefix)
+			todoData.fileData = fileData.split(',')[1];
+			todoData.fileName = selectedFile.name;
+		}
+
+		await addTodo(todoData);
 		await loadTodos();
+		
+		// Reset form
 		newTodoText = "";
+		newTodoDescription = "";
+		newTodoPriority = "medium";
+		selectedFile = null;
+		if (fileInput) fileInput.value = "";
 	}
 
 	async function handleToggleTodo(id) {
@@ -42,8 +78,41 @@
 	<h1>Todo List</h1>
 
 	<form class="todo-form" data-testid="todo-form" on:submit|preventDefault={handleAddTodo}>
-		<input class="todo-input" data-testid="todo-input" bind:value={newTodoText} placeholder="Add a new todo" />
-		<button class="todo-button" data-testid="add-button" type="submit">Add</button>
+		<div class="form-group">
+			<input class="todo-input" data-testid="todo-input" bind:value={newTodoText} placeholder="What needs to be done?" />
+			<textarea 
+				class="todo-description" 
+				data-testid="todo-description" 
+				bind:value={newTodoDescription} 
+				placeholder="Add a description (optional)"
+				rows="2"
+			></textarea>
+			<div class="form-row">
+				<select class="priority-select" data-testid="priority-select" bind:value={newTodoPriority}>
+					<option value="low">🟢 Low</option>
+					<option value="medium">🟡 Medium</option>
+					<option value="high">🔴 High</option>
+				</select>
+				<label class="file-label">
+					<input 
+						type="file" 
+						class="file-input" 
+						data-testid="file-input" 
+						bind:this={fileInput}
+						on:change={handleFileSelect}
+						accept="image/*,text/*,.pdf,.doc,.docx"
+					/>
+					<span class="file-label-text">
+						{#if selectedFile}
+							📎 {selectedFile.name}
+						{:else}
+							📎 Attach file
+						{/if}
+					</span>
+				</label>
+			</div>
+		</div>
+		<button class="todo-button" data-testid="add-button" type="submit">Add Todo</button>
 	</form>
 
 	{#if todos.length > 0}
@@ -51,7 +120,28 @@
 			{#each todos as todo}
 				<li class="todo-item" data-testid="todo-item">
 					<input type="checkbox" data-testid="todo-checkbox" checked={todo.completed} on:change={() => handleToggleTodo(todo.id)} />
-					<span class:completed={todo.completed} data-testid="todo-text">{todo.text}</span>
+					<div class="todo-content">
+						<div class="todo-header">
+							<span class:completed={todo.completed} data-testid="todo-text">{todo.text}</span>
+							{#if todo.priority}
+								<span class="priority priority-{todo.priority}" data-testid="todo-priority">{todo.priority}</span>
+							{/if}
+						</div>
+						{#if todo.description}
+							<p class="todo-description-text">{todo.description}</p>
+						{/if}
+						{#if todo.filepath}
+							<div class="file-preview">
+								{#if todo.filepath.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)}
+									<a href={todo.filepath} target="_blank" rel="noopener noreferrer">
+										<img src={todo.filepath} alt="Attached file" class="preview-image" data-testid="todo-file-preview" />
+									</a>
+								{:else}
+									<a href={todo.filepath} target="_blank" class="file-link" data-testid="todo-file">📎 View file</a>
+								{/if}
+							</div>
+						{/if}
+					</div>
 					<button class="delete-button" data-testid="delete-button" on:click={() => handleDeleteTodo(todo.id)}>Delete</button>
 				</li>
 			{/each}
@@ -60,64 +150,209 @@
 </main>
 
 <style>
-	/* Basic global styling */
+	:global(body) {
+		margin: 0;
+		background-color: #ffffff;
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
 	main {
-		font-family: sans-serif;
-		max-width: 600px;
-		margin: 2rem auto;
-		padding: 1rem;
-		background-color: #f8f8f8;
-		border-radius: 8px;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 3rem 1.5rem;
 	}
 
 	h1 {
-		text-align: center;
-		color: #333;
-		margin-bottom: 1rem;
+		font-size: 2.5rem;
+		font-weight: 700;
+		color: #191919;
+		margin: 0 0 2.5rem 0;
+		letter-spacing: -0.02em;
 	}
 
 	.todo-form {
 		display: flex;
-		gap: 0.5rem;
-		margin-bottom: 1rem;
+		gap: 1rem;
+		margin-bottom: 2rem;
+		padding: 1.75rem;
+		background-color: #f7f7f5;
+		border-radius: 8px;
+		border: 1px solid #e9e9e7;
+		align-items: flex-end;
+	}
+
+	.form-group {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.form-row {
+		display: flex;
+		gap: 0.75rem;
+		align-items: center;
+	}
+
+	@media (max-width: 768px) {
+		.todo-form {
+			flex-direction: column;
+		}
+		
+		.form-row {
+			flex-wrap: wrap;
+		}
+		
+		.todo-button {
+			width: 100%;
+		}
 	}
 
 	.todo-input {
-		flex: 1;
-		padding: 0.5rem;
-		border: 1px solid #ccc;
-		border-radius: 4px;
+		width: 100%;
+		padding: 0.75rem 1rem;
+		border: 1px solid #e9e9e7;
+		border-radius: 6px;
 		font-size: 1rem;
+		background-color: #ffffff;
+		color: #191919;
+		transition: all 0.15s ease;
+		outline: none;
 	}
 
-	.todo-button {
-		padding: 0.5rem 1rem;
-		font-size: 1rem;
-		color: white;
-		background-color: #333;
-		border: none;
-		border-radius: 4px;
+	.todo-input:focus {
+		border-color: #191919;
+		box-shadow: 0 0 0 3px rgba(25, 25, 25, 0.1);
+	}
+
+	.todo-input::placeholder {
+		color: #787774;
+	}
+
+	.todo-description {
+		width: 100%;
+		padding: 0.75rem 1rem;
+		border: 1px solid #e9e9e7;
+		border-radius: 6px;
+		font-size: 0.95rem;
+		font-family: inherit;
+		background-color: #ffffff;
+		color: #191919;
+		transition: all 0.15s ease;
+		outline: none;
+		resize: vertical;
+		min-height: 60px;
+	}
+
+	.todo-description:focus {
+		border-color: #191919;
+		box-shadow: 0 0 0 3px rgba(25, 25, 25, 0.1);
+	}
+
+	.todo-description::placeholder {
+		color: #787774;
+	}
+
+	.priority-select {
+		padding: 0.625rem 1rem;
+		border: 1px solid #e9e9e7;
+		border-radius: 6px;
+		font-size: 0.875rem;
+		background-color: #ffffff;
+		color: #191919;
+		cursor: pointer;
+		transition: all 0.15s ease;
+		outline: none;
+		min-width: 120px;
+		appearance: none;
+		background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+		background-repeat: no-repeat;
+		background-position: right 0.7rem center;
+		background-size: 1.2em;
+		padding-right: 2.5rem;
+	}
+
+	.priority-select:focus {
+		border-color: #191919;
+		box-shadow: 0 0 0 3px rgba(25, 25, 25, 0.1);
+	}
+
+	.file-label {
+		display: inline-block;
 		cursor: pointer;
 	}
 
+	.file-input {
+		display: none;
+	}
+
+	.file-label-text {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.625rem 1rem;
+		border: 1px solid #e9e9e7;
+		border-radius: 6px;
+		font-size: 0.875rem;
+		background-color: #ffffff;
+		color: #191919;
+		transition: all 0.15s ease;
+		white-space: nowrap;
+		max-width: 200px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.file-label:hover .file-label-text {
+		border-color: #d4d4d2;
+		background-color: #fafafa;
+	}
+
+	.todo-button {
+		padding: 0.75rem 1.5rem;
+		font-size: 0.95rem;
+		font-weight: 500;
+		color: #ffffff;
+		background-color: #191919;
+		border: none;
+		border-radius: 6px;
+		cursor: pointer;
+		transition: all 0.15s ease;
+		white-space: nowrap;
+		min-width: 120px;
+	}
+
 	.todo-button:hover {
-		background-color: #555;
+		background-color: #2d2d2d;
+	}
+
+	.todo-button:active {
+		transform: translateY(1px);
 	}
 
 	.todo-list {
 		list-style: none;
 		padding: 0;
 		margin: 0;
-		border-top: 1px solid #e0e0e0;
 	}
 
 	.todo-item {
 		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 0.5rem;
-		border-bottom: 1px solid #e0e0e0;
+		align-items: flex-start;
+		gap: 0.875rem;
+		padding: 1rem 0;
+		border-bottom: 1px solid #e9e9e7;
+		transition: background-color 0.15s ease;
+	}
+
+	.todo-item:hover {
+		background-color: #fafafa;
+		margin-left: -1rem;
+		margin-right: -1rem;
+		padding-left: 1rem;
+		padding-right: 1rem;
 	}
 
 	.todo-item:last-child {
@@ -125,31 +360,125 @@
 	}
 
 	.todo-item input[type="checkbox"] {
-		margin-right: 1rem;
+		width: 18px;
+		height: 18px;
+		margin-top: 2px;
+		cursor: pointer;
+		accent-color: #191919;
 	}
 
-	.todo-item span {
+	.todo-content {
 		flex: 1;
-		font-size: 1rem;
-		color: #333;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
 	}
 
-	.todo-item span.completed {
+	.todo-header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+	}
+
+	.todo-header span:first-child {
+		font-size: 0.95rem;
+		color: #191919;
+		line-height: 1.5;
+		flex: 1;
+	}
+
+	.todo-description-text {
+		margin: 0;
+		font-size: 0.875rem;
+		color: #787774;
+		line-height: 1.6;
+		white-space: pre-wrap;
+	}
+
+	.todo-content span.completed {
 		text-decoration: line-through;
-		color: #888;
+		color: #787774;
+		opacity: 0.8;
+	}
+
+	.priority {
+		padding: 0.2rem 0.5rem;
+		border-radius: 3px;
+		font-size: 0.75rem;
+		font-weight: 500;
+		text-transform: capitalize;
+		display: inline-block;
+		margin-left: 0.5rem;
+	}
+
+	.priority-low {
+		background-color: #f1f1ef;
+		color: #787774;
+	}
+
+	.priority-medium {
+		background-color: #fef7ed;
+		color: #ca8a04;
+	}
+
+	.priority-high {
+		background-color: #fef2f2;
+		color: #dc2626;
+	}
+
+	.file-preview {
+		display: inline-flex;
+		align-items: center;
+		margin-top: 0.5rem;
+	}
+
+	.preview-image {
+		max-width: 80px;
+		max-height: 80px;
+		border-radius: 4px;
+		border: 1px solid #e9e9e7;
+		cursor: pointer;
+		transition: transform 0.15s ease;
+	}
+
+	.preview-image:hover {
+		transform: scale(1.05);
+	}
+
+	.file-link {
+		color: #0066cc;
+		text-decoration: none;
+		font-size: 0.875rem;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	.file-link:hover {
+		text-decoration: underline;
 	}
 
 	.delete-button {
-		padding: 0.25rem 0.5rem;
+		padding: 0.4rem 0.75rem;
 		font-size: 0.875rem;
-		color: #fff;
-		background-color: #cc0000;
-		border: none;
+		color: #787774;
+		background-color: transparent;
+		border: 1px solid #e9e9e7;
 		border-radius: 4px;
 		cursor: pointer;
+		transition: all 0.15s ease;
+		opacity: 0;
+		margin-left: 0.5rem;
+	}
+
+	.todo-item:hover .delete-button {
+		opacity: 1;
 	}
 
 	.delete-button:hover {
-		background-color: #ff3333;
+		color: #dc2626;
+		border-color: #dc2626;
+		background-color: #fef2f2;
 	}
 </style>
