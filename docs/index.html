@@ -651,6 +651,20 @@ export default defineConfig({
                         }
                     </div>
                 </div>
+
+                <div class="install-step">
+                    <h3>
+                        <span class="step-number">4</span>
+                        Use in your app
+                    </h3>
+                    <div class="code-block">
+                        <span class="code-comment">// App.js</span><br>
+                        <span class="code-keyword">import</span> { calculate } <span class="code-keyword">from</span> <span class="code-string">'./math.server.js'</span>;<br>
+                        <br>
+                        <span class="code-keyword">const</span> result = <span class="code-keyword">await</span> calculate(10, 5);<br>
+                        console.log(result); <span class="code-comment">// 15</span>
+                    </div>
+                </div>
             </div>
         </div>
         </div>
