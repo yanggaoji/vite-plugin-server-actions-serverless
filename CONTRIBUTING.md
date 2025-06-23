@@ -38,7 +38,7 @@ vite-plugin-server-actions/
 │   ├── e2e/            # End-to-end tests
 │   └── production-build.test.js
 ├── examples/            # Example applications
-│   └── todo-app/       # Svelte todo example
+│   └── svelte-todo-app/       # Svelte todo example
 └── docs/               # Documentation
 
 ```
@@ -87,13 +87,13 @@ npm run check
 
 ```bash
 # Run the example app in development
-npm run example:dev
+npm run example:svelte:dev
 
 # Build the example app
-npm run example:build
+npm run example:svelte:build
 
 # Test production build
-cd examples/todo-app && npm run build && node dist/server.js
+cd examples/svelte-todo-app && npm run build && node dist/server.js
 ```
 
 ## 🧪 Writing Tests

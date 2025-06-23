@@ -54,8 +54,8 @@
     "node": ">=14.0.0"
   },
   "scripts": {
-    "example:build": "npm run build --prefix examples/todo-app",
-    "example:dev": "npm run dev --prefix examples/todo-app",
+    "example:svelte:build": "npm run build --prefix examples/svelte-todo-app",
+    "example:svelte:dev": "npm run dev --prefix examples/svelte-todo-app",
     "format": "npx prettier --write src/ README.md",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",

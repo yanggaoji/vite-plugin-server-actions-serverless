@@ -22,7 +22,7 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: "cd examples/todo-app && npm run dev",
+		command: "cd examples/svelte-todo-app && npm run dev",
 		url: "http://localhost:5173",
 		reuseExistingServer: !process.env.CI,
 	},

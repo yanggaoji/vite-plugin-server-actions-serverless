@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Todo App Integration", () => {
+test.describe("Svelte Todo App Integration", () => {
 	test.beforeEach(async ({ page }) => {
 		// Start with a fresh page
 		await page.goto("/");

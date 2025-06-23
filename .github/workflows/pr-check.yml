@@ -30,5 +30,5 @@ jobs:
     
     - name: Check bundle size
       run: |
-        npm run build --prefix examples/todo-app
+        npm run build --prefix examples/svelte-todo-app
         echo "Bundle size check passed"

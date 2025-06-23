@@ -11,7 +11,7 @@ delete TODOs, with data stored in a JSON file.
 
 ```shell
 git clone
-cd examples/todo-app
+cd examples/svelte-todo-app
 npm install
 ```
 

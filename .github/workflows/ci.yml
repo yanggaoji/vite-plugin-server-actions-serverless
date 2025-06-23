@@ -26,7 +26,7 @@ jobs:
     
     - name: Install example dependencies
       run: npm ci
-      working-directory: examples/todo-app
+      working-directory: examples/svelte-todo-app
     
     - name: Run linting
       run: npm run lint
@@ -39,7 +39,7 @@ jobs:
     
     - name: Build example app
       run: npm run build
-      working-directory: examples/todo-app
+      working-directory: examples/svelte-todo-app
     
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps

@@ -6,7 +6,7 @@ import fs from "fs/promises";
 import fetch from "node-fetch";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const todoAppDir = path.join(__dirname, "../examples/todo-app");
+const todoAppDir = path.join(__dirname, "../examples/svelte-todo-app");
 
 describe("Production Build", () => {
 	let serverProcess;

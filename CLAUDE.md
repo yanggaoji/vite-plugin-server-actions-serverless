@@ -22,7 +22,7 @@ Key files:
 - `src/validation.js` - Validation middleware and schema discovery system
 - `src/openapi.js` - OpenAPI spec generation and Swagger UI integration
 - `src/build-utils.js` - Production build utilities for validation code generation
-- `examples/todo-app/` - Working Svelte example demonstrating all features
+- `examples/svelte-todo-app/` - Working Svelte example demonstrating all features
 
 ## Development Commands
 
@@ -36,15 +36,15 @@ Key files:
 - `npm run typecheck` - Check TypeScript types
 - `npm run check` - Run all quality checks (tests, lint, typecheck)
 - `npm run sort` - Sort package.json
-- `npm run example:dev` - Run the todo app example in development
-- `npm run example:build` - Build the todo app example
+- `npm run example:svelte:dev` - Run the Svelte todo app example in development
+- `npm run example:svelte:build` - Build the Svelte todo app example
 
-### Todo app example:
+### Svelte todo app example:
 
-- `cd examples/todo-app && npm run dev` - Development server
-- `cd examples/todo-app && npm run build` - Production build
-- `cd examples/todo-app && npm run preview` - Preview production build
-- `cd examples/todo-app && npm run format` - Format example code
+- `cd examples/svelte-todo-app && npm run dev` - Development server
+- `cd examples/svelte-todo-app && npm run build` - Production build
+- `cd examples/svelte-todo-app && npm run preview` - Preview production build
+- `cd examples/svelte-todo-app && npm run format` - Format example code
 
 ## Server Actions Pattern
 
