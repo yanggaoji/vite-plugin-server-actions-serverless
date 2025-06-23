@@ -195,7 +195,9 @@ login.schema = LoginSchema;
 ### Complete Examples
 
 - [Todo App with Svelte](examples/svelte-todo-app) - Full-featured todo application with validation
-- More examples coming soon for React, Vue, and other frameworks
+- [Todo App with Vue](examples/vue-todo-app) - Same todo app built with Vue 3
+- [Todo App with React](examples/react-todo-app) - Same todo app built with React
+- More examples coming soon for other frameworks
 
 ## 🔍 How It Works
 

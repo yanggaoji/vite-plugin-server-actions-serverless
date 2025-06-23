@@ -19,7 +19,7 @@ export default defineConfig({
 				enabled: true,
 				swaggerUI: true,
 				info: {
-					title: "Todo App API",
+					title: "Svelte Todo App API",
 					version: "1.0.0",
 					description: "A simple todo application API with validation and auto-generated documentation",
 				},

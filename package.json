@@ -56,6 +56,10 @@
   "scripts": {
     "example:svelte:build": "npm run build --prefix examples/svelte-todo-app",
     "example:svelte:dev": "npm run dev --prefix examples/svelte-todo-app",
+    "example:vue:build": "npm run build --prefix examples/vue-todo-app",
+    "example:vue:dev": "npm run dev --prefix examples/vue-todo-app",
+    "example:react:build": "npm run build --prefix examples/react-todo-app",
+    "example:react:dev": "npm run dev --prefix examples/react-todo-app",
     "format": "npx prettier --write src/ README.md",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",

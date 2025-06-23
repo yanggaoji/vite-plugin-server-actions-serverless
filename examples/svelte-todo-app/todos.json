@@ -1,74 +1,18 @@
 [
   {
-    "id": 1750662871066,
-    "text": "Test todo",
-    "description": null,
+    "id": 1750673175101,
+    "text": "Complete todo",
+    "description": "This is a detailed description of the todo item",
     "completed": false,
-    "priority": "high",
-    "createdAt": "2025-06-23T07:14:31.066Z"
+    "priority": "low",
+    "createdAt": "2025-06-23T10:06:15.101Z"
   },
   {
-    "id": 1750664362706,
-    "text": "Test todo",
+    "id": 1750673175252,
+    "text": "Simple todo",
     "description": null,
     "completed": false,
-    "priority": "high",
-    "createdAt": "2025-06-23T07:39:22.706Z"
-  },
-  {
-    "id": 1750665353423,
-    "text": "Test todo",
-    "description": null,
-    "completed": false,
-    "priority": "high",
-    "createdAt": "2025-06-23T07:55:53.423Z"
-  },
-  {
-    "id": 1750665382463,
-    "text": "Test todo",
-    "description": null,
-    "completed": false,
-    "priority": "high",
-    "createdAt": "2025-06-23T07:56:22.463Z"
-  },
-  {
-    "id": 1750666507066,
-    "text": "Test todo",
-    "description": null,
-    "completed": false,
-    "priority": "high",
-    "createdAt": "2025-06-23T08:15:07.066Z"
-  },
-  {
-    "id": 1750666569544,
-    "text": "Test todo",
-    "description": null,
-    "completed": false,
-    "priority": "high",
-    "createdAt": "2025-06-23T08:16:09.544Z"
-  },
-  {
-    "id": 1750666750291,
-    "text": "Test todo",
-    "description": null,
-    "completed": false,
-    "priority": "high",
-    "createdAt": "2025-06-23T08:19:10.291Z"
-  },
-  {
-    "id": 1750666867444,
-    "text": "Test todo",
-    "description": null,
-    "completed": false,
-    "priority": "high",
-    "createdAt": "2025-06-23T08:21:07.444Z"
-  },
-  {
-    "id": 1750667455028,
-    "text": "Test todo",
-    "description": null,
-    "completed": false,
-    "priority": "high",
-    "createdAt": "2025-06-23T08:30:55.028Z"
+    "priority": "medium",
+    "createdAt": "2025-06-23T10:06:15.252Z"
   }
 ]
