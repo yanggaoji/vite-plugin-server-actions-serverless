@@ -622,7 +622,7 @@ export default {
       // Call server functions like regular functions
       const message = await greet('World');
       const time = await getTime();
-      
+
       this.greeting = `${message} The time is ${time}`;
     }
   }
@@ -828,7 +828,7 @@ export async function addTodo(todo) {
     completed: false,
     createdAt: new Date()
   };
-  
+
   await db.todos.create(newTodo);
   return newTodo;
 }
@@ -848,7 +848,7 @@ async function handleSubmit() {
       text: todoText,
       priority: 'high'
     });
-    
+
     // TypeScript knows the return type
     console.log('Created:', todo);
   } catch (error) {
@@ -870,7 +870,7 @@ export default defineConfig({
         enabled: true,
         adapter: 'zod'
       },
-      
+
       // Generate OpenAPI documentation
       openAPI: {
         enabled: true,
@@ -892,7 +892,7 @@ export default defineConfig({
 		<footer>
 			<div class="container">
 				<p>
-					Built with ❤️ by <a href="https://github.com/HelgeSverre">Helge Sverre</a> •
+					Built with <a href="https://www.anthropic.com/claude-code" style="text-decoration: none;">🤖</a> by <a href="https://github.com/HelgeSverre">Helge Sverre</a> •
 					<a href="https://github.com/HelgeSverre/vite-plugin-server-actions">GitHub</a> •
 					<a href="https://www.npmjs.com/package/vite-plugin-server-actions">npm</a>
 				</p>
