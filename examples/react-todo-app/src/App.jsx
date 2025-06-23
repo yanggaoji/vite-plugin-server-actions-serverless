@@ -76,13 +76,21 @@ function App() {
     setError("");
 
     try {
-      const newTodo = await addTodo({
+      const todoData = {
         text: formData.text,
-        description: formData.description,
         priority: formData.priority,
-        fileData: formData.fileData,
-        fileName: formData.fileName,
-      });
+      };
+      
+      // Only add optional fields if they have values
+      if (formData.description) {
+        todoData.description = formData.description;
+      }
+      if (formData.fileData) {
+        todoData.fileData = formData.fileData;
+        todoData.fileName = formData.fileName;
+      }
+      
+      const newTodo = await addTodo(todoData);
 
       setTodos([...todos, newTodo]);
 

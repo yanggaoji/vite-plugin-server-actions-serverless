@@ -183,6 +183,6 @@ export async function deleteTodo(id) {
 }
 
 // Attach schemas to functions for validation
-addTodo.schema = TodoSchema;
+addTodo.schema = z.tuple([TodoSchema]);
 updateTodo.schema = z.tuple([TodoIdSchema, TodoUpdateSchema]);
 deleteTodo.schema = z.tuple([TodoIdSchema]);

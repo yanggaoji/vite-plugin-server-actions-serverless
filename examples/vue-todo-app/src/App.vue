@@ -222,13 +222,21 @@ const handleSubmit = async () => {
   error.value = "";
 
   try {
-    const newTodo = await addTodo({
+    const todoData = {
       text: formData.value.text,
-      description: formData.value.description,
       priority: formData.value.priority,
-      fileData: formData.value.fileData,
-      fileName: formData.value.fileName,
-    });
+    };
+    
+    // Only add optional fields if they have values
+    if (formData.value.description) {
+      todoData.description = formData.value.description;
+    }
+    if (formData.value.fileData) {
+      todoData.fileData = formData.value.fileData;
+      todoData.fileName = formData.value.fileName;
+    }
+    
+    const newTodo = await addTodo(todoData);
 
     todos.value = [...todos.value, newTodo];
 

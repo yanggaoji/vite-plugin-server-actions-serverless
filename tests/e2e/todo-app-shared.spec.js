@@ -147,8 +147,22 @@ test.describe("Todo App Integration", () => {
 	});
 
 	test("should not add empty todos", async ({ page }) => {
-		// Try to add empty todo
-		await page.getByTestId("add-button").click();
+		const framework = getFrameworkName();
+		
+		if (framework === 'svelte') {
+			// Svelte doesn't disable the button, so just verify no todo is created
+			await page.getByTestId("add-button").click();
+		} else {
+			// Vue and React disable the button when input is empty
+			await expect(page.getByTestId("add-button")).toBeDisabled();
+			
+			// Fill and clear the input
+			await page.getByTestId("todo-input").fill("Test");
+			await expect(page.getByTestId("add-button")).toBeEnabled();
+			
+			await page.getByTestId("todo-input").clear();
+			await expect(page.getByTestId("add-button")).toBeDisabled();
+		}
 
 		// Should not create any todo items
 		await expect(page.getByTestId("todo-item")).toHaveCount(0);
