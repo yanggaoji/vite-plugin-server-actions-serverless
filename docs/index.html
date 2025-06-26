@@ -249,6 +249,7 @@
 				gap: 8px;
 				align-items: center;
 				padding: 12px 2rem 12px 0;
+				flex-shrink: 0;
 			}
 
 			.code-dots span {
@@ -258,17 +259,28 @@
 				background: var(--gray-600);
 			}
 
-			.code-tabs {
+			.code-header {
 				display: flex;
-				gap: 0;
-				margin-bottom: 0;
-				padding: 0 20px;
-				position: relative;
+				align-items: center;
 				background: var(--gray-900);
 				border-radius: 12px 12px 0 0;
 				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-				align-items: center;
 				border-bottom: 1px solid var(--gray-700);
+				padding: 0 20px;
+			}
+
+			.code-tabs {
+				display: flex;
+				gap: 0;
+				flex: 1;
+				overflow-x: auto;
+				-webkit-overflow-scrolling: touch;
+				scrollbar-width: none;
+				-ms-overflow-style: none;
+			}
+
+			.code-tabs::-webkit-scrollbar {
+				display: none;
 			}
 
 			.code-tab {
@@ -544,23 +556,8 @@
 					justify-content: center;
 				}
 
-				.code-tabs {
-					overflow-x: auto;
-					-webkit-overflow-scrolling: touch;
-					scrollbar-width: none;
-					-ms-overflow-style: none;
-				}
-
-				.code-tabs::-webkit-scrollbar {
-					display: none;
-				}
-
 				.code-tab {
 					white-space: nowrap;
-					flex-shrink: 0;
-				}
-
-				.code-dots {
 					flex-shrink: 0;
 				}
 			}
@@ -625,15 +622,17 @@
 
 				<!-- Code Example -->
 				<div class="code-window">
-					<div class="code-tabs">
+					<div class="code-header">
 						<div class="code-dots">
 							<span></span>
 							<span></span>
 							<span></span>
 						</div>
-						<button class="code-tab active" onclick="showTab('server')">greet.server.js</button>
-						<button class="code-tab" onclick="showTab('client')">App.vue</button>
-						<button class="code-tab" onclick="showTab('config')">vite.config.js</button>
+						<div class="code-tabs">
+							<button class="code-tab active" onclick="showTab('server')">greet.server.js</button>
+							<button class="code-tab" onclick="showTab('client')">App.vue</button>
+							<button class="code-tab" onclick="showTab('config')">vite.config.js</button>
+						</div>
 					</div>
 					<div class="code-example">
 
@@ -835,15 +834,17 @@ export default defineConfig({
 				<div class="advanced-example">
 					<h3>Built-in Validation with Zod</h3>
 					<div class="code-window">
-						<div class="code-tabs">
+						<div class="code-header">
 							<div class="code-dots">
 								<span></span>
 								<span></span>
 								<span></span>
 							</div>
-							<button class="code-tab active" onclick="showAdvancedTab('zod-server')">todo.server.js</button>
-							<button class="code-tab" onclick="showAdvancedTab('zod-client')">App.svelte</button>
-							<button class="code-tab" onclick="showAdvancedTab('zod-config')">vite.config.js</button>
+							<div class="code-tabs">
+								<button class="code-tab active" onclick="showAdvancedTab('zod-server')">todo.server.js</button>
+								<button class="code-tab" onclick="showAdvancedTab('zod-client')">App.svelte</button>
+								<button class="code-tab" onclick="showAdvancedTab('zod-config')">vite.config.js</button>
+							</div>
 						</div>
 						<div class="code-example">
 
@@ -949,7 +950,7 @@ export default defineConfig({
 				});
 
 				// Remove active class from first example tabs only
-				const firstExample = document.querySelector(".hero .code-window");
+				const firstExample = document.querySelector(".hero .code-header");
 				firstExample.querySelectorAll(".code-tab").forEach((tab) => {
 					tab.classList.remove("active");
 				});
