@@ -543,6 +543,26 @@
 					width: 100%;
 					justify-content: center;
 				}
+
+				.code-tabs {
+					overflow-x: auto;
+					-webkit-overflow-scrolling: touch;
+					scrollbar-width: none;
+					-ms-overflow-style: none;
+				}
+
+				.code-tabs::-webkit-scrollbar {
+					display: none;
+				}
+
+				.code-tab {
+					white-space: nowrap;
+					flex-shrink: 0;
+				}
+
+				.code-dots {
+					flex-shrink: 0;
+				}
 			}
 		</style>
 	</head>
