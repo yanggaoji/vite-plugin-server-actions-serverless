@@ -63,7 +63,7 @@ export default defineConfig({
 
 ### 3. Create a Server Function
 
-Any file ending with `.server.js` becomes a server module:
+Any file ending with `.server.js` or `.server.ts` becomes a server module:
 
 ```javascript
 // actions/todos.server.js
@@ -283,7 +283,7 @@ serverActions({
 | Option           | Type         | Default              | Description                    |
 | ---------------- | ------------ | -------------------- | ------------------------------ |
 | `apiPrefix`      | `string`     | `"/api"`             | URL prefix for all endpoints   |
-| `include`        | `string[]`   | `["**/*.server.js"]` | Files to process               |
+| `include`        | `string[]`   | `["**/*.server.js", "**/*.server.ts"]` | Files to process               |
 | `exclude`        | `string[]`   | `[]`                 | Files to ignore                |
 | `middleware`     | `Function[]` | `[]`                 | Express middleware stack       |
 | `routeTransform` | `Function`   | See below            | Customize URL generation       |
@@ -532,7 +532,7 @@ export async function sendEmail(to, subject, body) {
 
 ### Server Code Isolation
 
-- Server files (`.server.js`) are never bundled into client code
+- Server files (`.server.js` and `.server.ts`) are never bundled into client code
 - Development builds include safety checks to prevent accidental imports
 - Production builds completely separate server and client code
 
@@ -566,7 +566,7 @@ readAllowedFile.schema = FileSchema;
 
 ## 💻 TypeScript Support
 
-Vite Server Actions has first-class TypeScript support with automatic type inference:
+Vite Server Actions has first-class TypeScript support with automatic type inference. TypeScript files ending with `.server.ts` are processed by default, no additional configuration needed:
 
 ```typescript
 // server/users.server.ts
@@ -575,7 +575,7 @@ export async function getUser(id: number) {
 }
 
 // App.tsx - Full type inference!
-import { getUser } from "./server/users.server";
+import { getUser } from "./server/users.server.ts";
 
 const user = await getUser(123); // Type: User | null
 ```

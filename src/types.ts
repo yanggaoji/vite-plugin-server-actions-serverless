@@ -10,7 +10,7 @@ export interface ServerActionOptions {
 
 	/**
 	 * Include patterns for server action files
-	 * @default "**\/*.server.js"
+	 * @default ["**\/*.server.js", "**\/*.server.ts"]
 	 */
 	include?: string | string[];
 

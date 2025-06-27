@@ -1,5 +1,6 @@
 import { createRequire } from "module";
 import { pathToFileURL } from "url";
+import fs from "fs/promises";
 
 /**
  * Extract schemas from server modules during build time
@@ -37,26 +38,22 @@ export async function extractSchemas(serverFunctions) {
 /**
  * Generate validation setup code for production
  */
-export function generateValidationCode(options, serverFunctions) {
+export async function generateValidationCode(options, serverFunctions) {
 	if (!options.validation?.enabled) {
 		return {
 			imports: "",
 			setup: "",
 			middlewareFactory: "",
+			validationRuntime: "",
 		};
 	}
 
-	// Generate imports
-	const imports = `
-import { createValidationMiddleware, SchemaDiscovery } from '../../../src/validation.js';
+	// Read the validation runtime code that will be embedded
+	const validationRuntimePath = new URL('./validation-runtime.js', import.meta.url);
+	const validationRuntime = `
+// Embedded validation runtime
+${await fs.readFile(validationRuntimePath, 'utf-8')}
 `;
-
-	// Generate schema imports from the bundled actions
-	const schemaImports = Array.from(serverFunctions.entries())
-		.map(([moduleName, { functions }]) => {
-			return functions.map((fn) => `// Import schema for ${moduleName}.${fn} if it exists`).join("\n");
-		})
-		.join("\n");
 
 	// Generate setup code
 	const setup = `
@@ -94,8 +91,9 @@ function createContextualValidationMiddleware(moduleName, functionName) {
 `;
 
 	return {
-		imports: imports + schemaImports,
+		imports: "",
 		setup,
 		middlewareFactory,
+		validationRuntime,
 	};
 }

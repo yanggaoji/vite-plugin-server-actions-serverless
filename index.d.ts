@@ -60,7 +60,7 @@ export interface ServerActionOptions {
 	
 	/**
 	 * Include patterns for server action files
-	 * @default ["**\/*.server.js"]
+	 * @default ["**\/*.server.js", "**\/*.server.ts"]
 	 */
 	include?: string | string[];
 	
@@ -88,7 +88,7 @@ export interface ServerActionOptions {
 	 * @param filePath - The file path relative to project root
 	 * @param functionName - The exported function name
 	 * @returns The API route path (without prefix)
-	 * @default Clean hierarchical paths (removes src/ and .server.js)
+	 * @default Clean hierarchical paths (removes src/ and .server.js or .server.ts)
 	 */
 	routeTransform?: (filePath: string, functionName: string) => string;
 	

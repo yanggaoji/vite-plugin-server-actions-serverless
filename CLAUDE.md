@@ -10,7 +10,7 @@ This is **Vite Server Actions** - a Vite plugin that enables creating server-sid
 
 The plugin works by:
 
-1. Scanning for files ending with `.server.js` during the build process
+1. Scanning for files ending with `.server.js` or `.server.ts` during the build process
 2. Extracting exported functions using regex parsing
 3. In development: Creating Express middleware endpoints at `/api/{moduleName}/{functionName}`
 4. In production: Bundling server functions and generating a standalone Express server
@@ -50,7 +50,7 @@ Key files:
 
 Server functions must:
 
-- Be in files ending with `.server.js`
+- Be in files ending with `.server.js` or `.server.ts`
 - Export async functions
 - Accept arguments that are JSON-serializable
 - Return JSON-serializable values

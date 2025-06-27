@@ -36,7 +36,9 @@
       "Bash(npm run test:e2e:*)",
       "Bash(act push:*)",
       "Bash(cp:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(rg:*)",
+      "Bash(true)"
     ],
     "deny": []
   }

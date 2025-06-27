@@ -7,6 +7,8 @@ import { middleware } from "./middleware.js";
 import { defaultSchemaDiscovery, createValidationMiddleware } from "./validation.js";
 import { OpenAPIGenerator, setupOpenAPIEndpoints } from "./openapi.js";
 import { generateValidationCode } from "./build-utils.js";
+import { extractExportedFunctions, isValidFunctionName } from "./ast-parser.js";
+import { sanitizePath, isValidModuleName, createSecureModuleName, createErrorResponse } from "./security.js";
 
 // Utility functions for path transformation
 export const pathUtils = {
@@ -19,7 +21,7 @@ export const pathUtils = {
 		return filePath
 			.replace(/\//g, "_") // Replace slashes with underscores
 			.replace(/\./g, "_") // Replace dots with underscores
-			.replace(/_server_js$/, ""); // Remove .server.js extension
+			.replace(/_server_(js|ts)$/, ""); // Remove .server.js or .server.ts extension
 	},
 
 	/**
@@ -31,7 +33,7 @@ export const pathUtils = {
 	createCleanRoute: (filePath, functionName) => {
 		const cleanPath = filePath
 			.replace(/^src\//, "") // Remove src/ prefix
-			.replace(/\.server\.js$/, ""); // Remove .server.js suffix
+			.replace(/\.server\.(js|ts)$/, ""); // Remove .server.js or .server.ts suffix
 		return `${cleanPath}/${functionName}`;
 	},
 
@@ -44,7 +46,7 @@ export const pathUtils = {
 	createLegacyRoute: (filePath, functionName) => {
 		const legacyPath = filePath
 			.replace(/\//g, "_") // Replace slashes with underscores
-			.replace(/\.server\.js$/, ""); // Remove .server.js extension
+			.replace(/\.server\.(js|ts)$/, ""); // Remove .server.js or .server.ts extension
 		return `${legacyPath}/${functionName}`;
 	},
 
@@ -55,14 +57,14 @@ export const pathUtils = {
 	 * @returns {string} - Minimal route (e.g., "actions/todo.server/create")
 	 */
 	createMinimalRoute: (filePath, functionName) => {
-		const minimalPath = filePath.replace(/\.js$/, ""); // Just remove .js
+		const minimalPath = filePath.replace(/\.(js|ts)$/, ""); // Just remove .js or .ts
 		return `${minimalPath}/${functionName}`;
 	},
 };
 
 const DEFAULT_OPTIONS = {
 	apiPrefix: "/api",
-	include: ["**/*.server.js"],
+	include: ["**/*.server.js", "**/*.server.ts"],
 	exclude: [],
 	middleware: [],
 	moduleNameTransform: pathUtils.createModuleName,
@@ -70,7 +72,7 @@ const DEFAULT_OPTIONS = {
 		// Default to clean hierarchical paths: /api/actions/todo/create
 		const cleanPath = filePath
 			.replace(/^src\//, "") // Remove src/ prefix
-			.replace(/\.server\.js$/, ""); // Remove .server.js suffix
+			.replace(/\.server\.(js|ts)$/, ""); // Remove .server.js or .server.ts suffix
 		return `${cleanPath}/${functionName}`;
 	},
 	validation: {
@@ -144,6 +146,22 @@ export default function serverActions(userOptions = {}) {
 		configureServer(server) {
 			app = express();
 			app.use(express.json());
+
+			// Clean up on HMR
+			if (server.watcher) {
+				server.watcher.on('change', (file) => {
+					// If a server file changed, remove it from the map
+					if (shouldProcessFile(file, options)) {
+						for (const [moduleName, moduleInfo] of serverFunctions.entries()) {
+							if (moduleInfo.id === file) {
+								serverFunctions.delete(moduleName);
+								schemaDiscovery.clear(); // Clear associated schemas
+								console.log(`[HMR] Cleaned up server module: ${moduleName}`);
+							}
+						}
+					}
+				});
+			}
 
 			// Setup dynamic OpenAPI endpoints in development
 			if (process.env.NODE_ENV !== "production" && options.openAPI.enabled && openAPIGenerator) {
@@ -225,38 +243,43 @@ export default function serverActions(userOptions = {}) {
 				try {
 					const code = await fs.readFile(id, "utf-8");
 
-					let relativePath = path.relative(process.cwd(), id);
-
-					// If the file is outside the project root, use the absolute path
-					if (relativePath.startsWith("..")) {
-						relativePath = id;
+					// Sanitize the file path for security
+					const sanitizedPath = sanitizePath(id, process.cwd());
+					if (!sanitizedPath) {
+						throw new Error(`Invalid file path detected: ${id}`);
 					}
+
+					let relativePath = path.relative(process.cwd(), sanitizedPath);
 
 					// Normalize path separators
 					relativePath = relativePath.replace(/\\/g, "/").replace(/^\//, "");
 
 					// Generate module name for internal use (must be valid identifier)
-					const moduleName = options.moduleNameTransform(relativePath);
+					const moduleName = createSecureModuleName(options.moduleNameTransform(relativePath));
 
 					// Validate module name
-					if (!moduleName || moduleName.includes("..")) {
+					if (!isValidModuleName(moduleName)) {
 						throw new Error(`Invalid server module name: ${moduleName}`);
 					}
 
-					const exportRegex = /export\s+(async\s+)?function\s+(\w+)/g;
+					// Use AST parser to extract exported functions
+					const exportedFunctions = extractExportedFunctions(code, id);
 					const functions = [];
-					let match;
 
-					while ((match = exportRegex.exec(code)) !== null) {
-						const functionName = match[2];
-
-						// Validate function name
-						if (!functionName || !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(functionName)) {
-							console.warn(`Skipping invalid function name: ${functionName} in ${id}`);
+					for (const fn of exportedFunctions) {
+						// Skip default exports for now (could be supported in future)
+						if (fn.isDefault) {
+							console.warn(`Skipping default export in ${id}`);
 							continue;
 						}
 
-						functions.push(functionName);
+						// Validate function name
+						if (!isValidFunctionName(fn.name)) {
+							console.warn(`Skipping invalid function name: ${fn.name} in ${id}`);
+							continue;
+						}
+
+						functions.push(fn.name);
 					}
 
 					// Check for duplicate function names within the same module
@@ -336,20 +359,25 @@ export default function serverActions(userOptions = {}) {
 									console.error(`Error in ${functionName}: ${error.message}`);
 
 									if (error.message.includes("not found") || error.message.includes("not a function")) {
-										res.status(404).json({
-											error: "Function not found",
-											details: error.message,
-										});
+										res.status(404).json(createErrorResponse(
+											404,
+											"Function not found",
+											"FUNCTION_NOT_FOUND",
+											{ functionName, moduleName }
+										));
 									} else if (error.message.includes("Request body")) {
-										res.status(400).json({
-											error: "Bad request",
-											details: error.message,
-										});
+										res.status(400).json(createErrorResponse(
+											400,
+											error.message,
+											"INVALID_REQUEST_BODY"
+										));
 									} else {
-										res.status(500).json({
-											error: "Internal server error",
-											details: error.message,
-										});
+										res.status(500).json(createErrorResponse(
+											500,
+											"Internal server error",
+											"INTERNAL_ERROR",
+											process.env.NODE_ENV !== 'production' ? { message: error.message, stack: error.stack } : null
+										));
 									}
 								}
 							});
@@ -441,7 +469,7 @@ export default function serverActions(userOptions = {}) {
 			}
 
 			// Generate validation code if enabled
-			const validationCode = generateValidationCode(options, serverFunctions);
+			const validationCode = await generateValidationCode(options, serverFunctions);
 
 			// Generate server.js
 			const serverCode = `
@@ -450,6 +478,7 @@ export default function serverActions(userOptions = {}) {
         ${options.openAPI.enabled && options.openAPI.swaggerUI ? "import swaggerUi from 'swagger-ui-express';" : ""}
         ${options.openAPI.enabled ? "import { readFileSync } from 'fs';\nimport { fileURLToPath } from 'url';\nimport { dirname, join } from 'path';\n\nconst __filename = fileURLToPath(import.meta.url);\nconst __dirname = dirname(__filename);\nconst openAPISpec = JSON.parse(readFileSync(join(__dirname, 'openapi.json'), 'utf-8'));" : ""}
         ${validationCode.imports}
+        ${validationCode.validationRuntime}
 
         const app = express();
         ${validationCode.setup}
