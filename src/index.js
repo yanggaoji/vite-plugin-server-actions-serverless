@@ -3,6 +3,7 @@ import path from "path";
 import express from "express";
 import { rollup } from "rollup";
 import { minimatch } from "minimatch";
+import esbuild from "esbuild";
 import { middleware } from "./middleware.js";
 import { defaultSchemaDiscovery, createValidationMiddleware } from "./validation.js";
 import { OpenAPIGenerator, setupOpenAPIEndpoints } from "./openapi.js";
@@ -559,6 +560,22 @@ export default function serverActions(userOptions = {}) {
 							if (id === virtualEntryId) {
 								return virtualModuleContent;
 							}
+						},
+					},
+					{
+						name: "typescript-transform",
+						async load(id) {
+							// Handle TypeScript files
+							if (id.endsWith('.ts')) {
+								const code = await fs.readFile(id, 'utf-8');
+								const result = await esbuild.transform(code, {
+									loader: 'ts',
+									target: 'node16',
+									format: 'esm',
+								});
+								return result.code;
+							}
+							return null;
 						},
 					},
 					{

@@ -292,6 +292,40 @@ function generateCode(node) {
           elem ? (elem.type === 'Identifier' ? elem.name : `_${i}`) : `_${i}`
         );
         return `[${elements.join(', ')}]`;
+      case 'TSTypeReference':
+        // Handle type references like Todo, CreateTodoInput, etc.
+        if (node.typeName && node.typeName.type === 'Identifier') {
+          const typeName = node.typeName.name;
+          // Handle generic types like Promise<T>, Array<T>
+          if (node.typeParameters && node.typeParameters.params && node.typeParameters.params.length > 0) {
+            const typeArgs = node.typeParameters.params.map(param => generateCode(param)).join(', ');
+            return `${typeName}<${typeArgs}>`;
+          }
+          return typeName;
+        }
+        return 'unknown';
+      case 'TSTypeLiteral':
+        // Handle object type literals
+        if (node.members && node.members.length > 0) {
+          const members = node.members.map(member => {
+            if (member.type === 'TSPropertySignature' && member.key) {
+              const key = member.key.type === 'Identifier' ? member.key.name : 'unknown';
+              const type = member.typeAnnotation ? generateCode(member.typeAnnotation.typeAnnotation) : 'any';
+              const optional = member.optional ? '?' : '';
+              return `${key}${optional}: ${type}`;
+            }
+            return '';
+          }).filter(Boolean);
+          return `{ ${members.join('; ')} }`;
+        }
+        return '{}';
+      case 'TSInterfaceDeclaration':
+        // Handle interface declarations
+        return node.id ? node.id.name : 'unknown';
+      case 'TSNullKeyword':
+        return 'null';
+      case 'TSUndefinedKeyword':
+        return 'undefined';
       default:
         // Fallback for complex types
         return node.type || 'unknown';

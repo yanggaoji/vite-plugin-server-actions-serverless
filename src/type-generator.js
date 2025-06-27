@@ -94,7 +94,13 @@ function generateFunctionSignature(func) {
   // Determine return type
   let resultType = returnType || 'any';
   if (isAsync) {
-    resultType = `Promise<${resultType}>`;
+    // Check if the return type is already a Promise
+    if (resultType.startsWith('Promise<')) {
+      // Already wrapped in Promise, don't double-wrap
+      resultType = resultType;
+    } else {
+      resultType = `Promise<${resultType}>`;
+    }
   }
 
   return `function ${name}(${paramList}): ${resultType}`;
