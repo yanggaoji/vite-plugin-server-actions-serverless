@@ -5,7 +5,7 @@ import traverse from '@babel/traverse';
  * Extract exported functions from JavaScript/TypeScript code using AST parsing
  * @param {string} code - The source code to parse
  * @param {string} filename - The filename (for better error messages)
- * @returns {Array<{name: string, isAsync: boolean, isDefault: boolean, type: string}>}
+ * @returns {Array<{name: string, isAsync: boolean, isDefault: boolean, type: string, params: Array, returnType: string|null, jsdoc: string|null}>}
  */
 export function extractExportedFunctions(code, filename = 'unknown') {
   const functions = [];
@@ -41,7 +41,10 @@ export function extractExportedFunctions(code, filename = 'unknown') {
               name: declaration.id.name,
               isAsync: declaration.async || false,
               isDefault: false,
-              type: 'function'
+              type: 'function',
+              params: extractDetailedParams(declaration.params),
+              returnType: extractTypeAnnotation(declaration.returnType),
+              jsdoc: extractJSDoc(path.node.leadingComments)
             });
           }
         }
@@ -57,7 +60,10 @@ export function extractExportedFunctions(code, filename = 'unknown') {
                 name: decl.id.name,
                 isAsync: decl.init.async || false,
                 isDefault: false,
-                type: 'arrow'
+                type: 'arrow',
+                params: extractDetailedParams(decl.init.params),
+                returnType: extractTypeAnnotation(decl.init.returnType),
+                jsdoc: extractJSDoc(declaration.leadingComments)
               });
             }
           });
@@ -73,7 +79,10 @@ export function extractExportedFunctions(code, filename = 'unknown') {
             name: declaration.id ? declaration.id.name : 'default',
             isAsync: declaration.async || false,
             isDefault: true,
-            type: 'function'
+            type: 'function',
+            params: extractDetailedParams(declaration.params),
+            returnType: extractTypeAnnotation(declaration.returnType),
+            jsdoc: extractJSDoc(path.node.leadingComments)
           });
         }
         
@@ -84,7 +93,10 @@ export function extractExportedFunctions(code, filename = 'unknown') {
             name: 'default',
             isAsync: declaration.async || false,
             isDefault: true,
-            type: 'arrow'
+            type: 'arrow',
+            params: extractDetailedParams(declaration.params),
+            returnType: extractTypeAnnotation(declaration.returnType),
+            jsdoc: extractJSDoc(path.node.leadingComments)
           });
         }
       },
@@ -102,7 +114,10 @@ export function extractExportedFunctions(code, filename = 'unknown') {
             name: exportedName,
             isAsync: binding.path.node.async || false,
             isDefault: false,
-            type: 'renamed'
+            type: 'renamed',
+            params: extractDetailedParams(binding.path.node.params),
+            returnType: extractTypeAnnotation(binding.path.node.returnType),
+            jsdoc: extractJSDoc(binding.path.node.leadingComments)
           });
         }
         
@@ -115,7 +130,10 @@ export function extractExportedFunctions(code, filename = 'unknown') {
               name: exportedName,
               isAsync: init.async || false,
               isDefault: false,
-              type: 'renamed-arrow'
+              type: 'renamed-arrow',
+              params: extractDetailedParams(init.params),
+              returnType: extractTypeAnnotation(init.returnType),
+              jsdoc: extractJSDoc(binding.path.node.leadingComments)
             });
           }
         }
@@ -147,23 +165,147 @@ export function isValidFunctionName(name) {
 }
 
 /**
- * Extract function parameter names from AST (for future use with validation)
+ * Extract detailed parameter information from function parameters
+ * @param {Array} params - Array of parameter AST nodes
+ * @returns {Array<{name: string, type: string|null, defaultValue: string|null, isOptional: boolean, isRest: boolean}>}
+ */
+export function extractDetailedParams(params) {
+  if (!params) return [];
+  
+  return params.map(param => {
+    const paramInfo = {
+      name: '',
+      type: null,
+      defaultValue: null,
+      isOptional: false,
+      isRest: false
+    };
+
+    if (param.type === 'Identifier') {
+      paramInfo.name = param.name;
+      paramInfo.type = extractTypeAnnotation(param.typeAnnotation);
+      paramInfo.isOptional = param.optional || false;
+    } else if (param.type === 'AssignmentPattern') {
+      // Handle default parameters: function(name = 'default')
+      paramInfo.name = param.left.name;
+      paramInfo.type = extractTypeAnnotation(param.left.typeAnnotation);
+      paramInfo.defaultValue = generateCode(param.right);
+      paramInfo.isOptional = true;
+    } else if (param.type === 'RestElement') {
+      // Handle rest parameters: function(...args)
+      paramInfo.name = `...${param.argument.name}`;
+      paramInfo.type = extractTypeAnnotation(param.typeAnnotation);
+      paramInfo.isRest = true;
+    } else if (param.type === 'ObjectPattern') {
+      // Handle destructuring: function({name, age})
+      paramInfo.name = generateCode(param);
+      paramInfo.type = extractTypeAnnotation(param.typeAnnotation);
+      paramInfo.isOptional = param.optional || false;
+    } else if (param.type === 'ArrayPattern') {
+      // Handle array destructuring: function([first, second])
+      paramInfo.name = generateCode(param);
+      paramInfo.type = extractTypeAnnotation(param.typeAnnotation);
+      paramInfo.isOptional = param.optional || false;
+    }
+
+    return paramInfo;
+  });
+}
+
+/**
+ * Extract type annotation as string
+ * @param {object} typeAnnotation - Type annotation AST node
+ * @returns {string|null}
+ */
+export function extractTypeAnnotation(typeAnnotation) {
+  if (!typeAnnotation || !typeAnnotation.typeAnnotation) return null;
+  
+  return generateCode(typeAnnotation.typeAnnotation);
+}
+
+/**
+ * Extract JSDoc comments
+ * @param {Array} comments - Array of comment nodes
+ * @returns {string|null}
+ */
+export function extractJSDoc(comments) {
+  if (!comments) return null;
+  
+  const jsdocComment = comments.find(comment => 
+    comment.type === 'CommentBlock' && comment.value.startsWith('*')
+  );
+  
+  return jsdocComment ? `/*${jsdocComment.value}*/` : null;
+}
+
+/**
+ * Generate code string from AST node (simplified)
+ * @param {object} node - AST node
+ * @returns {string}
+ */
+function generateCode(node) {
+  if (!node) return '';
+  
+  try {
+    // Simple code generation for common cases
+    switch (node.type) {
+      case 'Identifier':
+        return node.name;
+      case 'StringLiteral':
+        return `"${node.value}"`;
+      case 'NumericLiteral':
+        return String(node.value);
+      case 'BooleanLiteral':
+        return String(node.value);
+      case 'NullLiteral':
+        return 'null';
+      case 'TSStringKeyword':
+        return 'string';
+      case 'TSNumberKeyword':
+        return 'number';
+      case 'TSBooleanKeyword':
+        return 'boolean';
+      case 'TSAnyKeyword':
+        return 'any';
+      case 'TSUnknownKeyword':
+        return 'unknown';
+      case 'TSVoidKeyword':
+        return 'void';
+      case 'TSArrayType':
+        return `${generateCode(node.elementType)}[]`;
+      case 'TSUnionType':
+        return node.types.map(type => generateCode(type)).join(' | ');
+      case 'TSLiteralType':
+        return generateCode(node.literal);
+      case 'ObjectPattern':
+        const props = node.properties.map(prop => {
+          if (prop.type === 'ObjectProperty') {
+            return prop.key.name;
+          } else if (prop.type === 'RestElement') {
+            return `...${prop.argument.name}`;
+          }
+          return '';
+        }).filter(Boolean);
+        return `{${props.join(', ')}}`;
+      case 'ArrayPattern':
+        const elements = node.elements.map((elem, i) => 
+          elem ? (elem.type === 'Identifier' ? elem.name : `_${i}`) : `_${i}`
+        );
+        return `[${elements.join(', ')}]`;
+      default:
+        // Fallback for complex types
+        return node.type || 'unknown';
+    }
+  } catch (error) {
+    return 'unknown';
+  }
+}
+
+/**
+ * Extract function parameter names from AST (legacy compatibility)
  * @param {object} functionNode - The function AST node
  * @returns {Array<string>}
  */
 export function extractFunctionParams(functionNode) {
-  const params = [];
-  
-  if (functionNode.params) {
-    functionNode.params.forEach(param => {
-      if (param.type === 'Identifier') {
-        params.push(param.name);
-      } else if (param.type === 'RestElement' && param.argument.type === 'Identifier') {
-        params.push(`...${param.argument.name}`);
-      }
-      // Handle destructuring and other patterns if needed
-    });
-  }
-  
-  return params;
+  return extractDetailedParams(functionNode.params).map(param => param.name);
 }

@@ -8,7 +8,21 @@ import { defaultSchemaDiscovery, createValidationMiddleware } from "./validation
 import { OpenAPIGenerator, setupOpenAPIEndpoints } from "./openapi.js";
 import { generateValidationCode } from "./build-utils.js";
 import { extractExportedFunctions, isValidFunctionName } from "./ast-parser.js";
+import { generateTypeDefinitions, generateEnhancedClientProxy } from "./type-generator.js";
 import { sanitizePath, isValidModuleName, createSecureModuleName, createErrorResponse } from "./security.js";
+import { 
+	enhanceFunctionNotFoundError, 
+	enhanceParsingError, 
+	enhanceValidationError,
+	enhanceModuleLoadError,
+	createDevelopmentWarning 
+} from "./error-enhancer.js";
+import { 
+	validateFunctionSignature, 
+	validateFileStructure, 
+	createDevelopmentFeedback,
+	validateSchemaAttachment 
+} from "./dev-validator.js";
 
 // Utility functions for path transformation
 export const pathUtils = {
@@ -229,6 +243,18 @@ export default function serverActions(userOptions = {}) {
 			}
 
 			server.middlewares.use(app);
+
+			// Show development feedback after server is ready
+			if (process.env.NODE_ENV === 'development') {
+				server.httpServer?.on("listening", () => {
+					// Delay to appear after Vite's startup messages
+					global.setTimeout(() => {
+						if (serverFunctions.size > 0) {
+							console.log(createDevelopmentFeedback(serverFunctions));
+						}
+					}, 100);
+				});
+			}
 		},
 
 		async resolveId(source, importer) {
@@ -262,24 +288,52 @@ export default function serverActions(userOptions = {}) {
 						throw new Error(`Invalid server module name: ${moduleName}`);
 					}
 
-					// Use AST parser to extract exported functions
+					// Use AST parser to extract exported functions with detailed information
 					const exportedFunctions = extractExportedFunctions(code, id);
 					const functions = [];
+					const functionDetails = [];
 
 					for (const fn of exportedFunctions) {
 						// Skip default exports for now (could be supported in future)
 						if (fn.isDefault) {
-							console.warn(`Skipping default export in ${id}`);
+							console.warn(createDevelopmentWarning(
+								"Default Export Skipped",
+								`Default exports are not currently supported`,
+								{
+									filePath: relativePath,
+									suggestion: "Use named exports instead: export async function myFunction() {}"
+								}
+							));
 							continue;
 						}
 
 						// Validate function name
 						if (!isValidFunctionName(fn.name)) {
-							console.warn(`Skipping invalid function name: ${fn.name} in ${id}`);
+							console.warn(createDevelopmentWarning(
+								"Invalid Function Name",
+								`Function name '${fn.name}' is not a valid JavaScript identifier`,
+								{
+									filePath: relativePath,
+									suggestion: "Function names must start with a letter, $, or _ and contain only letters, numbers, $, and _"
+								}
+							));
 							continue;
 						}
 
+						// Warn about non-async functions
+						if (!fn.isAsync) {
+							console.warn(createDevelopmentWarning(
+								"Non-Async Function",
+								`Function '${fn.name}' is not async. Server actions should typically be async`,
+								{
+									filePath: relativePath,
+									suggestion: "Consider changing to: export async function " + fn.name + "() {}"
+								}
+							));
+						}
+
 						functions.push(fn.name);
+						functionDetails.push(fn);
 					}
 
 					// Check for duplicate function names within the same module
@@ -288,15 +342,47 @@ export default function serverActions(userOptions = {}) {
 						console.warn(`Duplicate function names detected in ${id}`);
 					}
 
-					serverFunctions.set(moduleName, { functions: uniqueFunctions, id, filePath: relativePath });
+					// Store both simple function names and detailed information
+					serverFunctions.set(moduleName, { 
+						functions: uniqueFunctions, 
+						functionDetails, 
+						id, 
+						filePath: relativePath 
+					});
+
+					// Development-time validation and feedback
+					if (process.env.NODE_ENV === 'development') {
+						// Validate file structure
+						const fileWarnings = validateFileStructure(functionDetails, relativePath);
+						fileWarnings.forEach(warning => console.warn(warning));
+
+						// Validate individual function signatures
+						functionDetails.forEach(func => {
+							const funcWarnings = validateFunctionSignature(func, relativePath);
+							funcWarnings.forEach(warning => console.warn(warning));
+						});
+					}
 
 					// Discover schemas from module if validation is enabled (development only)
 					if (options.validation.enabled && process.env.NODE_ENV !== "production") {
 						try {
 							const module = await import(id);
 							schemaDiscovery.discoverFromModule(module, moduleName);
+							
+							// Validate schema attachment in development
+							if (process.env.NODE_ENV === 'development') {
+								const schemaWarnings = validateSchemaAttachment(module, uniqueFunctions, relativePath);
+								schemaWarnings.forEach(warning => console.warn(warning));
+							}
 						} catch (error) {
-							console.warn(`Failed to discover schemas from ${id}: ${error.message}`);
+							const enhancedError = enhanceModuleLoadError(id, error);
+							console.warn(enhancedError.message);
+							
+							if (process.env.NODE_ENV === 'development' && enhancedError.suggestions) {
+								enhancedError.suggestions.forEach(suggestion => {
+									console.info(`  💡 ${suggestion}`);
+								});
+							}
 						}
 					}
 
@@ -345,7 +431,18 @@ export default function serverActions(userOptions = {}) {
 
 									// Check if function exists in module
 									if (typeof module[functionName] !== "function") {
-										throw new Error(`Function ${functionName} not found or not a function`);
+										// Get available functions for better error message
+										const availableFunctions = Object.keys(module).filter(key => 
+											typeof module[key] === 'function'
+										);
+										
+										const enhancedError = enhanceFunctionNotFoundError(
+											functionName, 
+											moduleName, 
+											availableFunctions
+										);
+										
+										throw new Error(enhancedError.message);
 									}
 
 									// Validate request body is array for function arguments
@@ -359,24 +456,44 @@ export default function serverActions(userOptions = {}) {
 									console.error(`Error in ${functionName}: ${error.message}`);
 
 									if (error.message.includes("not found") || error.message.includes("not a function")) {
+										// Extract available functions from the error context if available
+										const availableFunctionsMatch = error.message.match(/Available functions: ([^]+)/);
+										const availableFunctions = availableFunctionsMatch 
+											? availableFunctionsMatch[1].split(', ')
+											: [];
+										
 										res.status(404).json(createErrorResponse(
 											404,
 											"Function not found",
 											"FUNCTION_NOT_FOUND",
-											{ functionName, moduleName }
+											{ 
+												functionName, 
+												moduleName,
+												availableFunctions: availableFunctions.length > 0 ? availableFunctions : undefined,
+												suggestion: `Try one of: ${availableFunctions.join(', ') || 'none available'}`
+											}
 										));
 									} else if (error.message.includes("Request body")) {
 										res.status(400).json(createErrorResponse(
 											400,
 											error.message,
-											"INVALID_REQUEST_BODY"
+											"INVALID_REQUEST_BODY",
+											{ 
+												suggestion: "Send an array of arguments: [arg1, arg2, ...]" 
+											}
 										));
 									} else {
 										res.status(500).json(createErrorResponse(
 											500,
 											"Internal server error",
 											"INTERNAL_ERROR",
-											process.env.NODE_ENV !== 'production' ? { message: error.message, stack: error.stack } : null
+											process.env.NODE_ENV !== 'production' 
+												? { 
+													message: error.message, 
+													stack: error.stack,
+													suggestion: "Check server logs for more details"
+												} 
+												: { suggestion: "Contact support if this persists" }
 										));
 									}
 								}
@@ -385,11 +502,29 @@ export default function serverActions(userOptions = {}) {
 					}
 					// OpenAPI endpoints will be set up during configureServer after all modules are loaded
 
-					return generateClientProxy(moduleName, uniqueFunctions, options, relativePath);
+					// Use enhanced client proxy generator if we have detailed function information
+					if (functionDetails.length > 0) {
+						return generateEnhancedClientProxy(moduleName, functionDetails, options, relativePath);
+					} else {
+						// Fallback to basic proxy for backwards compatibility
+						return generateClientProxy(moduleName, uniqueFunctions, options, relativePath);
+					}
 				} catch (error) {
-					console.error(`Failed to process server file ${id}: ${error.message}`);
-					// Return empty proxy instead of failing the build
-					return `// Failed to load server actions from ${id}: ${error.message}`;
+					const enhancedError = enhanceParsingError(id, error);
+					console.error(enhancedError.message);
+					
+					// Provide helpful suggestions in development
+					if (process.env.NODE_ENV === 'development' && enhancedError.suggestions.length > 0) {
+						console.info('[Vite Server Actions] 💡 Suggestions:');
+						enhancedError.suggestions.forEach(suggestion => {
+							console.info(`  • ${suggestion}`);
+						});
+					}
+					
+					// Return error comment with context instead of failing the build
+					return `// Failed to load server actions from ${id}
+// Error: ${error.message}
+// ${enhancedError.suggestions.length > 0 ? 'Suggestions: ' + enhancedError.suggestions.join(', ') : ''}`;
 				}
 			}
 		},
@@ -450,6 +585,14 @@ export default function serverActions(userOptions = {}) {
 				type: "asset",
 				fileName: "actions.js",
 				source: bundledCode,
+			});
+
+			// Generate and emit TypeScript definitions
+			const typeDefinitions = generateTypeDefinitions(serverFunctions, options);
+			this.emitFile({
+				type: "asset",
+				fileName: "actions.d.ts",
+				source: typeDefinitions,
 			});
 
 			// Generate OpenAPI spec if enabled

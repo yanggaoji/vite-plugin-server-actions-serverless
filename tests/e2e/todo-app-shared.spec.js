@@ -222,9 +222,11 @@ test.describe("API Integration", () => {
 
 		expect(response.status()).toBe(400);
 		const error = await response.json();
-		expect(error.error).toBe("Validation failed");
-		expect(Array.isArray(error.details)).toBe(true);
-		expect(error.details[0].message).toContain("Todo text is required");
+		expect(error.error).toBe(true);
+		expect(error.message).toBe("Validation failed");
+		expect(error.details).toBeDefined();
+		expect(Array.isArray(error.details.validationErrors)).toBe(true);
+		expect(error.details.validationErrors[0].message).toContain("Todo text is required");
 	});
 
 	test("should handle valid API requests", async ({ page }) => {

@@ -38,7 +38,8 @@
       "Bash(cp:*)",
       "Bash(curl:*)",
       "Bash(rg:*)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(npm run test:*)"
     ],
     "deny": []
   }
