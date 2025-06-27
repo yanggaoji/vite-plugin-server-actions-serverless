@@ -160,7 +160,7 @@ const App: React.FC = () => {
 
   return (
     <main>
-      <h1>Todo List - React TypeScript Edition</h1>
+      <h1>Todo List - React-ts Edition</h1>
       
       {error && (
         <div className="error-message" role="alert">

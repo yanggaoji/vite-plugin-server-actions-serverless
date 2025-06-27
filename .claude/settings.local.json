@@ -40,7 +40,8 @@
       "Bash(rg:*)",
       "Bash(true)",
       "Bash(npm run test:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }

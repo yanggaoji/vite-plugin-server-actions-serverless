@@ -12,7 +12,7 @@ export default defineConfig({
 			openAPI: {
 				enabled: true,
 				info: {
-					title: "React Todo App API",
+					title: "React-ts Todo App API",
 					version: "1.0.0",
 					description: "API documentation for the React Todo App",
 				},

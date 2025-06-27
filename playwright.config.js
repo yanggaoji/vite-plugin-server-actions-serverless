@@ -39,6 +39,14 @@ export default defineConfig({
 			},
 			testMatch: "**/todo-app-shared.spec.js",
 		},
+		{
+			name: "react-ts",
+			use: { 
+				browserName: "chromium",
+				baseURL: "http://localhost:5176",
+			},
+			testMatch: "**/todo-app-shared.spec.js",
+		},
 	],
 	webServer: [
 		{
@@ -56,6 +64,12 @@ export default defineConfig({
 		{
 			command: "cd examples/react-todo-app && npm run dev -- --port 5175",
 			url: "http://localhost:5175",
+			reuseExistingServer: !process.env.CI,
+			timeout: 120 * 1000,
+		},
+		{
+			command: "cd examples/react-todo-app-typescript && npm run dev -- --port 5176",
+			url: "http://localhost:5176",
 			reuseExistingServer: !process.env.CI,
 			timeout: 120 * 1000,
 		},

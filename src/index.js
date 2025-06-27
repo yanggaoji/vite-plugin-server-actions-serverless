@@ -4,6 +4,9 @@ import express from "express";
 import { rollup } from "rollup";
 import { minimatch } from "minimatch";
 import esbuild from "esbuild";
+import { createRequire } from "module";
+import { fileURLToPath } from "url";
+import os from "os";
 import { middleware } from "./middleware.js";
 import { defaultSchemaDiscovery, createValidationMiddleware } from "./validation.js";
 import { OpenAPIGenerator, setupOpenAPIEndpoints } from "./openapi.js";
@@ -24,6 +27,69 @@ import {
 	createDevelopmentFeedback,
 	validateSchemaAttachment 
 } from "./dev-validator.js";
+
+// Cache for compiled TypeScript modules in development
+const tsModuleCache = new Map();
+
+/**
+ * Import a module, handling TypeScript files in development
+ * @param {string} id - Module path
+ * @returns {Promise<any>} - Imported module
+ */
+async function importModule(id) {
+	// In production or for JS files, use regular import
+	if (process.env.NODE_ENV === 'production' || !id.endsWith('.ts')) {
+		return import(id);
+	}
+
+	// Check cache first
+	if (tsModuleCache.has(id)) {
+		return tsModuleCache.get(id);
+	}
+
+	try {
+		// Read and transform TypeScript file
+		const tsCode = await fs.readFile(id, 'utf-8');
+		
+		// Transform imports to be relative to the original file location
+		const result = await esbuild.transform(tsCode, {
+			loader: 'ts',
+			target: 'node16',
+			format: 'esm',
+			sourcefile: id,
+			sourcemap: 'inline',
+		});
+
+		// Create a temporary file in the same directory as the original
+		// This ensures relative imports work correctly
+		const dir = path.dirname(id);
+		const basename = path.basename(id, '.ts');
+		const tmpFile = path.join(dir, `.${basename}.tmp.mjs`);
+		
+		// Write compiled JavaScript
+		await fs.writeFile(tmpFile, result.code, 'utf-8');
+		
+		try {
+			// Import the compiled module
+			const module = await import(tmpFile);
+			
+			// Cache the module
+			tsModuleCache.set(id, module);
+			
+			// Clean up temp file immediately
+			await fs.unlink(tmpFile).catch(() => {});
+			
+			return module;
+		} catch (importError) {
+			// Clean up on error
+			await fs.unlink(tmpFile).catch(() => {});
+			throw importError;
+		}
+	} catch (error) {
+		console.error(`Failed to import TypeScript module ${id}:`, error);
+		throw error;
+	}
+}
 
 // Utility functions for path transformation
 export const pathUtils = {
@@ -135,6 +201,7 @@ export default function serverActions(userOptions = {}) {
 	let openAPIGenerator;
 	let validationMiddleware = null;
 	let viteConfig = null;
+	let viteDevServer = null;
 
 	// Initialize OpenAPI generator if enabled
 	if (options.openAPI.enabled) {
@@ -159,6 +226,7 @@ export default function serverActions(userOptions = {}) {
 		},
 
 		configureServer(server) {
+			viteDevServer = server;
 			app = express();
 			app.use(express.json());
 
@@ -167,6 +235,11 @@ export default function serverActions(userOptions = {}) {
 				server.watcher.on('change', (file) => {
 					// If a server file changed, remove it from the map
 					if (shouldProcessFile(file, options)) {
+						// Clear TypeScript cache for this file
+						if (file.endsWith('.ts')) {
+							tsModuleCache.delete(file);
+						}
+						
 						for (const [moduleName, moduleInfo] of serverFunctions.entries()) {
 							if (moduleInfo.id === file) {
 								serverFunctions.delete(moduleName);
@@ -367,7 +440,7 @@ export default function serverActions(userOptions = {}) {
 					// Discover schemas from module if validation is enabled (development only)
 					if (options.validation.enabled && process.env.NODE_ENV !== "production") {
 						try {
-							const module = await import(id);
+							const module = await importModule(id);
 							schemaDiscovery.discoverFromModule(module, moduleName);
 							
 							// Validate schema attachment in development
@@ -428,7 +501,7 @@ export default function serverActions(userOptions = {}) {
 							// Apply middleware before the handler
 							app.post(endpoint, ...contextMiddlewares, async (req, res) => {
 								try {
-									const module = await import(id);
+									const module = await importModule(id);
 
 									// Check if function exists in module
 									if (typeof module[functionName] !== "function") {
