@@ -236,10 +236,29 @@ if (typeof window !== 'undefined') {
     // Generate JavaScript signature (without TypeScript types)
     const jsSignature = generateJavaScriptSignature(func);
     
+    // Generate JSDoc with parameter types if not already present
+    let jsdocComment = func.jsdoc;
+    if (!jsdocComment || !jsdocComment.includes('@param')) {
+      // Generate JSDoc from function information
+      jsdocComment = `/**\n * ${func.jsdoc ? func.jsdoc.replace(/\/\*\*|\*\//g, '').trim() : `Server action: ${func.name}`}`;
+      
+      // Add parameter documentation
+      func.params.forEach(param => {
+        const paramType = param.type || 'any';
+        const optionalMark = param.isOptional ? ' [' + param.name.replace('?', '') + ']' : ' ' + param.name;
+        jsdocComment += `\n * @param {${paramType}}${optionalMark}`;
+      });
+      
+      // Add return type documentation
+      if (func.returnType) {
+        jsdocComment += `\n * @returns {${func.returnType}}`;
+      }
+      
+      jsdocComment += '\n */';
+    }
+    
     clientProxy += `
-${func.jsdoc || `/**
- * Server action: ${func.name}
- */`}
+${jsdocComment}
 export async ${jsSignature} {
   console.log("[Vite Server Actions] 🚀 - Executing ${func.name}");
   

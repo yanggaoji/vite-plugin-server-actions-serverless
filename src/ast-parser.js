@@ -326,6 +326,15 @@ function generateCode(node) {
         return 'null';
       case 'TSUndefinedKeyword':
         return 'undefined';
+      case 'TSFunctionType':
+        // Handle function type signatures
+        const funcParams = node.parameters.map(param => {
+          const paramName = param.name ? param.name : '_';
+          const paramType = param.typeAnnotation ? generateCode(param.typeAnnotation.typeAnnotation) : 'any';
+          return `${paramName}: ${paramType}`;
+        }).join(', ');
+        const funcReturn = node.typeAnnotation ? generateCode(node.typeAnnotation.typeAnnotation) : 'void';
+        return `(${funcParams}) => ${funcReturn}`;
       default:
         // Fallback for complex types
         return node.type || 'unknown';
