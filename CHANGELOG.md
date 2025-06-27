@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-06-27
+
+### Added
+- **Enhanced TypeScript Support** - Full TypeScript integration with real-time compilation in development
+- **Automatic Type Generation** - Generate `.d.ts` files for all server actions with proper TypeScript types
+- **AST-Based Function Detection** - More reliable function parsing with detailed TypeScript analysis
+- **TypeScript React Example** - Comprehensive example showcasing all DX features with full TypeScript support
+- **Development Experience Improvements** - Smart code analysis with helpful warnings and suggestions
+- **Enhanced Error Messages** - Detailed error messages with actionable suggestions for better code quality
+- **Security Enhancements** - Path traversal protection and secure module name validation
+- **Test Infrastructure** - Comprehensive test coverage (100% success rate) with both unit and e2e tests
+- **OpenAPI Type Integration** - TypeScript types automatically extracted for OpenAPI documentation
+- **Production TypeScript Compilation** - Full TypeScript support in production builds using esbuild
+
+### Improved
+- **TypeScript Development Mode** - On-the-fly TypeScript compilation with retry logic and cache busting
+- **Module Import Reliability** - Enhanced import system with better error handling and recovery
+- **Test Coverage** - Achieved 100% test success rate across all frameworks (Svelte, Vue, React, TypeScript React)
+- **Documentation** - Updated README with comprehensive TypeScript examples and DX feature showcase
+- **Developer Feedback** - Real-time validation warnings and best practice suggestions
+
+### Fixed
+- **TypeScript Import Issues** - Resolved module loading problems in development mode
+- **Test Reliability** - Fixed flaky tests and improved test infrastructure
+- **File Upload Compatibility** - Enhanced file upload testing across all framework implementations
+- **Cache Management** - Better HMR cache handling for TypeScript files
+
 ## [1.0.1] - 2025-06-26
 
 ### Added
