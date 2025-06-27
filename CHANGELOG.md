@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2025-06-26
+
+### Added
+- Support for Vite 7
+- Mobile responsiveness for code tabs in documentation site
+- Improved terminal-style tabs design in documentation site
+
+### Changed
+- Dropped support for Vite 2 and 3 (now requires Vite 4+)
+- Removed ESLint in favor of Prettier-only formatting
+
+### Fixed
+- Code tabs interference between examples in documentation
+- Mobile scrolling behavior for code tabs (dots now stay fixed)
+
 ## [1.0.0] - 2025-06-23
 
 First stable release! This version is production-ready with comprehensive features for building full-stack applications with Vite.

@@ -347,23 +347,23 @@ export class EnhancedOpenAPIGenerator extends OpenAPIGenerator {
 		const { type, description } = param;
 
 		switch (type.toLowerCase()) {
-		case "string":
-			return { type: "string", description };
-		case "number":
-			return { type: "number", description };
-		case "boolean":
-			return { type: "boolean", description };
-		case "object":
-			return { type: "object", description };
-		case "array":
-			return { type: "array", items: { type: "object" }, description };
-		default:
-			// Handle union types like 'low'|'medium'|'high'
-			if (type.includes("|")) {
-				const enumValues = type.split("|").map((v) => v.replace(/['"]/g, "").trim());
-				return { type: "string", enum: enumValues, description };
-			}
-			return { type: "object", description };
+			case "string":
+				return { type: "string", description };
+			case "number":
+				return { type: "number", description };
+			case "boolean":
+				return { type: "boolean", description };
+			case "object":
+				return { type: "object", description };
+			case "array":
+				return { type: "array", items: { type: "object" }, description };
+			default:
+				// Handle union types like 'low'|'medium'|'high'
+				if (type.includes("|")) {
+					const enumValues = type.split("|").map((v) => v.replace(/['"]/g, "").trim());
+					return { type: "string", enum: enumValues, description };
+				}
+				return { type: "object", description };
 		}
 	}
 }

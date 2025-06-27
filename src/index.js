@@ -463,14 +463,14 @@ export default function serverActions(userOptions = {}) {
 				// Server functions
 				// --------------------------------------------------
         ${Array.from(serverFunctions.entries())
-		.flatMap(([moduleName, { functions, filePath }]) =>
-			functions
-				.map((functionName) => {
-					const routePath = options.routeTransform(filePath, functionName);
-					const middlewareCall = options.validation?.enabled
-						? `createContextualValidationMiddleware('${moduleName}', '${functionName}'), `
-						: "";
-					return `
+					.flatMap(([moduleName, { functions, filePath }]) =>
+						functions
+							.map((functionName) => {
+								const routePath = options.routeTransform(filePath, functionName);
+								const middlewareCall = options.validation?.enabled
+									? `createContextualValidationMiddleware('${moduleName}', '${functionName}'), `
+									: "";
+								return `
             app.post('${options.apiPrefix}/${routePath}', ${middlewareCall}async (req, res) => {
               try {
                 const result = await serverActions.${moduleName}.${functionName}(...req.body);
@@ -481,16 +481,16 @@ export default function serverActions(userOptions = {}) {
               }
             });
           `;
-				})
-				.join("\n")
-				.trim(),
-		)
-		.join("\n")
-		.trim()}
+							})
+							.join("\n")
+							.trim(),
+					)
+					.join("\n")
+					.trim()}
 
 				${
-	options.openAPI.enabled
-		? `
+					options.openAPI.enabled
+						? `
 				// OpenAPI endpoints
 				// --------------------------------------------------
 				app.get('${options.openAPI.specPath}', (req, res) => {
@@ -498,16 +498,16 @@ export default function serverActions(userOptions = {}) {
 				});
 				
 				${
-	options.openAPI.swaggerUI
-		? `
+					options.openAPI.swaggerUI
+						? `
 				// Swagger UI
 				app.use('${options.openAPI.docsPath}', swaggerUi.serve, swaggerUi.setup(openAPISpec));
 				`
-		: ""
-}
+						: ""
+				}
 				`
-		: ""
-}
+						: ""
+				}
 
 				// Start server
 				// --------------------------------------------------
@@ -515,13 +515,13 @@ export default function serverActions(userOptions = {}) {
         app.listen(port, () => {
 					console.log(\`🚀 Server listening: http://localhost:\${port}\`);
 					${
-	options.openAPI.enabled
-		? `
+						options.openAPI.enabled
+							? `
 					console.log(\`📖 API Documentation: http://localhost:\${port}${options.openAPI.docsPath}\`);
 					console.log(\`📄 OpenAPI Spec: http://localhost:\${port}${options.openAPI.specPath}\`);
 					`
-		: ""
-}
+							: ""
+					}
 				});
 
         // List all server functions
@@ -573,8 +573,8 @@ if (typeof window !== 'undefined') {
       	console.log("[Vite Server Actions] 🚀 - Executing ${functionName}");
         
         ${
-	isDev
-		? `
+					isDev
+						? `
         // Development-only: Mark that we're in a valid proxy context
         if (typeof window !== 'undefined') {
           window.__VITE_SERVER_ACTIONS_PROXY__ = true;
@@ -588,8 +588,8 @@ if (typeof window !== 'undefined') {
           );
         }
         `
-		: ""
-}
+						: ""
+				}
         
         try {
           const response = await fetch('${options.apiPrefix}/${routePath}', {
@@ -618,15 +618,15 @@ if (typeof window !== 'undefined') {
           const result = await response.json();
           
           ${
-	isDev
-		? `
+						isDev
+							? `
           // Development-only: Clear the proxy context
           if (typeof window !== 'undefined') {
             window.__VITE_SERVER_ACTIONS_PROXY__ = false;
           }
           `
-		: ""
-}
+							: ""
+					}
           
           return result;
           
@@ -634,15 +634,15 @@ if (typeof window !== 'undefined') {
           console.error("[Vite Server Actions] ❗ - Network or execution error in ${functionName}:", error.message);
           
           ${
-	isDev
-		? `
+						isDev
+							? `
           // Development-only: Clear the proxy context on error
           if (typeof window !== 'undefined') {
             window.__VITE_SERVER_ACTIONS_PROXY__ = false;
           }
           `
-		: ""
-}
+							: ""
+					}
           
           // Re-throw with more context if it's not already our custom error
           if (!error.details) {
