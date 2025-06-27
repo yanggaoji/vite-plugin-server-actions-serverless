@@ -47,47 +47,61 @@ async function importModule(id) {
 		return tsModuleCache.get(id);
 	}
 
-	try {
-		// Read and transform TypeScript file
-		const tsCode = await fs.readFile(id, 'utf-8');
-		
-		// Transform imports to be relative to the original file location
-		const result = await esbuild.transform(tsCode, {
-			loader: 'ts',
-			target: 'node16',
-			format: 'esm',
-			sourcefile: id,
-			sourcemap: 'inline',
-		});
-
-		// Create a temporary file in the same directory as the original
-		// This ensures relative imports work correctly
-		const dir = path.dirname(id);
-		const basename = path.basename(id, '.ts');
-		const tmpFile = path.join(dir, `.${basename}.tmp.mjs`);
-		
-		// Write compiled JavaScript
-		await fs.writeFile(tmpFile, result.code, 'utf-8');
-		
+	// Retry logic for TypeScript compilation failures
+	let retryCount = 0;
+	const maxRetries = 3;
+	
+	while (retryCount < maxRetries) {
 		try {
-			// Import the compiled module
-			const module = await import(tmpFile);
+			// Read and transform TypeScript file
+			const tsCode = await fs.readFile(id, 'utf-8');
 			
-			// Cache the module
-			tsModuleCache.set(id, module);
+			// Transform imports to be relative to the original file location
+			const result = await esbuild.transform(tsCode, {
+				loader: 'ts',
+				target: 'node16',
+				format: 'esm',
+				sourcefile: id,
+				sourcemap: 'inline',
+			});
+
+			// Create a temporary file in the same directory as the original
+			// This ensures relative imports work correctly
+			const dir = path.dirname(id);
+			const basename = path.basename(id, '.ts');
+			const tmpFile = path.join(dir, `.${basename}.tmp.mjs`);
 			
-			// Clean up temp file immediately
-			await fs.unlink(tmpFile).catch(() => {});
+			// Write compiled JavaScript
+			await fs.writeFile(tmpFile, result.code, 'utf-8');
 			
-			return module;
-		} catch (importError) {
-			// Clean up on error
-			await fs.unlink(tmpFile).catch(() => {});
-			throw importError;
+			try {
+				// Add a small delay to ensure file is written
+				await new Promise(resolve => setTimeout(resolve, 50));
+				
+				// Import the compiled module with cache busting
+				const module = await import(`${tmpFile}?t=${Date.now()}`);
+				
+				// Cache the module
+				tsModuleCache.set(id, module);
+				
+				// Clean up temp file immediately
+				await fs.unlink(tmpFile).catch(() => {});
+				
+				return module;
+			} catch (importError) {
+				// Clean up on error
+				await fs.unlink(tmpFile).catch(() => {});
+				throw importError;
+			}
+		} catch (error) {
+			retryCount++;
+			if (retryCount >= maxRetries) {
+				console.error(`Failed to import TypeScript module ${id} after ${maxRetries} attempts:`, error);
+				throw error;
+			}
+			// Wait before retry
+			await new Promise(resolve => setTimeout(resolve, 100 * retryCount));
 		}
-	} catch (error) {
-		console.error(`Failed to import TypeScript module ${id}:`, error);
-		throw error;
 	}
 }
 
