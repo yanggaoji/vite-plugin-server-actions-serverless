@@ -1,45 +1,18 @@
 [
-	{
-		"id": 1,
-		"text": "Review quarterly financial report",
-		"completed": false,
-		"priority": "high",
-		"description": "Analyze Q4 revenue trends and prepare summary for board meeting",
-		"createdAt": "2024-01-15T09:00:00Z",
-		"filepath": "/uploads/financial-report-q4.pdf"
-	},
-	{
-		"id": 2,
-		"text": "Update product documentation",
-		"completed": true,
-		"priority": "medium",
-		"description": "Add new API endpoints and update existing examples",
-		"createdAt": "2024-01-14T14:30:00Z"
-	},
-	{
-		"id": 3,
-		"text": "Fix login page responsiveness",
-		"completed": false,
-		"priority": "medium",
-		"description": "Mobile view breaks on screens smaller than 375px",
-		"createdAt": "2024-01-13T11:15:00Z",
-		"filepath": "/uploads/mobile-bug-screenshot.png"
-	},
-	{
-		"id": 4,
-		"text": "Prepare team presentation",
-		"completed": false,
-		"priority": "high",
-		"description": "Weekly engineering sync - discuss new architecture proposal",
-		"createdAt": "2024-01-12T16:45:00Z",
-		"filepath": "/uploads/architecture-proposal.pdf"
-	},
-	{
-		"id": 5,
-		"text": "Code review for PR #234",
-		"completed": true,
-		"priority": "low",
-		"description": "Review authentication refactor changes",
-		"createdAt": "2024-01-11T10:20:00Z"
-	}
+  {
+    "id": 1750996685796,
+    "text": "Complete todo",
+    "description": "This is a detailed description of the todo item",
+    "completed": false,
+    "priority": "low",
+    "createdAt": "2025-06-27T03:58:05.796Z"
+  },
+  {
+    "id": 1750996685946,
+    "text": "Simple todo",
+    "description": null,
+    "completed": false,
+    "priority": "medium",
+    "createdAt": "2025-06-27T03:58:05.946Z"
+  }
 ]
