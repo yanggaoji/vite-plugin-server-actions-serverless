@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createErrorResponse } from "./security.js";
 import { extendZodWithOpenApi, OpenAPIRegistry, OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
 
 // Extend Zod with OpenAPI support
@@ -254,10 +255,11 @@ export function createValidationMiddleware(options = {}) {
 		try {
 			// Request body should be an array of arguments for server functions
 			if (!Array.isArray(req.body) || req.body.length === 0) {
-				return res.status(400).json({
-					error: "Validation failed",
-					details: "Request body must be a non-empty array of function arguments",
-				});
+				return res.status(400).json(createErrorResponse(
+					400,
+					"Request body must be a non-empty array of function arguments",
+					"INVALID_REQUEST_BODY"
+				));
 			}
 
 			// Validate based on schema type
@@ -273,11 +275,12 @@ export function createValidationMiddleware(options = {}) {
 			const result = await adapter.validate(schema, validationData);
 
 			if (!result.success) {
-				return res.status(400).json({
-					error: "Validation failed",
-					details: result.errors,
-					validationErrors: result.errors,
-				});
+				return res.status(400).json(createErrorResponse(
+					400,
+					"Validation failed",
+					"VALIDATION_ERROR",
+					{ validationErrors: result.errors }
+				));
 			}
 
 			// Replace request body with validated data
@@ -290,10 +293,12 @@ export function createValidationMiddleware(options = {}) {
 			next();
 		} catch (error) {
 			console.error("Validation middleware error:", error);
-			res.status(500).json({
-				error: "Internal validation error",
-				details: error.message,
-			});
+			res.status(500).json(createErrorResponse(
+				500,
+				"Internal validation error",
+				"VALIDATION_INTERNAL_ERROR",
+				process.env.NODE_ENV !== 'production' ? { message: error.message, stack: error.stack } : null
+			));
 		}
 	};
 }

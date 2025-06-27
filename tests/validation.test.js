@@ -364,8 +364,11 @@ describe("createValidationMiddleware", () => {
 
 		expect(mockRes.status).toHaveBeenCalledWith(400);
 		expect(mockRes.json).toHaveBeenCalledWith({
-			error: "Validation failed",
-			details: "Request body must be a non-empty array of function arguments",
+			error: true,
+			status: 400,
+			message: "Request body must be a non-empty array of function arguments",
+			code: "INVALID_REQUEST_BODY",
+			timestamp: expect.any(String)
 		});
 		expect(mockNext).not.toHaveBeenCalled();
 	});
@@ -381,9 +384,14 @@ describe("createValidationMiddleware", () => {
 
 		expect(mockRes.status).toHaveBeenCalledWith(400);
 		expect(mockRes.json).toHaveBeenCalledWith({
-			error: "Validation failed",
-			details: expect.any(Array),
-			validationErrors: expect.any(Array),
+			error: true,
+			status: 400,
+			message: "Validation failed",
+			code: "VALIDATION_ERROR",
+			details: expect.objectContaining({
+				validationErrors: expect.any(Array)
+			}),
+			timestamp: expect.any(String)
 		});
 		expect(mockNext).not.toHaveBeenCalled();
 	});
@@ -420,8 +428,14 @@ describe("createValidationMiddleware", () => {
 
 		expect(mockRes.status).toHaveBeenCalledWith(500);
 		expect(mockRes.json).toHaveBeenCalledWith({
-			error: "Internal validation error",
-			details: "Adapter error",
+			error: true,
+			status: 500,
+			message: "Internal validation error",
+			code: "VALIDATION_INTERNAL_ERROR",
+			details: expect.objectContaining({
+				message: "Adapter error"
+			}),
+			timestamp: expect.any(String)
 		});
 		expect(consoleErrorSpy).toHaveBeenCalled();
 

@@ -196,35 +196,27 @@ describe("Integration Tests - Validation System", () => {
 
 			expect(mockRes.status).toHaveBeenCalledWith(400);
 			expect(mockRes.json).toHaveBeenCalledWith({
-				error: "Validation failed",
-				details: expect.arrayContaining([
-					expect.objectContaining({
-						path: "name",
-						message: "String must contain at least 2 character(s)",
-					}),
-					expect.objectContaining({
-						path: "email",
-						message: "Invalid email",
-					}),
-					expect.objectContaining({
-						path: "age",
-						message: "Number must be greater than or equal to 18",
-					}),
-				]),
-				validationErrors: expect.arrayContaining([
-					expect.objectContaining({
-						path: "name",
-						message: "String must contain at least 2 character(s)",
-					}),
-					expect.objectContaining({
-						path: "email",
-						message: "Invalid email",
-					}),
-					expect.objectContaining({
-						path: "age",
-						message: "Number must be greater than or equal to 18",
-					}),
-				]),
+				error: true,
+				status: 400,
+				message: "Validation failed",
+				code: "VALIDATION_ERROR",
+				details: expect.objectContaining({
+					validationErrors: expect.arrayContaining([
+						expect.objectContaining({
+							path: "name",
+							message: "String must contain at least 2 character(s)",
+						}),
+						expect.objectContaining({
+							path: "email",
+							message: "Invalid email",
+						}),
+						expect.objectContaining({
+							path: "age",
+							message: "Number must be greater than or equal to 18",
+						}),
+					])
+				}),
+				timestamp: expect.any(String)
 			});
 			expect(mockNext).not.toHaveBeenCalled();
 		});
@@ -665,8 +657,14 @@ describe("Integration Tests - Validation System", () => {
 
 			expect(mockRes.status).toHaveBeenCalledWith(500);
 			expect(mockRes.json).toHaveBeenCalledWith({
-				error: "Internal server error",
-				details: "Function error",
+				error: true,
+				status: 500,
+				message: "Internal server error",
+				code: "INTERNAL_ERROR",
+				details: expect.objectContaining({
+					message: "Function error"
+				}),
+				timestamp: expect.any(String)
 			});
 		});
 	});
@@ -873,22 +871,27 @@ describe("End-to-end validation workflow", () => {
 
 		expect(errorRes.status).toHaveBeenCalledWith(400);
 		expect(errorRes.json).toHaveBeenCalledWith({
-			error: "Validation failed",
-			details: expect.arrayContaining([
-				expect.objectContaining({
-					path: "0",
-					message: expect.stringContaining("Invalid uuid"),
-				}),
-				expect.objectContaining({
-					path: "1.name",
-					message: expect.stringContaining("at least 1"),
-				}),
-				expect.objectContaining({
-					path: "1.email",
-					message: expect.stringContaining("Invalid email"),
-				}),
-			]),
-			validationErrors: expect.any(Array),
+			error: true,
+			status: 400,
+			message: "Validation failed",
+			code: "VALIDATION_ERROR",
+			details: expect.objectContaining({
+				validationErrors: expect.arrayContaining([
+					expect.objectContaining({
+						path: "0",
+						message: expect.stringContaining("Invalid uuid"),
+					}),
+					expect.objectContaining({
+						path: "1.name",
+						message: expect.stringContaining("at least 1"),
+					}),
+					expect.objectContaining({
+						path: "1.email",
+						message: expect.stringContaining("Invalid email"),
+					}),
+				])
+			}),
+			timestamp: expect.any(String)
 		});
 		expect(nextSpy).not.toHaveBeenCalled();
 
