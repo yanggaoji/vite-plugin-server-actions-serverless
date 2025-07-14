@@ -42,7 +42,8 @@
 			"Bash(npm run test:*)",
 			"Bash(tree:*)",
 			"Bash(pkill:*)",
-			"Bash(npm run format:*)"
+			"Bash(npm run format:*)",
+			"Bash(gh pr view:*)"
 		],
 		"deny": []
 	}

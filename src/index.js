@@ -34,12 +34,30 @@ const tsModuleCache = new Map();
 /**
  * Import a module, handling TypeScript files in development
  * @param {string} id - Module path
+ * @param {any} viteServer - Vite dev server instance
  * @returns {Promise<any>} - Imported module
  */
-async function importModule(id) {
+async function importModule(id, viteServer = null) {
 	// In production or for JS files, use regular import
 	if (process.env.NODE_ENV === "production" || !id.endsWith(".ts")) {
 		return import(id);
+	}
+
+	// Use Vite's SSR module loader if available (preferred method)
+	if (viteServer && viteServer.ssrLoadModule) {
+		try {
+			// Clear from cache if it exists to ensure fresh load
+			if (tsModuleCache.has(id)) {
+				tsModuleCache.delete(id);
+			}
+			
+			const module = await viteServer.ssrLoadModule(id);
+			tsModuleCache.set(id, module);
+			return module;
+		} catch (error) {
+			console.error(`Failed to load module ${id} via Vite SSR:`, error);
+			// Fall through to manual compilation
+		}
 	}
 
 	// Check cache first
@@ -47,6 +65,7 @@ async function importModule(id) {
 		return tsModuleCache.get(id);
 	}
 
+	// Fallback: Manual TypeScript compilation (when Vite server is not available)
 	// Retry logic for TypeScript compilation failures
 	let retryCount = 0;
 	const maxRetries = 3;
@@ -349,10 +368,38 @@ export default function serverActions(userOptions = {}) {
 		},
 
 		async resolveId(source, importer) {
+			// Handle server file imports
 			if (importer && shouldProcessFile(source, options)) {
 				const resolvedPath = path.resolve(path.dirname(importer), source);
 				return resolvedPath;
 			}
+			
+			// Handle TypeScript imports from server files
+			if (importer && shouldProcessFile(importer, options)) {
+				// Check if this is a relative import
+				if (source.startsWith('.') || source.startsWith('/')) {
+					// Try to resolve TypeScript file
+					const basePath = path.resolve(path.dirname(importer), source);
+					const possiblePaths = [
+						basePath,
+						`${basePath}.ts`,
+						`${basePath}.tsx`,
+						path.join(basePath, 'index.ts'),
+						path.join(basePath, 'index.tsx')
+					];
+					
+					for (const possiblePath of possiblePaths) {
+						try {
+							await fs.access(possiblePath);
+							return possiblePath;
+						} catch {
+							// File doesn't exist, try next
+						}
+					}
+				}
+			}
+			
+			return null;
 		},
 
 		async load(id) {
@@ -460,7 +507,7 @@ export default function serverActions(userOptions = {}) {
 					// Discover schemas from module if validation is enabled (development only)
 					if (options.validation.enabled && process.env.NODE_ENV !== "production") {
 						try {
-							const module = await importModule(id);
+							const module = await importModule(id, viteDevServer);
 							schemaDiscovery.discoverFromModule(module, moduleName);
 
 							// Validate schema attachment in development
@@ -521,7 +568,7 @@ export default function serverActions(userOptions = {}) {
 							// Apply middleware before the handler
 							app.post(endpoint, ...contextMiddlewares, async (req, res) => {
 								try {
-									const module = await importModule(id);
+									const module = await importModule(id, viteDevServer);
 
 									// Check if function exists in module
 									if (typeof module[functionName] !== "function") {

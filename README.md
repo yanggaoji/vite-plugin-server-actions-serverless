@@ -33,7 +33,7 @@ const users = await getUsers(); // Just call it!
 
 - **Seamless Imports** - Import server functions like any other module
 - **Secure by Default** - Server code never exposed to client, path traversal protection
-- **TypeScript** - Automatic compilation, type generation, and AST-based parsing
+- **TypeScript** - Full support with cross-file imports, automatic compilation via Vite's SSR module system
 - **Validation** - Zod schemas with type inference and OpenAPI generation
 - **Documentation** - OpenAPI 3.0 specs with Swagger UI
 - **Middleware Support** - Authentication, logging, CORS, and custom middleware
