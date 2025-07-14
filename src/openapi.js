@@ -29,10 +29,18 @@ export class OpenAPIGenerator {
 	 * @returns {object} Complete OpenAPI 3.0 specification
 	 */
 	generateSpec(serverFunctions, schemaDiscovery, options = {}) {
+		// Override servers with dynamic port if provided
+		const servers = options.port ? [
+			{
+				url: `http://localhost:${options.port}`,
+				description: "Development server",
+			}
+		] : this.servers;
+		
 		const spec = {
 			openapi: "3.0.3",
 			info: this.info,
-			servers: this.servers,
+			servers,
 			paths: {},
 			components: {
 				schemas: {},
@@ -237,8 +245,9 @@ export function setupOpenAPIEndpoints(app, openAPISpec, options = {}) {
 		const swaggerMiddleware = createSwaggerMiddleware(openAPISpec, options);
 		app.use(docsPath, ...swaggerMiddleware);
 
-		console.log(`📖 API Documentation: http://localhost:${process.env.PORT || 5173}${docsPath}`);
-		console.log(`📄 OpenAPI Spec: http://localhost:${process.env.PORT || 5173}${specPath}`);
+		const port = options.port || process.env.PORT || 3000;
+		console.log(`📖 API Documentation: http://localhost:${port}${docsPath}`);
+		console.log(`📄 OpenAPI Spec: http://localhost:${port}${specPath}`);
 	}
 }
 

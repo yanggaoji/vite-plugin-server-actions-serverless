@@ -269,9 +269,12 @@ export default function serverActions(userOptions = {}) {
 			if (process.env.NODE_ENV !== "production" && options.openAPI.enabled && openAPIGenerator) {
 				// OpenAPI spec endpoint - generates spec dynamically from current serverFunctions
 				app.get(options.openAPI.specPath, (req, res) => {
+					// Get the actual port from the request
+					const port = req.get('host')?.split(':')[1] || viteConfig.server?.port || 5173;
 					const openAPISpec = openAPIGenerator.generateSpec(serverFunctions, schemaDiscovery, {
 						apiPrefix: options.apiPrefix,
 						routeTransform: options.routeTransform,
+						port,
 					});
 
 					// Add a note if no functions are found
@@ -305,7 +308,7 @@ export default function serverActions(userOptions = {}) {
 								// Wait for server to start and get the actual port, then log URLs
 								server.httpServer?.on("listening", () => {
 									const address = server.httpServer.address();
-									const port = address?.port || 5173;
+									const port = address?.port || viteConfig.server?.port || 5173;
 									// Always use localhost for consistent display
 									const host = "localhost";
 
@@ -702,9 +705,12 @@ export default function serverActions(userOptions = {}) {
 			// Generate OpenAPI spec if enabled
 			let openAPISpec = null;
 			if (options.openAPI.enabled) {
+				// Use PORT env var for production builds, defaulting to 3000
+				const port = process.env.PORT || 3000;
 				openAPISpec = openAPIGenerator.generateSpec(serverFunctions, schemaDiscovery, {
 					apiPrefix: options.apiPrefix,
 					routeTransform: options.routeTransform,
+					port,
 				});
 
 				// Emit OpenAPI spec as a separate file

@@ -366,7 +366,10 @@ describe("Integration Tests - Validation System", () => {
 				json: vi.fn(),
 			};
 
-			specHandler({}, mockRes);
+			const mockReq = {
+				get: vi.fn().mockReturnValue('localhost:5173')
+			};
+			specHandler(mockReq, mockRes);
 
 			expect(mockRes.json).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -428,7 +431,10 @@ describe("Integration Tests - Validation System", () => {
 				json: vi.fn(),
 			};
 
-			specHandler({}, mockRes);
+			const mockReq = {
+				get: vi.fn().mockReturnValue('localhost:5173')
+			};
+			specHandler(mockReq, mockRes);
 
 			const spec = mockRes.json.mock.calls[0][0];
 			const createUserPath = spec.paths["/api/test/createUser"];
@@ -605,7 +611,10 @@ describe("Integration Tests - Validation System", () => {
 			const specHandler = getCall[1];
 
 			const mockRes = { json: vi.fn() };
-			specHandler({}, mockRes);
+			const mockReq = {
+				get: vi.fn().mockReturnValue('localhost:5173')
+			};
+			specHandler(mockReq, mockRes);
 
 			const spec = mockRes.json.mock.calls[0][0];
 			expect(spec.paths["/api/users/createUser"]).toBeDefined();

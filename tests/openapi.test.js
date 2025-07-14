@@ -102,6 +102,20 @@ describe("OpenAPIGenerator", () => {
 			const pathItem = spec.paths["/api/testModule/testFunction"];
 			expect(pathItem.post.requestBody.content["application/json"].schema).toBeDefined();
 		});
+		
+		it("should use dynamic port when provided", () => {
+			const serverFunctions = new Map([
+				["testModule", { functions: ["testFunction"] }]
+			]);
+			
+			const spec = generator.generateSpec(serverFunctions, schemaDiscovery, {
+				apiPrefix: "/api",
+				port: 8081
+			});
+			
+			expect(spec.servers).toHaveLength(1);
+			expect(spec.servers[0].url).toBe("http://localhost:8081");
+		});
 	});
 
 	describe("generatePathItem", () => {
