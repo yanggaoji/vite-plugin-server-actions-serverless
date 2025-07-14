@@ -74,10 +74,10 @@ describe("TypeScript Module Resolution Fix", () => {
     ];
 
     // Mock file existence checks
-    vi.spyOn(fs, "access").mockImplementation(async (filePath) => {
+    vi.spyOn(fs, "stat").mockImplementation(async (filePath) => {
       // Simulate that .ts files exist
       if (filePath.endsWith(".ts")) {
-        return;
+        return { isFile: () => true };
       }
       throw new Error("File not found");
     });
@@ -92,9 +92,9 @@ describe("TypeScript Module Resolution Fix", () => {
     const importer = "/project/src/test.server.ts";
     
     // Mock that types.ts exists
-    vi.spyOn(fs, "access").mockImplementation(async (filePath) => {
+    vi.spyOn(fs, "stat").mockImplementation(async (filePath) => {
       if (filePath === "/project/src/types.ts") {
-        return;
+        return { isFile: () => true };
       }
       throw new Error("File not found");
     });
@@ -111,9 +111,12 @@ describe("TypeScript Module Resolution Fix", () => {
     const importer = "/project/src/test.server.ts";
     
     // Mock that models/index.ts exists
-    vi.spyOn(fs, "access").mockImplementation(async (filePath) => {
+    vi.spyOn(fs, "stat").mockImplementation(async (filePath) => {
       if (filePath === "/project/src/models/index.ts") {
-        return;
+        return { isFile: () => true };
+      }
+      if (filePath === "/project/src/models") {
+        return { isFile: () => false };
       }
       throw new Error("File not found");
     });

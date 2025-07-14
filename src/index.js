@@ -390,8 +390,11 @@ export default function serverActions(userOptions = {}) {
 					
 					for (const possiblePath of possiblePaths) {
 						try {
-							await fs.access(possiblePath);
-							return possiblePath;
+							const stats = await fs.stat(possiblePath);
+							// Only return if it's a file, not a directory
+							if (stats.isFile()) {
+								return possiblePath;
+							}
 						} catch {
 							// File doesn't exist, try next
 						}

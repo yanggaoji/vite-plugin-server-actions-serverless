@@ -3,8 +3,7 @@ import { MetricsGrid } from "./MetricsGrid";
 import { TimeSeriesChart } from "./TimeSeriesChart";
 import { TypeFeatureCard } from "./TypeFeatureCard";
 import { 
-  calculateMetric, 
-  queryMetrics
+  calculateMetric
 } from "../actions/analytics.server";
 import { generateTimeSeries } from "../actions/data-generator.server";
 import type { MetricName } from "../types/analytics";

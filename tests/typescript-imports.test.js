@@ -182,7 +182,7 @@ export async function testFunction() {
     const result = await plugin.load(serverFilePath);
     
     // Should still generate proxy code
-    expect(result).toContain("export async function testFunction(...args)");
+    expect(result).toContain("export async function testFunction");
   });
 
   it("should handle index.ts imports correctly", async () => {

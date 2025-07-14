@@ -1,6 +1,5 @@
 import { z } from "zod";
 import type { 
-  AnalyticsEvent, 
   MetricName, 
   MetricValue,
   Aggregation,
@@ -31,7 +30,7 @@ export async function calculateMetric<T extends MetricName>(
   const events = await generateEvents(dateRange);
   
   // Type-safe metric calculation based on template literal type
-  const [entity, metric, timeframe] = metricName.split("_") as [string, string, string];
+  const [entity, metric] = metricName.split("_") as [string, string, string];
   
   // Filter events based on entity
   const relevantEvents = events.filter(event => {
@@ -161,7 +160,7 @@ export async function groupData<T extends Record<string, any>>(
     
     // Recursively group by remaining fields
     if (remainingFields.length > 0) {
-      group.children = await groupData(values, remainingFields as any);
+      group.children = await groupData(values, remainingFields) as any;
     }
     
     result.push(group);

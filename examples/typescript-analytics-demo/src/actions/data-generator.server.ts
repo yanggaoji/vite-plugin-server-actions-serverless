@@ -3,10 +3,7 @@ import {
   createUserId, 
   createOrderId, 
   createProductId,
-  createSessionId,
-  type UserId,
-  type OrderId,
-  type ProductId
+  type UserId
 } from "../types/branded";
 import type { AnalyticsEvent, TimeSeriesData } from "../types/analytics";
 
@@ -154,14 +151,13 @@ export async function generateTimeSeries<T extends number | { [key: string]: num
         value = Math.floor(50 + random() * 150) as T;
         break;
       case "conversion":
-        value = {
+        const conversionData = {
           rate: 0.02 + random() * 0.08,
           total: Math.floor(100 + random() * 400),
           converted: 0
-        } as T;
-        if (typeof value === "object" && "total" in value && "rate" in value) {
-          value.converted = Math.floor(value.total * value.rate);
-        }
+        };
+        conversionData.converted = Math.floor(conversionData.total * conversionData.rate);
+        value = conversionData as unknown as T;
         break;
     }
     

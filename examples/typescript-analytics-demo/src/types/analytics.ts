@@ -13,10 +13,10 @@ export type MetricName = `${Entity}_${Metric}_${Timeframe}`;
 
 // Conditional types for metric values
 export type MetricValue<T extends MetricName> = 
-  T extends `${infer E}_count_${infer TF}` ? number :
-  T extends `${infer E}_revenue_${infer TF}` ? { amount: number; currency: string } :
-  T extends `${infer E}_duration_${infer TF}` ? { avg: number; min: number; max: number } :
-  T extends `${infer E}_conversion_${infer TF}` ? { rate: number; total: number; converted: number } :
+  T extends `${string}_count_${string}` ? number :
+  T extends `${string}_revenue_${string}` ? { amount: number; currency: string } :
+  T extends `${string}_duration_${string}` ? { avg: number; min: number; max: number } :
+  T extends `${string}_conversion_${string}` ? { rate: number; total: number; converted: number } :
   never;
 
 // Discriminated union for events

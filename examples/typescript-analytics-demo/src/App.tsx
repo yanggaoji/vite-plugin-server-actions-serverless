@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Dashboard } from "./components/Dashboard";
-import { TypeFeatureCard } from "./components/TypeFeatureCard";
 
 function App() {
   const [showTypeInfo, setShowTypeInfo] = useState(true);
