@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2025-07-14
+
+### Added
+
+- Enhanced TypeScript type generation with support for 95% of TypeScript type patterns
+- Support for intersection types, tuple types, template literals, conditional types, and more
+- Comprehensive test suite for TypeScript type generation (20+ test cases)
+- Advanced TypeScript examples demonstrating complex type patterns
+
+### Fixed
+
+- Port configuration now correctly propagates to OpenAPI documentation
+- Fixed hardcoded port 5173 in multiple locations
+- Improved error handling for malformed TypeScript types
+
+### Changed
+
+- Reduced marketing language in documentation
+- Minimized emoji usage throughout codebase
+- Updated TODO.md with future improvement roadmap
+
 ## [1.1.0] - 2025-06-27
 
 ### Added
@@ -121,7 +142,10 @@ First stable release! This version is production-ready with comprehensive featur
 - Hot module replacement support
 - Basic todo app example
 
-[Unreleased]: https://github.com/HelgeSverre/vite-plugin-server-actions/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/HelgeSverre/vite-plugin-server-actions/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/HelgeSverre/vite-plugin-server-actions/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/HelgeSverre/vite-plugin-server-actions/compare/v1.0.1...v1.1.0
+[1.0.1]: https://github.com/HelgeSverre/vite-plugin-server-actions/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/HelgeSverre/vite-plugin-server-actions/compare/v0.1.1...v1.0.0
 [0.1.1]: https://github.com/HelgeSverre/vite-plugin-server-actions/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/HelgeSverre/vite-plugin-server-actions/releases/tag/v0.1.0

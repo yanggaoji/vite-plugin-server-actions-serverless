@@ -9,6 +9,7 @@ import {
   type CreateTodoInput,
   type FileUploadResult,
 } from "./actions/todo.server";
+import { TypeTest } from "./components/TypeTest";
 
 interface FormData {
   text: string;
@@ -314,6 +315,9 @@ const App: React.FC = () => {
           ))}
         </ul>
       )}
+
+      {/* Advanced TypeScript Types Demo */}
+      {process.env.NODE_ENV === 'development' && <TypeTest />}
     </main>
   );
 };

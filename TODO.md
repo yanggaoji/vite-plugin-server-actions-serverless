@@ -27,6 +27,62 @@
       accounts and authenticated session (not really meant for prod usage, but it could i guess)
 - [ ] Add support for streaming responses
 
+## Future Improvements
+
+### Security Enhancements (High Priority)
+
+- [ ] Add request timeout middleware with configurable timeouts per action
+- [ ] Implement rate limiting middleware with memory store for dev and Redis example for production
+- [ ] Add request body size limits and file upload size restrictions
+- [ ] Implement CSRF protection with token generation/validation
+- [ ] Add security headers middleware (helmet.js integration)
+- [ ] Implement API key/token authentication options
+- [ ] Add file type validation and virus scanning hooks for uploads
+
+### Production Readiness (High Priority)
+
+- [ ] Add graceful shutdown handling (SIGTERM/SIGINT) with connection draining
+- [ ] Implement health check endpoints (/health, /ready) with custom checks
+- [ ] Add request ID tracking for debugging and correlation
+- [ ] Include structured logging for production environments
+- [ ] Add clustering support for multi-core utilization
+- [ ] Implement proper error tracking with configurable error reporting
+- [ ] Add monitoring/APM integration hooks (OpenTelemetry, etc.)
+- [ ] Create deployment guides for common platforms (Docker, K8s, serverless)
+
+### Performance Optimizations (Medium Priority)
+
+- [ ] Add response compression (gzip/brotli) to production builds
+- [ ] Implement AST parsing cache with LRU eviction
+- [ ] Add proper memory management for TypeScript module cache
+- [ ] Implement request deduplication for identical concurrent requests
+- [ ] Add connection pooling examples for database operations
+- [ ] Implement response caching layer with invalidation strategies
+- [ ] Add request queuing for rate-limited operations
+
+### Code Organization (Medium Priority)
+
+- [ ] Split large index.js file (~900 lines) into smaller modules
+- [ ] Extract TypeScript handling to separate module
+- [ ] Reorganize middleware into dedicated directory structure
+- [ ] Create separate build utilities module
+- [ ] Implement plugin system for extensibility
+- [ ] Add middleware composition utilities
+
+### Developer Experience Enhancements
+
+- [ ] Add authentication middleware examples (JWT/session-based)
+- [ ] Implement WebSocket transport for real-time server actions
+- [ ] Add request/response interceptor support
+- [ ] Create batch operations support for multiple actions
+- [ ] Add GraphQL-like field selection to reduce payload size
+- [ ] Implement automatic retry with exponential backoff
+- [ ] Add playground UI for interactive API exploration
+- [ ] Create migration guide from traditional API routes
+- [ ] Add SSR framework support (Next.js, Nuxt.js)
+- [ ] Implement HMR for schema changes
+- [ ] Add TypeScript declaration maps for better IDE support
+
 ---
 
 ## Completed Tasks (v1.0.0)

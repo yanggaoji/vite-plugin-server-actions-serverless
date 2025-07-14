@@ -289,8 +289,18 @@ function generateCode(node) {
 				return `[${elements.join(", ")}]`;
 			case "TSTypeReference":
 				// Handle type references like Todo, CreateTodoInput, etc.
-				if (node.typeName && node.typeName.type === "Identifier") {
-					const typeName = node.typeName.name;
+				if (node.typeName) {
+					let typeName = "";
+
+					// Handle qualified names like z.infer
+					if (node.typeName.type === "TSQualifiedName") {
+						typeName = generateCode(node.typeName);
+					} else if (node.typeName.type === "Identifier") {
+						typeName = node.typeName.name;
+					} else {
+						return "unknown";
+					}
+
 					// Handle generic types like Promise<T>, Array<T>
 					if (node.typeParameters && node.typeParameters.params && node.typeParameters.params.length > 0) {
 						const typeArgs = node.typeParameters.params.map((param) => generateCode(param)).join(", ");
@@ -327,13 +337,185 @@ function generateCode(node) {
 				// Handle function type signatures
 				const funcParams = node.parameters
 					.map((param) => {
+						let paramStr = "";
 						const paramName = param.name ? param.name : "_";
 						const paramType = param.typeAnnotation ? generateCode(param.typeAnnotation.typeAnnotation) : "any";
-						return `${paramName}: ${paramType}`;
+
+						// Handle rest parameters
+						if (param.type === "RestElement") {
+							paramStr = `...${param.argument.name}: ${paramType}`;
+						} else {
+							paramStr = `${paramName}`;
+							// Handle optional parameters
+							if (param.optional) {
+								paramStr += "?";
+							}
+							paramStr += `: ${paramType}`;
+						}
+
+						return paramStr;
 					})
 					.join(", ");
 				const funcReturn = node.typeAnnotation ? generateCode(node.typeAnnotation.typeAnnotation) : "void";
 				return `(${funcParams}) => ${funcReturn}`;
+			case "TSIntersectionType":
+				// Handle intersection types: A & B & C
+				return node.types.map((type) => generateCode(type)).join(" & ");
+			case "TSTupleType":
+				// Handle tuple types: [string, number, boolean]
+				const tupleElements = node.elementTypes.map((elem) => generateCode(elem)).join(", ");
+				return `[${tupleElements}]`;
+			case "TSIndexSignature":
+				// Handle index signatures: { [key: string]: any }
+				if (node.parameters && node.parameters.length > 0) {
+					const param = node.parameters[0];
+					const keyName = param.name || "key";
+					const keyType = param.typeAnnotation ? generateCode(param.typeAnnotation.typeAnnotation) : "string";
+					const valueType = node.typeAnnotation ? generateCode(node.typeAnnotation.typeAnnotation) : "any";
+					return `[${keyName}: ${keyType}]: ${valueType}`;
+				}
+				return "[key: string]: any";
+			case "TSBigIntKeyword":
+				return "bigint";
+			case "TSSymbolKeyword":
+				return "symbol";
+			case "TSNeverKeyword":
+				return "never";
+			case "TSThisType":
+				return "this";
+			case "TSTemplateLiteralType":
+				// Handle template literal types
+				if (node.quasis && node.types) {
+					let result = "";
+					for (let i = 0; i < node.quasis.length; i++) {
+						result += node.quasis[i].value.raw;
+						if (i < node.types.length) {
+							result += "${" + generateCode(node.types[i]) + "}";
+						}
+					}
+					return "`" + result + "`";
+				}
+				return "`${string}`";
+			case "TemplateLiteral":
+				// Handle template literals (non-type version)
+				if (node.quasis && node.expressions) {
+					let result = "";
+					for (let i = 0; i < node.quasis.length; i++) {
+						result += node.quasis[i].value.raw;
+						if (i < node.expressions.length) {
+							result += "${" + generateCode(node.expressions[i]) + "}";
+						}
+					}
+					return "`" + result + "`";
+				}
+				return "`${string}`";
+			case "TSConditionalType":
+				// Handle conditional types: T extends U ? X : Y
+				const checkType = generateCode(node.checkType);
+				const extendsType = generateCode(node.extendsType);
+				const trueType = generateCode(node.trueType);
+				const falseType = generateCode(node.falseType);
+				return `${checkType} extends ${extendsType} ? ${trueType} : ${falseType}`;
+			case "TSTypeOperator":
+				// Handle type operators like readonly, keyof
+				const operator = node.operator;
+				const typeArg = generateCode(node.typeAnnotation);
+				return `${operator} ${typeArg}`;
+			case "TSIndexedAccessType":
+				// Handle indexed access types: T[K]
+				const objectType = generateCode(node.objectType);
+				const indexType = generateCode(node.indexType);
+				return `${objectType}[${indexType}]`;
+			case "TSMappedType":
+				// Handle mapped types: { [K in T]: U }
+				let mapped = "{";
+				if (node.readonly) {
+					mapped += node.readonly === "+" ? "readonly " : "-readonly ";
+				}
+				mapped += "[";
+				if (node.typeParameter) {
+					mapped += node.typeParameter.name;
+					if (node.typeParameter.constraint) {
+						mapped += " in " + generateCode(node.typeParameter.constraint);
+					}
+				}
+				mapped += "]";
+				if (node.optional) {
+					mapped += node.optional === "+" ? "?" : "-?";
+				}
+				mapped += ": ";
+				if (node.typeAnnotation) {
+					mapped += generateCode(node.typeAnnotation);
+				}
+				mapped += "}";
+				return mapped;
+			case "TSTypePredicate":
+				// Handle type predicates: value is Type
+				const paramName = node.parameterName ? node.parameterName.name : "value";
+				const predicateType = node.typeAnnotation ? generateCode(node.typeAnnotation.typeAnnotation) : "unknown";
+				return `${paramName} is ${predicateType}`;
+			case "TSParenthesizedType":
+				// Handle parenthesized types: (string | number)
+				return `(${generateCode(node.typeAnnotation)})`;
+			case "TSTypeQuery":
+				// Handle typeof operator: typeof someValue
+				const exprName = node.exprName;
+				if (exprName.type === "Identifier") {
+					return `typeof ${exprName.name}`;
+				}
+				return "typeof unknown";
+			case "TSQualifiedName":
+				// Handle qualified names like A.B.C
+				if (node.left.type === "TSQualifiedName") {
+					return generateCode(node.left) + "." + node.right.name;
+				} else if (node.left.type === "Identifier") {
+					return node.left.name + "." + node.right.name;
+				}
+				return "unknown";
+			case "TSOptionalType":
+				// Handle optional types in function parameters
+				return generateCode(node.typeAnnotation);
+			case "TSRestType":
+				// Handle rest types: ...Type[]
+				return "..." + generateCode(node.typeAnnotation);
+			case "TSNamedTupleMember":
+				// Handle named tuple members
+				let namedTuple = "";
+				if (node.label) {
+					namedTuple += node.label.name + ": ";
+				}
+				namedTuple += generateCode(node.elementType);
+				if (node.optional) {
+					namedTuple += "?";
+				}
+				return namedTuple;
+			case "TSInferType":
+				// Handle infer types: infer T
+				return `infer ${node.typeParameter.name}`;
+			case "TSImportType":
+				// Handle import types: import("module").Type
+				let importStr = `import("${node.argument.value}")`;
+				if (node.qualifier) {
+					// Handle nested qualifiers like import("./types").users.Admin
+					if (node.qualifier.type === "TSQualifiedName") {
+						// Recursively build the qualified name
+						const buildQualifiedName = (qName) => {
+							if (qName.left.type === "TSQualifiedName") {
+								return buildQualifiedName(qName.left) + "." + qName.right.name;
+							} else {
+								return qName.left.name + "." + qName.right.name;
+							}
+						};
+						importStr += "." + buildQualifiedName(node.qualifier);
+					} else {
+						importStr += "." + node.qualifier.name;
+					}
+				}
+				if (node.typeParameters) {
+					const typeArgs = node.typeParameters.params.map((param) => generateCode(param)).join(", ");
+					importStr += `<${typeArgs}>`;
+				}
+				return importStr;
 			default:
 				// Fallback for complex types
 				return node.type || "unknown";
