@@ -49,10 +49,10 @@ export async function generateValidationCode(options, serverFunctions) {
 	}
 
 	// Read the validation runtime code that will be embedded
-	const validationRuntimePath = new URL('./validation-runtime.js', import.meta.url);
+	const validationRuntimePath = new URL("./validation-runtime.js", import.meta.url);
 	const validationRuntime = `
 // Embedded validation runtime
-${await fs.readFile(validationRuntimePath, 'utf-8')}
+${await fs.readFile(validationRuntimePath, "utf-8")}
 `;
 
 	// Generate setup code

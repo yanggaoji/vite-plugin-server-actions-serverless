@@ -1,4 +1,4 @@
-import path from 'path';
+import path from "path";
 
 /**
  * Sanitize and validate file paths to prevent directory traversal attacks
@@ -7,51 +7,51 @@ import path from 'path';
  * @returns {string|null} - Sanitized path or null if invalid
  */
 export function sanitizePath(filePath, basePath) {
-  if (!filePath || typeof filePath !== 'string') {
-    return null;
-  }
+	if (!filePath || typeof filePath !== "string") {
+		return null;
+	}
 
-  // For test environments and development with absolute paths that are already project-relative
-  if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development') {
-    // For test paths like /src/test.server.js, treat as relative to basePath
-    if (filePath.startsWith('/src/') || filePath.startsWith('/project/')) {
-      const relativePath = filePath.startsWith('/project/') ? filePath.slice('/project/'.length) : filePath.slice(1);
-      const normalizedPath = path.resolve(basePath, relativePath);
-      // Debug: console.log(`Test path resolved: ${filePath} -> ${normalizedPath}`);
-      return normalizedPath;
-    }
-    // Check if it's an absolute path outside project structure (like /etc/passwd)
-    if (path.isAbsolute(filePath)) {
-      // Debug: console.log(`Test absolute path allowed: ${filePath}`);
-      return filePath; // Allow other absolute paths in tests (for edge case tests)
-    }
-  }
+	// For test environments and development with absolute paths that are already project-relative
+	if (process.env.NODE_ENV === "test" || process.env.NODE_ENV === "development") {
+		// For test paths like /src/test.server.js, treat as relative to basePath
+		if (filePath.startsWith("/src/") || filePath.startsWith("/project/")) {
+			const relativePath = filePath.startsWith("/project/") ? filePath.slice("/project/".length) : filePath.slice(1);
+			const normalizedPath = path.resolve(basePath, relativePath);
+			// Debug: console.log(`Test path resolved: ${filePath} -> ${normalizedPath}`);
+			return normalizedPath;
+		}
+		// Check if it's an absolute path outside project structure (like /etc/passwd)
+		if (path.isAbsolute(filePath)) {
+			// Debug: console.log(`Test absolute path allowed: ${filePath}`);
+			return filePath; // Allow other absolute paths in tests (for edge case tests)
+		}
+	}
 
-  // Normalize the paths
-  const normalizedBase = path.resolve(basePath);
-  const normalizedPath = path.resolve(basePath, filePath);
+	// Normalize the paths
+	const normalizedBase = path.resolve(basePath);
+	const normalizedPath = path.resolve(basePath, filePath);
 
-  // Check if the resolved path is within the base directory
-  if (!normalizedPath.startsWith(normalizedBase + path.sep) && normalizedPath !== normalizedBase) {
-    console.error(`Path traversal attempt detected: ${filePath}`);
-    return null;
-  }
+	// Check if the resolved path is within the base directory
+	if (!normalizedPath.startsWith(normalizedBase + path.sep) && normalizedPath !== normalizedBase) {
+		console.error(`Path traversal attempt detected: ${filePath}`);
+		return null;
+	}
 
-  // Additional checks for suspicious patterns
-  const suspiciousPatterns = [
-    /\0/, // Null bytes
-    /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i, // Windows reserved names
-  ];
+	// Additional checks for suspicious patterns
+	const suspiciousPatterns = [
+		/\0/, // Null bytes
+		/^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i, // Windows reserved names
+	];
 
-  const pathSegments = filePath.split(/[/\\]/);
-  for (const segment of pathSegments) {
-    if (suspiciousPatterns.some(pattern => pattern.test(segment))) {
-      console.error(`Suspicious path segment detected: ${segment}`);
-      return null;
-    }
-  }
+	const pathSegments = filePath.split(/[/\\]/);
+	for (const segment of pathSegments) {
+		if (suspiciousPatterns.some((pattern) => pattern.test(segment))) {
+			console.error(`Suspicious path segment detected: ${segment}`);
+			return null;
+		}
+	}
 
-  return normalizedPath;
+	return normalizedPath;
 }
 
 /**
@@ -60,14 +60,14 @@ export function sanitizePath(filePath, basePath) {
  * @returns {boolean}
  */
 export function isValidModuleName(moduleName) {
-  if (!moduleName || typeof moduleName !== 'string') {
-    return false;
-  }
+	if (!moduleName || typeof moduleName !== "string") {
+		return false;
+	}
 
-  // Module name should only contain alphanumeric, underscore, and dash
-  // No dots to prevent directory traversal via module names
-  const validPattern = /^[a-zA-Z0-9_-]+$/;
-  return validPattern.test(moduleName);
+	// Module name should only contain alphanumeric, underscore, and dash
+	// No dots to prevent directory traversal via module names
+	const validPattern = /^[a-zA-Z0-9_-]+$/;
+	return validPattern.test(moduleName);
 }
 
 /**
@@ -76,13 +76,13 @@ export function isValidModuleName(moduleName) {
  * @returns {string}
  */
 export function createSecureModuleName(filePath) {
-  // Remove any potentially dangerous characters
-  return filePath
-    .replace(/[^a-zA-Z0-9_/-]/g, '_')  // Replace non-alphanumeric (except slash and dash)
-    .replace(/\/+/g, '_')               // Replace slashes with underscores
-    .replace(/-+/g, '_')                // Replace dashes with underscores
-    .replace(/_+/g, '_')                // Collapse multiple underscores
-    .replace(/^_|_$/g, '');             // Trim underscores from start/end
+	// Remove any potentially dangerous characters
+	return filePath
+		.replace(/[^a-zA-Z0-9_/-]/g, "_") // Replace non-alphanumeric (except slash and dash)
+		.replace(/\/+/g, "_") // Replace slashes with underscores
+		.replace(/-+/g, "_") // Replace dashes with underscores
+		.replace(/_+/g, "_") // Collapse multiple underscores
+		.replace(/^_|_$/g, ""); // Trim underscores from start/end
 }
 
 /**
@@ -94,25 +94,25 @@ export function createSecureModuleName(filePath) {
  * @returns {object}
  */
 export function createErrorResponse(status, message, code = null, details = null) {
-  const error = {
-    error: true,
-    status,
-    message,
-    timestamp: new Date().toISOString()
-  };
+	const error = {
+		error: true,
+		status,
+		message,
+		timestamp: new Date().toISOString(),
+	};
 
-  if (code) {
-    error.code = code;
-  }
+	if (code) {
+		error.code = code;
+	}
 
-  if (details) {
-    error.details = details;
-  }
+	if (details) {
+		error.details = details;
+	}
 
-  // In production, don't expose internal error details
-  if (process.env.NODE_ENV === 'production' && details?.stack) {
-    delete details.stack;
-  }
+	// In production, don't expose internal error details
+	if (process.env.NODE_ENV === "production" && details?.stack) {
+		delete details.stack;
+	}
 
-  return error;
+	return error;
 }

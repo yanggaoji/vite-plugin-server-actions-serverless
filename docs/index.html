@@ -296,7 +296,7 @@
 				font-weight: 500;
 				transition: all 0.2s;
 				position: relative;
-				font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+				font-family: "JetBrains Mono", "Consolas", "Monaco", monospace;
 			}
 
 			.code-tab:first-child {
@@ -635,9 +635,8 @@
 						</div>
 					</div>
 					<div class="code-example">
-
-					<div id="server" class="code-content active">
-						<pre><code class="language-javascript">// greet.server.js
+						<div id="server" class="code-content active">
+							<pre><code class="language-javascript">// greet.server.js
 export async function greet(name) {
   return `Hello, ${name}!`;
 }
@@ -645,10 +644,10 @@ export async function greet(name) {
 export async function getTime() {
   return new Date().toLocaleTimeString();
 }</code></pre>
-					</div>
+						</div>
 
-					<div id="client" class="code-content">
-						<pre><code class="language-javascript">// App.vue
+						<div id="client" class="code-content">
+							<pre><code class="language-javascript">// App.vue
 import { greet, getTime } from './greet.server.js';
 
 export default {
@@ -662,10 +661,10 @@ export default {
     }
   }
 }</code></pre>
-					</div>
+						</div>
 
-					<div id="config" class="code-content">
-						<pre><code class="language-javascript">// vite.config.js
+						<div id="config" class="code-content">
+							<pre><code class="language-javascript">// vite.config.js
 import { defineConfig } from 'vite';
 import { serverActions } from 'vite-plugin-server-actions';
 
@@ -674,8 +673,8 @@ export default defineConfig({
     serverActions()
   ]
 });</code></pre>
+						</div>
 					</div>
-				</div>
 				</div>
 			</div>
 		</div>
@@ -847,9 +846,8 @@ export default defineConfig({
 							</div>
 						</div>
 						<div class="code-example">
-
-						<div id="zod-server" class="code-content active">
-							<pre><code class="language-javascript">import { z } from 'zod';
+							<div id="zod-server" class="code-content active">
+								<pre><code class="language-javascript">import { z } from 'zod';
 
 // Define validation schema
 const TodoSchema = z.object({
@@ -874,10 +872,10 @@ export async function addTodo(todo) {
 
 // Attach schema for validation
 addTodo.schema = z.tuple([TodoSchema]);</code></pre>
-						</div>
+							</div>
 
-						<div id="zod-client" class="code-content">
-							<pre><code class="language-javascript">// Import server function like any other module
+							<div id="zod-client" class="code-content">
+								<pre><code class="language-javascript">// Import server function like any other module
 import { addTodo } from './todo.server.js';
 
 async function handleSubmit() {
@@ -895,10 +893,10 @@ async function handleSubmit() {
     console.error('Validation failed:', error);
   }
 }</code></pre>
-						</div>
+							</div>
 
-						<div id="zod-config" class="code-content">
-							<pre><code class="language-javascript">import { defineConfig } from 'vite';
+							<div id="zod-config" class="code-content">
+								<pre><code class="language-javascript">import { defineConfig } from 'vite';
 import { serverActions } from 'vite-plugin-server-actions';
 
 export default defineConfig({
@@ -921,8 +919,8 @@ export default defineConfig({
     })
   ]
 });</code></pre>
+							</div>
 						</div>
-					</div>
 					</div>
 				</div>
 			</div>
@@ -932,7 +930,8 @@ export default defineConfig({
 		<footer>
 			<div class="container">
 				<p>
-					Built with <a href="https://www.anthropic.com/claude-code" style="text-decoration: none;">🤖</a> by <a href="https://github.com/HelgeSverre">Helge Sverre</a> •
+					Built with <a href="https://www.anthropic.com/claude-code" style="text-decoration: none">🤖</a> by
+					<a href="https://github.com/HelgeSverre">Helge Sverre</a> •
 					<a href="https://github.com/HelgeSverre/vite-plugin-server-actions">GitHub</a> •
 					<a href="https://www.npmjs.com/package/vite-plugin-server-actions">npm</a>
 				</p>

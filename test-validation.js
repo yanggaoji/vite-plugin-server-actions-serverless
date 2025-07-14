@@ -7,8 +7,8 @@ console.log("🧪 Testing validation system...\n");
 // Test Zod adapter
 const adapter = new ZodAdapter();
 const schema = z.object({
-  name: z.string().min(1),
-  age: z.number().int().min(0),
+	name: z.string().min(1),
+	age: z.number().int().min(0),
 });
 
 console.log("1. Testing valid data...");
@@ -27,8 +27,8 @@ console.log("\n4. Testing schema discovery...");
 const discovery = new SchemaDiscovery();
 
 // Mock module with schema
-const mockFunction = function testFunc(data) { 
-  return data; 
+const mockFunction = function testFunc(data) {
+	return data;
 };
 mockFunction.schema = schema;
 

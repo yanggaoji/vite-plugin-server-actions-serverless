@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] - 2025-06-27
 
 ### Added
+
 - **Enhanced TypeScript Support** - Full TypeScript integration with real-time compilation in development
 - **Automatic Type Generation** - Generate `.d.ts` files for all server actions with proper TypeScript types
 - **AST-Based Function Detection** - More reliable function parsing with detailed TypeScript analysis
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Production TypeScript Compilation** - Full TypeScript support in production builds using esbuild
 
 ### Improved
+
 - **TypeScript Development Mode** - On-the-fly TypeScript compilation with retry logic and cache busting
 - **Module Import Reliability** - Enhanced import system with better error handling and recovery
 - **Test Coverage** - Achieved 100% test success rate across all frameworks (Svelte, Vue, React, TypeScript React)
@@ -29,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Developer Feedback** - Real-time validation warnings and best practice suggestions
 
 ### Fixed
+
 - **TypeScript Import Issues** - Resolved module loading problems in development mode
 - **Test Reliability** - Fixed flaky tests and improved test infrastructure
 - **File Upload Compatibility** - Enhanced file upload testing across all framework implementations
@@ -37,15 +40,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.1] - 2025-06-26
 
 ### Added
+
 - Support for Vite 7
 - Mobile responsiveness for code tabs in documentation site
 - Improved terminal-style tabs design in documentation site
 
 ### Changed
+
 - Dropped support for Vite 2 and 3 (now requires Vite 4+)
 - Removed ESLint in favor of Prettier-only formatting
 
 ### Fixed
+
 - Code tabs interference between examples in documentation
 - Mobile scrolling behavior for code tabs (dots now stay fixed)
 

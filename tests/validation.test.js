@@ -368,7 +368,7 @@ describe("createValidationMiddleware", () => {
 			status: 400,
 			message: "Request body must be a non-empty array of function arguments",
 			code: "INVALID_REQUEST_BODY",
-			timestamp: expect.any(String)
+			timestamp: expect.any(String),
 		});
 		expect(mockNext).not.toHaveBeenCalled();
 	});
@@ -389,9 +389,9 @@ describe("createValidationMiddleware", () => {
 			message: "Validation failed",
 			code: "VALIDATION_ERROR",
 			details: expect.objectContaining({
-				validationErrors: expect.any(Array)
+				validationErrors: expect.any(Array),
 			}),
-			timestamp: expect.any(String)
+			timestamp: expect.any(String),
 		});
 		expect(mockNext).not.toHaveBeenCalled();
 	});
@@ -433,9 +433,9 @@ describe("createValidationMiddleware", () => {
 			message: "Internal validation error",
 			code: "VALIDATION_INTERNAL_ERROR",
 			details: expect.objectContaining({
-				message: "Adapter error"
+				message: "Adapter error",
 			}),
-			timestamp: expect.any(String)
+			timestamp: expect.any(String),
 		});
 		expect(consoleErrorSpy).toHaveBeenCalled();
 

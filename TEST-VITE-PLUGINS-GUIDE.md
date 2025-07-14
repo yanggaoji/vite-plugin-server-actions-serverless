@@ -1,7 +1,7 @@
 # The complete guide to testing Vite plugins
 
-Testing Vite plugins effectively requires a strategic approach combining the right tools, patterns, and practices. *
-*Vitest emerges as the unanimous testing framework of choice**, offering native Vite integration and a Jest-compatible
+Testing Vite plugins effectively requires a strategic approach combining the right tools, patterns, and practices. \*
+\*Vitest emerges as the unanimous testing framework of choice\*\*, offering native Vite integration and a Jest-compatible
 API that enables fast, reliable testing. The most successful plugins employ a three-layer testing strategy: unit tests
 for individual hooks, integration tests using Vite's programmatic APIs, and end-to-end tests with Playwright for browser
 validation.
@@ -17,20 +17,23 @@ Setting up Vitest for plugin testing requires minimal configuration:
 
 ```javascript
 // vitest.config.ts
-import { defineConfig } from 'vitest/config'
-import { mergeConfig } from 'vite'
-import viteConfig from './vite.config'
+import { defineConfig } from "vitest/config";
+import { mergeConfig } from "vite";
+import viteConfig from "./vite.config";
 
-export default mergeConfig(viteConfig, defineConfig({
-  test: {
-    globals: true,
-    environment: 'node', // Use 'jsdom' for browser-like testing
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html']
-    }
-  }
-}))
+export default mergeConfig(
+  viteConfig,
+  defineConfig({
+    test: {
+      globals: true,
+      environment: "node", // Use 'jsdom' for browser-like testing
+      coverage: {
+        provider: "v8",
+        reporter: ["text", "json", "html"],
+      },
+    },
+  }),
+);
 ```
 
 This configuration shares your existing Vite setup while adding test-specific options. The **environment setting** is
@@ -38,9 +41,9 @@ crucial—use 'node' for most plugin testing, but switch to 'jsdom' when testing
 
 ## Three testing layers maximize coverage efficiency
 
-Successful Vite plugins implement a strategic three-layer testing approach that balances thoroughness with efficiency. *
-*Unit tests** form the foundation, focusing on individual plugin hooks and transformations. **Integration tests**
-validate plugin behavior within Vite's build pipeline. **End-to-end tests** ensure real-world functionality in actual
+Successful Vite plugins implement a strategic three-layer testing approach that balances thoroughness with efficiency. \*
+\*Unit tests** form the foundation, focusing on individual plugin hooks and transformations. **Integration tests**
+validate plugin behavior within Vite's build pipeline. **End-to-end tests\*\* ensure real-world functionality in actual
 browser environments.
 
 ### Unit testing targets plugin hooks
@@ -49,34 +52,34 @@ Unit tests should cover all major plugin hooks, with particular emphasis on the 
 ** hooks that handle most plugin logic. Here's the pattern used by official Vite plugins:
 
 ```javascript
-import { describe, it, expect } from 'vitest'
-import myPlugin from './my-plugin'
+import { describe, it, expect } from "vitest";
+import myPlugin from "./my-plugin";
 
-describe('Transform Hook', () => {
-  it('transforms files correctly', async () => {
-    const plugin = myPlugin({ option: 'value' })
-    const result = await plugin.transform('input code', 'test.js')
+describe("Transform Hook", () => {
+  it("transforms files correctly", async () => {
+    const plugin = myPlugin({ option: "value" });
+    const result = await plugin.transform("input code", "test.js");
 
-    expect(result.code).toContain('expected output')
-    expect(result.map).toBeDefined()
-  })
-})
+    expect(result.code).toContain("expected output");
+    expect(result.map).toBeDefined();
+  });
+});
 ```
 
 Virtual module testing deserves special attention, as it's a common source of bugs:
 
 ```javascript
-it('handles virtual modules', async () => {
-  const plugin = myPlugin()
+it("handles virtual modules", async () => {
+  const plugin = myPlugin();
 
   // Test module resolution
-  const resolved = await plugin.resolveId('virtual:my-module')
-  expect(resolved).toBe('\0virtual:my-module')
+  const resolved = await plugin.resolveId("virtual:my-module");
+  expect(resolved).toBe("\0virtual:my-module");
 
   // Test module loading
-  const loaded = await plugin.load('\0virtual:my-module')
-  expect(loaded).toContain('export const')
-})
+  const loaded = await plugin.load("\0virtual:my-module");
+  expect(loaded).toContain("export const");
+});
 ```
 
 ### Integration testing validates the build pipeline
@@ -85,36 +88,36 @@ Integration tests use Vite's programmatic APIs to test plugins within the actual
 **build** APIs enable comprehensive testing without manual setup:
 
 ```javascript
-import { createServer, build } from 'vite'
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { createServer, build } from "vite";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 
-describe('Plugin Integration', () => {
-  let server
+describe("Plugin Integration", () => {
+  let server;
 
   beforeAll(async () => {
     server = await createServer({
       plugins: [myPlugin()],
-      configFile: false
-    })
-  })
+      configFile: false,
+    });
+  });
 
   afterAll(async () => {
-    await server.close()
-  })
+    await server.close();
+  });
 
-  it('processes modules through pipeline', async () => {
-    const result = await server.transformRequest('/test-file.js')
-    expect(result.code).toContain('transformed')
-  })
+  it("processes modules through pipeline", async () => {
+    const result = await server.transformRequest("/test-file.js");
+    expect(result.code).toContain("transformed");
+  });
 
-  it('works during build', async () => {
+  it("works during build", async () => {
     const result = await build({
       plugins: [myPlugin()],
-      build: { write: false }
-    })
-    expect(result.output).toBeDefined()
-  })
-})
+      build: { write: false },
+    });
+    expect(result.output).toBeDefined();
+  });
+});
 ```
 
 ### End-to-end testing with Playwright
@@ -123,21 +126,21 @@ Modern Vite plugins use **Playwright** for E2E testing, following the pattern es
 This approach tests actual browser behavior with your plugin:
 
 ```javascript
-import { test, expect } from '@playwright/test'
+import { test, expect } from "@playwright/test";
 
-test('plugin works in browser', async ({ page }) => {
+test("plugin works in browser", async ({ page }) => {
   // Start dev server with plugin
   const server = await createServer({
-    plugins: [myPlugin()]
-  })
-  await server.listen()
+    plugins: [myPlugin()],
+  });
+  await server.listen();
 
   // Test browser functionality
-  await page.goto(`http://localhost:${server.config.server.port}`)
-  await expect(page.locator('#app')).toContainText('Expected content')
+  await page.goto(`http://localhost:${server.config.server.port}`);
+  await expect(page.locator("#app")).toContainText("Expected content");
 
-  await server.close()
-})
+  await server.close();
+});
 ```
 
 ## Essential testing tools and utilities
@@ -146,14 +149,14 @@ The **vite-plugin-inspect** tool proves indispensable for debugging plugin trans
 dependency and add it to your Vite configuration:
 
 ```javascript
-import Inspect from 'vite-plugin-inspect'
+import Inspect from "vite-plugin-inspect";
 
 export default {
   plugins: [
     myPlugin(),
-    Inspect() // Adds /__inspect/ route for debugging
-  ]
-}
+    Inspect(), // Adds /__inspect/ route for debugging
+  ],
+};
 ```
 
 This creates a web interface at `localhost:5173/__inspect/` where you can examine how your plugin transforms each
@@ -163,19 +166,19 @@ For mocking and stubbing, Vitest provides powerful utilities through its **vi** 
 for predictable testing:
 
 ```javascript
-import { vi } from 'vitest'
-import { vol } from 'memfs'
+import { vi } from "vitest";
+import { vol } from "memfs";
 
-vi.mock('node:fs')
-vi.mock('node:fs/promises')
+vi.mock("node:fs");
+vi.mock("node:fs/promises");
 
 beforeEach(() => {
-  vol.reset()
+  vol.reset();
   vol.fromJSON({
-    '/project/src/index.js': 'export default "hello"',
-    '/project/package.json': '{"name": "test"}'
-  })
-})
+    "/project/src/index.js": 'export default "hello"',
+    "/project/package.json": '{"name": "test"}',
+  });
+});
 ```
 
 ## Real-world testing patterns from successful plugins
@@ -203,18 +206,13 @@ minimal Vite project testing specific plugin features.
 Successful plugins also employ **configuration matrix testing** to ensure compatibility across environments:
 
 ```javascript
-const configs = [
-  { mode: 'development' },
-  { mode: 'production' },
-  { ssr: true },
-  { legacy: true }
-]
+const configs = [{ mode: "development" }, { mode: "production" }, { ssr: true }, { legacy: true }];
 
-configs.forEach(config => {
+configs.forEach((config) => {
   describe(`Plugin with ${JSON.stringify(config)}`, () => {
     // Test suite for each configuration
-  })
-})
+  });
+});
 ```
 
 ## Critical pitfalls to avoid
@@ -228,28 +226,23 @@ Here's how to avoid the configuration testing pitfall:
 
 ```javascript
 // ❌ Bad: Only testing default configuration
-const plugin = myPlugin()
+const plugin = myPlugin();
 
 // ✅ Good: Testing multiple configurations
-const configurations = [
-  {},
-  { debug: true },
-  { include: ['**/*.vue'] },
-  { exclude: ['node_modules'] }
-]
+const configurations = [{}, { debug: true }, { include: ["**/*.vue"] }, { exclude: ["node_modules"] }];
 
-configurations.forEach(config => {
+configurations.forEach((config) => {
   it(`works with config ${JSON.stringify(config)}`, () => {
-    const plugin = myPlugin(config)
+    const plugin = myPlugin(config);
     // Test implementation
-  })
-})
+  });
+});
 ```
 
 ## Optimal testing coverage strategies
 
 The **"bang for buck"** approach to testing focuses effort where bugs most commonly occur. Research shows **80% of
-plugin bugs** stem from incorrect hook implementations, **15% from configuration issues**, and **5% from error handling.
+plugin bugs** stem from incorrect hook implementations, **15% from configuration issues**, and \*\*5% from error handling.
 Structure your testing effort accordingly.
 
 Priority areas for comprehensive testing:
@@ -263,12 +256,12 @@ Priority areas for comprehensive testing:
 For efficiency, implement **snapshot testing** for transformation outputs:
 
 ```javascript
-it('transforms component correctly', async () => {
-  const input = await readFile('./fixtures/Component.vue', 'utf-8')
-  const result = await plugin.transform(input, 'Component.vue')
+it("transforms component correctly", async () => {
+  const input = await readFile("./fixtures/Component.vue", "utf-8");
+  const result = await plugin.transform(input, "Component.vue");
 
-  expect(result.code).toMatchSnapshot()
-})
+  expect(result.code).toMatchSnapshot();
+});
 ```
 
 ## Setting up continuous integration
@@ -286,7 +279,7 @@ jobs:
     strategy:
       matrix:
         node-version: [18, 20, 22]
-        vite-version: ['^5.0.0', '^6.0.0']
+        vite-version: ["^5.0.0", "^6.0.0"]
 
     steps:
       - uses: actions/checkout@v4
@@ -311,11 +304,11 @@ export default defineConfig({
         lines: 80,
         functions: 80,
         branches: 75,
-        statements: 80
-      }
-    }
-  }
-})
+        statements: 80,
+      },
+    },
+  },
+});
 ```
 
 ## Performance testing and optimization
@@ -324,34 +317,33 @@ Performance testing prevents regression in transformation speed and bundle size 
 Vitest's built-in capabilities:
 
 ```javascript
-import { bench, describe } from 'vitest'
+import { bench, describe } from "vitest";
 
-describe('Plugin Performance', () => {
-  bench('transforms large files', async () => {
-    const largeFile = 'const x = 1;\n'.repeat(10000)
-    await plugin.transform(largeFile, 'large.js')
-  })
+describe("Plugin Performance", () => {
+  bench("transforms large files", async () => {
+    const largeFile = "const x = 1;\n".repeat(10000);
+    await plugin.transform(largeFile, "large.js");
+  });
 
-  bench('handles many small files', async () => {
+  bench("handles many small files", async () => {
     for (let i = 0; i < 100; i++) {
-      await plugin.transform(`export const n = ${i}`, `file${i}.js`)
+      await plugin.transform(`export const n = ${i}`, `file${i}.js`);
     }
-  })
-})
+  });
+});
 ```
 
 Monitor bundle size impact to ensure plugins don't bloat applications:
 
 ```javascript
-it('minimal bundle size impact', async () => {
-  const baselineResult = await build({ plugins: [] })
-  const withPluginResult = await build({ plugins: [myPlugin()] })
+it("minimal bundle size impact", async () => {
+  const baselineResult = await build({ plugins: [] });
+  const withPluginResult = await build({ plugins: [myPlugin()] });
 
-  const sizeIncrease = withPluginResult.output[0].code.length -
-                      baselineResult.output[0].code.length
+  const sizeIncrease = withPluginResult.output[0].code.length - baselineResult.output[0].code.length;
 
-  expect(sizeIncrease).toBeLessThan(5000) // Max 5KB increase
-})
+  expect(sizeIncrease).toBeLessThan(5000); // Max 5KB increase
+});
 ```
 
 ## Debugging and troubleshooting workflows

@@ -5,7 +5,7 @@ import {
 	createSwaggerMiddleware,
 	setupOpenAPIEndpoints,
 	parseJSDocParameters,
-	EnhancedOpenAPIGenerator
+	EnhancedOpenAPIGenerator,
 } from "../src/openapi.js";
 import { SchemaDiscovery, ZodAdapter } from "../src/validation.js";
 
@@ -13,8 +13,8 @@ import { SchemaDiscovery, ZodAdapter } from "../src/validation.js";
 vi.mock("swagger-ui-express", () => ({
 	default: {
 		serve: vi.fn(),
-		setup: vi.fn(() => vi.fn())
-	}
+		setup: vi.fn(() => vi.fn()),
+	},
 }));
 
 describe("OpenAPIGenerator", () => {
@@ -38,14 +38,14 @@ describe("OpenAPIGenerator", () => {
 			info: {
 				title: "Custom API",
 				version: "2.0.0",
-				description: "Custom description"
+				description: "Custom description",
 			},
 			servers: [
 				{
 					url: "https://api.example.com",
-					description: "Production server"
-				}
-			]
+					description: "Production server",
+				},
+			],
 		});
 
 		expect(customGenerator.info.title).toBe("Custom API");
@@ -56,12 +56,10 @@ describe("OpenAPIGenerator", () => {
 
 	describe("generateSpec", () => {
 		it("should generate basic OpenAPI spec", () => {
-			const serverFunctions = new Map([
-				["testModule", { functions: ["testFunction", "anotherFunction"] }]
-			]);
+			const serverFunctions = new Map([["testModule", { functions: ["testFunction", "anotherFunction"] }]]);
 
 			const spec = generator.generateSpec(serverFunctions, schemaDiscovery, {
-				apiPrefix: "/api"
+				apiPrefix: "/api",
 			});
 
 			expect(spec.openapi).toBe("3.0.3");
@@ -78,7 +76,7 @@ describe("OpenAPIGenerator", () => {
 		it("should generate paths for multiple modules", () => {
 			const serverFunctions = new Map([
 				["module1", { functions: ["func1", "func2"] }],
-				["module2", { functions: ["func3"] }]
+				["module2", { functions: ["func3"] }],
 			]);
 
 			const spec = generator.generateSpec(serverFunctions, schemaDiscovery);
@@ -90,9 +88,7 @@ describe("OpenAPIGenerator", () => {
 		});
 
 		it("should include schema information when available", () => {
-			const serverFunctions = new Map([
-				["testModule", { functions: ["testFunction"] }]
-			]);
+			const serverFunctions = new Map([["testModule", { functions: ["testFunction"] }]]);
 
 			const schema = z.object({ name: z.string(), age: z.number() });
 			schemaDiscovery.registerSchema("testModule", "testFunction", schema);
@@ -102,17 +98,15 @@ describe("OpenAPIGenerator", () => {
 			const pathItem = spec.paths["/api/testModule/testFunction"];
 			expect(pathItem.post.requestBody.content["application/json"].schema).toBeDefined();
 		});
-		
+
 		it("should use dynamic port when provided", () => {
-			const serverFunctions = new Map([
-				["testModule", { functions: ["testFunction"] }]
-			]);
-			
+			const serverFunctions = new Map([["testModule", { functions: ["testFunction"] }]]);
+
 			const spec = generator.generateSpec(serverFunctions, schemaDiscovery, {
 				apiPrefix: "/api",
-				port: 8081
+				port: 8081,
 			});
-			
+
 			expect(spec.servers).toHaveLength(1);
 			expect(spec.servers[0].url).toBe("http://localhost:8081");
 		});
@@ -151,7 +145,7 @@ describe("OpenAPIGenerator", () => {
 
 			// Success response
 			expect(pathItem.post.responses[200].content["application/json"].schema).toBeDefined();
-			
+
 			// Error responses
 			expect(pathItem.post.responses[400].content["application/json"].schema).toBeDefined();
 			expect(pathItem.post.responses[404].content["application/json"].schema).toBeDefined();
@@ -180,7 +174,7 @@ describe("OpenAPIGenerator", () => {
 			const validationSchema = z.object({
 				name: z.string(),
 				age: z.number(),
-				active: z.boolean()
+				active: z.boolean(),
 			});
 			const schema = generator.generateRequestSchema(validationSchema);
 
@@ -229,8 +223,8 @@ describe("createSwaggerMiddleware", () => {
 		const customOptions = {
 			swaggerOptions: {
 				customSiteTitle: "Custom Title",
-				customCss: "body { background: red; }"
-			}
+				customCss: "body { background: red; }",
+			},
 		};
 
 		const middleware = createSwaggerMiddleware(spec, customOptions);
@@ -245,7 +239,7 @@ describe("setupOpenAPIEndpoints", () => {
 	beforeEach(() => {
 		mockApp = {
 			get: vi.fn(),
-			use: vi.fn()
+			use: vi.fn(),
 		};
 		consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 	});
@@ -256,7 +250,7 @@ describe("setupOpenAPIEndpoints", () => {
 
 	it("should setup OpenAPI JSON endpoint", () => {
 		const spec = { openapi: "3.0.3", info: { title: "Test" } };
-		
+
 		setupOpenAPIEndpoints(mockApp, spec);
 
 		expect(mockApp.get).toHaveBeenCalledWith("/api/openapi.json", expect.any(Function));
@@ -264,7 +258,7 @@ describe("setupOpenAPIEndpoints", () => {
 
 	it("should setup Swagger UI by default", () => {
 		const spec = { openapi: "3.0.3", info: { title: "Test" } };
-		
+
 		setupOpenAPIEndpoints(mockApp, spec);
 
 		expect(mockApp.use).toHaveBeenCalledWith("/api/docs", expect.any(Function), expect.any(Function));
@@ -274,7 +268,7 @@ describe("setupOpenAPIEndpoints", () => {
 
 	it("should skip Swagger UI when disabled", () => {
 		const spec = { openapi: "3.0.3", info: { title: "Test" } };
-		
+
 		setupOpenAPIEndpoints(mockApp, spec, { enableSwaggerUI: false });
 
 		expect(mockApp.get).toHaveBeenCalledWith("/api/openapi.json", expect.any(Function));
@@ -286,9 +280,9 @@ describe("setupOpenAPIEndpoints", () => {
 		const spec = { openapi: "3.0.3", info: { title: "Test" } };
 		const options = {
 			docsPath: "/custom/docs",
-			specPath: "/custom/spec.json"
+			specPath: "/custom/spec.json",
 		};
-		
+
 		setupOpenAPIEndpoints(mockApp, spec, options);
 
 		expect(mockApp.get).toHaveBeenCalledWith("/custom/spec.json", expect.any(Function));
@@ -297,11 +291,11 @@ describe("setupOpenAPIEndpoints", () => {
 
 	it("should serve OpenAPI spec correctly", () => {
 		const spec = { openapi: "3.0.3", info: { title: "Test" } };
-		
+
 		setupOpenAPIEndpoints(mockApp, spec);
 
 		// Get the handler function and test it
-		const getCall = mockApp.get.mock.calls.find(call => call[0] === "/api/openapi.json");
+		const getCall = mockApp.get.mock.calls.find((call) => call[0] === "/api/openapi.json");
 		expect(getCall).toBeDefined();
 
 		const handler = getCall[1];
@@ -330,7 +324,7 @@ describe("parseJSDocParameters", () => {
 			name: "name",
 			type: "string",
 			description: "The user's name",
-			required: true
+			required: true,
 		});
 	});
 
@@ -416,9 +410,7 @@ describe("EnhancedOpenAPIGenerator", () => {
 
 	describe("generateSchemaFromJSDoc", () => {
 		it("should generate single parameter schema", () => {
-			const params = [
-				{ name: "name", type: "string", description: "User name", required: true }
-			];
+			const params = [{ name: "name", type: "string", description: "User name", required: true }];
 
 			const schema = generator.generateSchemaFromJSDoc(params);
 
@@ -429,7 +421,7 @@ describe("EnhancedOpenAPIGenerator", () => {
 		it("should generate object schema for multiple parameters", () => {
 			const params = [
 				{ name: "name", type: "string", description: "User name", required: true },
-				{ name: "age", type: "number", description: "User age", required: false }
+				{ name: "age", type: "number", description: "User age", required: false },
 			];
 
 			const schema = generator.generateSchemaFromJSDoc(params);
@@ -443,20 +435,26 @@ describe("EnhancedOpenAPIGenerator", () => {
 
 	describe("jsDocTypeToOpenAPISchema", () => {
 		it("should convert basic types", () => {
-			expect(generator.jsDocTypeToOpenAPISchema({ type: "string", description: "test" }))
-				.toEqual({ type: "string", description: "test" });
-			
-			expect(generator.jsDocTypeToOpenAPISchema({ type: "number", description: "test" }))
-				.toEqual({ type: "number", description: "test" });
-			
-			expect(generator.jsDocTypeToOpenAPISchema({ type: "boolean", description: "test" }))
-				.toEqual({ type: "boolean", description: "test" });
+			expect(generator.jsDocTypeToOpenAPISchema({ type: "string", description: "test" })).toEqual({
+				type: "string",
+				description: "test",
+			});
+
+			expect(generator.jsDocTypeToOpenAPISchema({ type: "number", description: "test" })).toEqual({
+				type: "number",
+				description: "test",
+			});
+
+			expect(generator.jsDocTypeToOpenAPISchema({ type: "boolean", description: "test" })).toEqual({
+				type: "boolean",
+				description: "test",
+			});
 		});
 
 		it("should handle union types", () => {
-			const result = generator.jsDocTypeToOpenAPISchema({ 
-				type: "'low'|'medium'|'high'", 
-				description: "Priority level" 
+			const result = generator.jsDocTypeToOpenAPISchema({
+				type: "'low'|'medium'|'high'",
+				description: "Priority level",
 			});
 
 			expect(result.type).toBe("string");
@@ -465,9 +463,9 @@ describe("EnhancedOpenAPIGenerator", () => {
 		});
 
 		it("should handle arrays", () => {
-			const result = generator.jsDocTypeToOpenAPISchema({ 
-				type: "array", 
-				description: "List of items" 
+			const result = generator.jsDocTypeToOpenAPISchema({
+				type: "array",
+				description: "List of items",
 			});
 
 			expect(result.type).toBe("array");
@@ -476,9 +474,9 @@ describe("EnhancedOpenAPIGenerator", () => {
 		});
 
 		it("should default to object for unknown types", () => {
-			const result = generator.jsDocTypeToOpenAPISchema({ 
-				type: "CustomType", 
-				description: "Custom type" 
+			const result = generator.jsDocTypeToOpenAPISchema({
+				type: "CustomType",
+				description: "Custom type",
 			});
 
 			expect(result.type).toBe("object");

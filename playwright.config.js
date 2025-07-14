@@ -17,7 +17,7 @@ export default defineConfig({
 	projects: [
 		{
 			name: "svelte",
-			use: { 
+			use: {
 				browserName: "chromium",
 				baseURL: "http://localhost:5173",
 			},
@@ -25,7 +25,7 @@ export default defineConfig({
 		},
 		{
 			name: "vue",
-			use: { 
+			use: {
 				browserName: "chromium",
 				baseURL: "http://localhost:5174",
 			},
@@ -33,7 +33,7 @@ export default defineConfig({
 		},
 		{
 			name: "react",
-			use: { 
+			use: {
 				browserName: "chromium",
 				baseURL: "http://localhost:5175",
 			},
@@ -41,7 +41,7 @@ export default defineConfig({
 		},
 		{
 			name: "react-ts",
-			use: { 
+			use: {
 				browserName: "chromium",
 				baseURL: "http://localhost:5176",
 			},

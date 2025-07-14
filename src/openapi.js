@@ -30,13 +30,15 @@ export class OpenAPIGenerator {
 	 */
 	generateSpec(serverFunctions, schemaDiscovery, options = {}) {
 		// Override servers with dynamic port if provided
-		const servers = options.port ? [
-			{
-				url: `http://localhost:${options.port}`,
-				description: "Development server",
-			}
-		] : this.servers;
-		
+		const servers = options.port
+			? [
+					{
+						url: `http://localhost:${options.port}`,
+						description: "Development server",
+					},
+				]
+			: this.servers;
+
 		const spec = {
 			openapi: "3.0.3",
 			info: this.info,

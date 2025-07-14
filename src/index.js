@@ -14,18 +14,18 @@ import { generateValidationCode } from "./build-utils.js";
 import { extractExportedFunctions, isValidFunctionName } from "./ast-parser.js";
 import { generateTypeDefinitions, generateEnhancedClientProxy } from "./type-generator.js";
 import { sanitizePath, isValidModuleName, createSecureModuleName, createErrorResponse } from "./security.js";
-import { 
-	enhanceFunctionNotFoundError, 
-	enhanceParsingError, 
+import {
+	enhanceFunctionNotFoundError,
+	enhanceParsingError,
 	enhanceValidationError,
 	enhanceModuleLoadError,
-	createDevelopmentWarning 
+	createDevelopmentWarning,
 } from "./error-enhancer.js";
-import { 
-	validateFunctionSignature, 
-	validateFileStructure, 
+import {
+	validateFunctionSignature,
+	validateFileStructure,
 	createDevelopmentFeedback,
-	validateSchemaAttachment 
+	validateSchemaAttachment,
 } from "./dev-validator.js";
 
 // Cache for compiled TypeScript modules in development
@@ -38,7 +38,7 @@ const tsModuleCache = new Map();
  */
 async function importModule(id) {
 	// In production or for JS files, use regular import
-	if (process.env.NODE_ENV === 'production' || !id.endsWith('.ts')) {
+	if (process.env.NODE_ENV === "production" || !id.endsWith(".ts")) {
 		return import(id);
 	}
 
@@ -50,43 +50,43 @@ async function importModule(id) {
 	// Retry logic for TypeScript compilation failures
 	let retryCount = 0;
 	const maxRetries = 3;
-	
+
 	while (retryCount < maxRetries) {
 		try {
 			// Read and transform TypeScript file
-			const tsCode = await fs.readFile(id, 'utf-8');
-			
+			const tsCode = await fs.readFile(id, "utf-8");
+
 			// Transform imports to be relative to the original file location
 			const result = await esbuild.transform(tsCode, {
-				loader: 'ts',
-				target: 'node16',
-				format: 'esm',
+				loader: "ts",
+				target: "node16",
+				format: "esm",
 				sourcefile: id,
-				sourcemap: 'inline',
+				sourcemap: "inline",
 			});
 
 			// Create a temporary file in the same directory as the original
 			// This ensures relative imports work correctly
 			const dir = path.dirname(id);
-			const basename = path.basename(id, '.ts');
+			const basename = path.basename(id, ".ts");
 			const tmpFile = path.join(dir, `.${basename}.tmp.mjs`);
-			
+
 			// Write compiled JavaScript
-			await fs.writeFile(tmpFile, result.code, 'utf-8');
-			
+			await fs.writeFile(tmpFile, result.code, "utf-8");
+
 			try {
 				// Add a small delay to ensure file is written
-				await new Promise(resolve => setTimeout(resolve, 50));
-				
+				await new Promise((resolve) => setTimeout(resolve, 50));
+
 				// Import the compiled module with cache busting
 				const module = await import(`${tmpFile}?t=${Date.now()}`);
-				
+
 				// Cache the module
 				tsModuleCache.set(id, module);
-				
+
 				// Clean up temp file immediately
 				await fs.unlink(tmpFile).catch(() => {});
-				
+
 				return module;
 			} catch (importError) {
 				// Clean up on error
@@ -100,7 +100,7 @@ async function importModule(id) {
 				throw error;
 			}
 			// Wait before retry
-			await new Promise(resolve => setTimeout(resolve, 100 * retryCount));
+			await new Promise((resolve) => setTimeout(resolve, 100 * retryCount));
 		}
 	}
 }
@@ -246,14 +246,14 @@ export default function serverActions(userOptions = {}) {
 
 			// Clean up on HMR
 			if (server.watcher) {
-				server.watcher.on('change', (file) => {
+				server.watcher.on("change", (file) => {
 					// If a server file changed, remove it from the map
 					if (shouldProcessFile(file, options)) {
 						// Clear TypeScript cache for this file
-						if (file.endsWith('.ts')) {
+						if (file.endsWith(".ts")) {
 							tsModuleCache.delete(file);
 						}
-						
+
 						for (const [moduleName, moduleInfo] of serverFunctions.entries()) {
 							if (moduleInfo.id === file) {
 								serverFunctions.delete(moduleName);
@@ -270,7 +270,7 @@ export default function serverActions(userOptions = {}) {
 				// OpenAPI spec endpoint - generates spec dynamically from current serverFunctions
 				app.get(options.openAPI.specPath, (req, res) => {
 					// Get the actual port from the request
-					const port = req.get('host')?.split(':')[1] || viteConfig.server?.port || 5173;
+					const port = req.get("host")?.split(":")[1] || viteConfig.server?.port || 5173;
 					const openAPISpec = openAPIGenerator.generateSpec(serverFunctions, schemaDiscovery, {
 						apiPrefix: options.apiPrefix,
 						routeTransform: options.routeTransform,
@@ -336,7 +336,7 @@ export default function serverActions(userOptions = {}) {
 			server.middlewares.use(app);
 
 			// Show development feedback after server is ready
-			if (process.env.NODE_ENV === 'development') {
+			if (process.env.NODE_ENV === "development") {
 				server.httpServer?.on("listening", () => {
 					// Delay to appear after Vite's startup messages
 					global.setTimeout(() => {
@@ -387,40 +387,43 @@ export default function serverActions(userOptions = {}) {
 					for (const fn of exportedFunctions) {
 						// Skip default exports for now (could be supported in future)
 						if (fn.isDefault) {
-							console.warn(createDevelopmentWarning(
-								"Default Export Skipped",
-								`Default exports are not currently supported`,
-								{
+							console.warn(
+								createDevelopmentWarning("Default Export Skipped", `Default exports are not currently supported`, {
 									filePath: relativePath,
-									suggestion: "Use named exports instead: export async function myFunction() {}"
-								}
-							));
+									suggestion: "Use named exports instead: export async function myFunction() {}",
+								}),
+							);
 							continue;
 						}
 
 						// Validate function name
 						if (!isValidFunctionName(fn.name)) {
-							console.warn(createDevelopmentWarning(
-								"Invalid Function Name",
-								`Function name '${fn.name}' is not a valid JavaScript identifier`,
-								{
-									filePath: relativePath,
-									suggestion: "Function names must start with a letter, $, or _ and contain only letters, numbers, $, and _"
-								}
-							));
+							console.warn(
+								createDevelopmentWarning(
+									"Invalid Function Name",
+									`Function name '${fn.name}' is not a valid JavaScript identifier`,
+									{
+										filePath: relativePath,
+										suggestion:
+											"Function names must start with a letter, $, or _ and contain only letters, numbers, $, and _",
+									},
+								),
+							);
 							continue;
 						}
 
 						// Warn about non-async functions
 						if (!fn.isAsync) {
-							console.warn(createDevelopmentWarning(
-								"Non-Async Function",
-								`Function '${fn.name}' is not async. Server actions should typically be async`,
-								{
-									filePath: relativePath,
-									suggestion: "Consider changing to: export async function " + fn.name + "() {}"
-								}
-							));
+							console.warn(
+								createDevelopmentWarning(
+									"Non-Async Function",
+									`Function '${fn.name}' is not async. Server actions should typically be async`,
+									{
+										filePath: relativePath,
+										suggestion: "Consider changing to: export async function " + fn.name + "() {}",
+									},
+								),
+							);
 						}
 
 						functions.push(fn.name);
@@ -434,23 +437,23 @@ export default function serverActions(userOptions = {}) {
 					}
 
 					// Store both simple function names and detailed information
-					serverFunctions.set(moduleName, { 
-						functions: uniqueFunctions, 
-						functionDetails, 
-						id, 
-						filePath: relativePath 
+					serverFunctions.set(moduleName, {
+						functions: uniqueFunctions,
+						functionDetails,
+						id,
+						filePath: relativePath,
 					});
 
 					// Development-time validation and feedback
-					if (process.env.NODE_ENV === 'development') {
+					if (process.env.NODE_ENV === "development") {
 						// Validate file structure
 						const fileWarnings = validateFileStructure(functionDetails, relativePath);
-						fileWarnings.forEach(warning => console.warn(warning));
+						fileWarnings.forEach((warning) => console.warn(warning));
 
 						// Validate individual function signatures
-						functionDetails.forEach(func => {
+						functionDetails.forEach((func) => {
 							const funcWarnings = validateFunctionSignature(func, relativePath);
-							funcWarnings.forEach(warning => console.warn(warning));
+							funcWarnings.forEach((warning) => console.warn(warning));
 						});
 					}
 
@@ -459,18 +462,18 @@ export default function serverActions(userOptions = {}) {
 						try {
 							const module = await importModule(id);
 							schemaDiscovery.discoverFromModule(module, moduleName);
-							
+
 							// Validate schema attachment in development
-							if (process.env.NODE_ENV === 'development') {
+							if (process.env.NODE_ENV === "development") {
 								const schemaWarnings = validateSchemaAttachment(module, uniqueFunctions, relativePath);
-								schemaWarnings.forEach(warning => console.warn(warning));
+								schemaWarnings.forEach((warning) => console.warn(warning));
 							}
 						} catch (error) {
 							const enhancedError = enhanceModuleLoadError(id, error);
 							console.warn(enhancedError.message);
-							
-							if (process.env.NODE_ENV === 'development' && enhancedError.suggestions) {
-								enhancedError.suggestions.forEach(suggestion => {
+
+							if (process.env.NODE_ENV === "development" && enhancedError.suggestions) {
+								enhancedError.suggestions.forEach((suggestion) => {
 									console.info(`  💡 ${suggestion}`);
 								});
 							}
@@ -523,16 +526,10 @@ export default function serverActions(userOptions = {}) {
 									// Check if function exists in module
 									if (typeof module[functionName] !== "function") {
 										// Get available functions for better error message
-										const availableFunctions = Object.keys(module).filter(key => 
-											typeof module[key] === 'function'
-										);
-										
-										const enhancedError = enhanceFunctionNotFoundError(
-											functionName, 
-											moduleName, 
-											availableFunctions
-										);
-										
+										const availableFunctions = Object.keys(module).filter((key) => typeof module[key] === "function");
+
+										const enhancedError = enhanceFunctionNotFoundError(functionName, moduleName, availableFunctions);
+
 										throw new Error(enhancedError.message);
 									}
 
@@ -549,43 +546,37 @@ export default function serverActions(userOptions = {}) {
 									if (error.message.includes("not found") || error.message.includes("not a function")) {
 										// Extract available functions from the error context if available
 										const availableFunctionsMatch = error.message.match(/Available functions: ([^]+)/);
-										const availableFunctions = availableFunctionsMatch 
-											? availableFunctionsMatch[1].split(', ')
-											: [];
-										
-										res.status(404).json(createErrorResponse(
-											404,
-											"Function not found",
-											"FUNCTION_NOT_FOUND",
-											{ 
-												functionName, 
+										const availableFunctions = availableFunctionsMatch ? availableFunctionsMatch[1].split(", ") : [];
+
+										res.status(404).json(
+											createErrorResponse(404, "Function not found", "FUNCTION_NOT_FOUND", {
+												functionName,
 												moduleName,
 												availableFunctions: availableFunctions.length > 0 ? availableFunctions : undefined,
-												suggestion: `Try one of: ${availableFunctions.join(', ') || 'none available'}`
-											}
-										));
+												suggestion: `Try one of: ${availableFunctions.join(", ") || "none available"}`,
+											}),
+										);
 									} else if (error.message.includes("Request body")) {
-										res.status(400).json(createErrorResponse(
-											400,
-											error.message,
-											"INVALID_REQUEST_BODY",
-											{ 
-												suggestion: "Send an array of arguments: [arg1, arg2, ...]" 
-											}
-										));
+										res.status(400).json(
+											createErrorResponse(400, error.message, "INVALID_REQUEST_BODY", {
+												suggestion: "Send an array of arguments: [arg1, arg2, ...]",
+											}),
+										);
 									} else {
-										res.status(500).json(createErrorResponse(
-											500,
-											"Internal server error",
-											"INTERNAL_ERROR",
-											process.env.NODE_ENV !== 'production' 
-												? { 
-													message: error.message, 
-													stack: error.stack,
-													suggestion: "Check server logs for more details"
-												} 
-												: { suggestion: "Contact support if this persists" }
-										));
+										res.status(500).json(
+											createErrorResponse(
+												500,
+												"Internal server error",
+												"INTERNAL_ERROR",
+												process.env.NODE_ENV !== "production"
+													? {
+															message: error.message,
+															stack: error.stack,
+															suggestion: "Check server logs for more details",
+														}
+													: { suggestion: "Contact support if this persists" },
+											),
+										);
 									}
 								}
 							});
@@ -603,19 +594,19 @@ export default function serverActions(userOptions = {}) {
 				} catch (error) {
 					const enhancedError = enhanceParsingError(id, error);
 					console.error(enhancedError.message);
-					
+
 					// Provide helpful suggestions in development
-					if (process.env.NODE_ENV === 'development' && enhancedError.suggestions.length > 0) {
-						console.info('[Vite Server Actions] 💡 Suggestions:');
-						enhancedError.suggestions.forEach(suggestion => {
+					if (process.env.NODE_ENV === "development" && enhancedError.suggestions.length > 0) {
+						console.info("[Vite Server Actions] 💡 Suggestions:");
+						enhancedError.suggestions.forEach((suggestion) => {
 							console.info(`  • ${suggestion}`);
 						});
 					}
-					
+
 					// Return error comment with context instead of failing the build
 					return `// Failed to load server actions from ${id}
 // Error: ${error.message}
-// ${enhancedError.suggestions.length > 0 ? 'Suggestions: ' + enhancedError.suggestions.join(', ') : ''}`;
+// ${enhancedError.suggestions.length > 0 ? "Suggestions: " + enhancedError.suggestions.join(", ") : ""}`;
 				}
 			}
 		},
@@ -656,12 +647,12 @@ export default function serverActions(userOptions = {}) {
 						name: "typescript-transform",
 						async load(id) {
 							// Handle TypeScript files
-							if (id.endsWith('.ts')) {
-								const code = await fs.readFile(id, 'utf-8');
+							if (id.endsWith(".ts")) {
+								const code = await fs.readFile(id, "utf-8");
 								const result = await esbuild.transform(code, {
-									loader: 'ts',
-									target: 'node16',
-									format: 'esm',
+									loader: "ts",
+									target: "node16",
+									format: "esm",
 								});
 								return result.code;
 							}

@@ -282,15 +282,15 @@ serverActions({
 
 ### All Configuration Options
 
-| Option           | Type         | Default              | Description                    |
-| ---------------- | ------------ | -------------------- | ------------------------------ |
-| `apiPrefix`      | `string`     | `"/api"`             | URL prefix for all endpoints   |
+| Option           | Type         | Default                                | Description                    |
+| ---------------- | ------------ | -------------------------------------- | ------------------------------ |
+| `apiPrefix`      | `string`     | `"/api"`                               | URL prefix for all endpoints   |
 | `include`        | `string[]`   | `["**/*.server.js", "**/*.server.ts"]` | Files to process               |
-| `exclude`        | `string[]`   | `[]`                 | Files to ignore                |
-| `middleware`     | `Function[]` | `[]`                 | Express middleware stack       |
-| `routeTransform` | `Function`   | See below            | Customize URL generation       |
-| `validation`     | `Object`     | `{ enabled: false }` | Validation settings            |
-| `openAPI`        | `Object`     | `{ enabled: false }` | OpenAPI documentation settings |
+| `exclude`        | `string[]`   | `[]`                                   | Files to ignore                |
+| `middleware`     | `Function[]` | `[]`                                   | Express middleware stack       |
+| `routeTransform` | `Function`   | See below                              | Customize URL generation       |
+| `validation`     | `Object`     | `{ enabled: false }`                   | Validation settings            |
+| `openAPI`        | `Object`     | `{ enabled: false }`                   | OpenAPI documentation settings |
 
 #### Route Transform Options
 
@@ -647,6 +647,7 @@ export async function uploadFile(fileData: {
 ```
 
 This automatically generates:
+
 - 📄 **OpenAPI 3.0 specs** with proper TypeScript types
 - 🔍 **Swagger UI documentation** with interactive examples
 - 🏷️ **Type definitions** (`.d.ts`) for client-side imports
@@ -668,7 +669,7 @@ export function syncFunction() {
 }
 // 💡 Suggestion: Change to: export async function syncFunction()
 
-// ⚠️ Warning: Missing return type annotation  
+// ⚠️ Warning: Missing return type annotation
 export async function getUser(id) {
   return await db.user.findUnique({ where: { id } });
 }
@@ -684,7 +685,7 @@ export async function updateUser(id, data) {
 ### 📝 Development Warnings & Suggestions
 
 - **Type Safety Hints** - Suggestions for adding TypeScript types and return annotations
-- **Schema Validation** - Recommendations for adding Zod schemas to improve API reliability  
+- **Schema Validation** - Recommendations for adding Zod schemas to improve API reliability
 - **Function Structure** - Best practices for async functions and proper exports
 - **Security Warnings** - Path traversal detection and secure coding suggestions
 - **Performance Tips** - Optimization suggestions for production builds

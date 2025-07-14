@@ -145,11 +145,11 @@ import { test, expect } from "@playwright/test";
 test.describe("Todo App Integration", () => {
   test("should add a new todo", async ({ page }) => {
     await page.goto("/");
-    
+
     // Using data-testid for framework-agnostic testing
     await page.getByTestId("todo-input").fill("New todo");
     await page.getByTestId("add-button").click();
-    
+
     await expect(page.getByTestId("todo-item")).toContainText("New todo");
   });
 });

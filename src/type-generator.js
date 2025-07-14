@@ -10,13 +10,13 @@
  * @returns {string} - TypeScript definition content
  */
 export function generateTypeDefinitions(serverFunctions, options = {}) {
-  let typeDefinitions = `// Auto-generated TypeScript definitions for Vite Server Actions
+	let typeDefinitions = `// Auto-generated TypeScript definitions for Vite Server Actions
 // This file is automatically updated when server actions change
 
 `;
 
-  // Add imports for common types
-  typeDefinitions += `type ServerActionResult<T> = Promise<T>;
+	// Add imports for common types
+	typeDefinitions += `type ServerActionResult<T> = Promise<T>;
 type ServerActionError = {
   error: boolean;
   status: number;
@@ -28,15 +28,15 @@ type ServerActionError = {
 
 `;
 
-  // Generate types for each module
-  for (const [moduleName, moduleInfo] of serverFunctions) {
-    typeDefinitions += generateModuleTypes(moduleName, moduleInfo);
-  }
+	// Generate types for each module
+	for (const [moduleName, moduleInfo] of serverFunctions) {
+		typeDefinitions += generateModuleTypes(moduleName, moduleInfo);
+	}
 
-  // Generate a global interface that combines all server actions
-  typeDefinitions += generateGlobalInterface(serverFunctions);
+	// Generate a global interface that combines all server actions
+	typeDefinitions += generateGlobalInterface(serverFunctions);
 
-  return typeDefinitions;
+	return typeDefinitions;
 }
 
 /**
@@ -46,21 +46,21 @@ type ServerActionError = {
  * @returns {string}
  */
 function generateModuleTypes(moduleName, moduleInfo) {
-  const { functions, filePath, functionDetails = [] } = moduleInfo;
-  
-  let moduleTypes = `// Types for ${filePath}\n`;
-  moduleTypes += `declare module "${filePath}" {\n`;
+	const { functions, filePath, functionDetails = [] } = moduleInfo;
 
-  functionDetails.forEach(func => {
-    const signature = generateFunctionSignature(func);
-    const jsdocComment = func.jsdoc ? formatJSDocForTS(func.jsdoc) : '';
-    
-    moduleTypes += `${jsdocComment}  export ${signature};\n`;
-  });
+	let moduleTypes = `// Types for ${filePath}\n`;
+	moduleTypes += `declare module "${filePath}" {\n`;
 
-  moduleTypes += `}\n\n`;
-  
-  return moduleTypes;
+	functionDetails.forEach((func) => {
+		const signature = generateFunctionSignature(func);
+		const jsdocComment = func.jsdoc ? formatJSDocForTS(func.jsdoc) : "";
+
+		moduleTypes += `${jsdocComment}  export ${signature};\n`;
+	});
+
+	moduleTypes += `}\n\n`;
+
+	return moduleTypes;
 }
 
 /**
@@ -69,41 +69,43 @@ function generateModuleTypes(moduleName, moduleInfo) {
  * @returns {string}
  */
 function generateFunctionSignature(func) {
-  const { name, isAsync, params, returnType } = func;
-  
-  // Generate parameter list
-  const paramList = params.map(param => {
-    let paramStr = param.name;
-    
-    // Add type annotation
-    if (param.type) {
-      paramStr += `: ${param.type}`;
-    } else {
-      paramStr += `: any`; // Fallback for untyped parameters
-    }
-    
-    // Handle optional parameters
-    if (param.isOptional && !param.name.includes('...')) {
-      // Insert ? before the type annotation
-      paramStr = paramStr.replace(':', '?:');
-    }
-    
-    return paramStr;
-  }).join(', ');
+	const { name, isAsync, params, returnType } = func;
 
-  // Determine return type
-  let resultType = returnType || 'any';
-  if (isAsync) {
-    // Check if the return type is already a Promise
-    if (resultType.startsWith('Promise<')) {
-      // Already wrapped in Promise, don't double-wrap
-      resultType = resultType;
-    } else {
-      resultType = `Promise<${resultType}>`;
-    }
-  }
+	// Generate parameter list
+	const paramList = params
+		.map((param) => {
+			let paramStr = param.name;
 
-  return `function ${name}(${paramList}): ${resultType}`;
+			// Add type annotation
+			if (param.type) {
+				paramStr += `: ${param.type}`;
+			} else {
+				paramStr += `: any`; // Fallback for untyped parameters
+			}
+
+			// Handle optional parameters
+			if (param.isOptional && !param.name.includes("...")) {
+				// Insert ? before the type annotation
+				paramStr = paramStr.replace(":", "?:");
+			}
+
+			return paramStr;
+		})
+		.join(", ");
+
+	// Determine return type
+	let resultType = returnType || "any";
+	if (isAsync) {
+		// Check if the return type is already a Promise
+		if (resultType.startsWith("Promise<")) {
+			// Already wrapped in Promise, don't double-wrap
+			resultType = resultType;
+		} else {
+			resultType = `Promise<${resultType}>`;
+		}
+	}
+
+	return `function ${name}(${paramList}): ${resultType}`;
 }
 
 /**
@@ -112,19 +114,21 @@ function generateFunctionSignature(func) {
  * @returns {string}
  */
 function generateJavaScriptSignature(func) {
-  const { name, params } = func;
-  
-  // Generate parameter list without TypeScript types
-  const paramList = params.map(param => {
-    let paramStr = param.name;
-    
-    // For JavaScript, we only need the parameter name
-    // Optional and rest parameters are handled naturally
-    
-    return paramStr;
-  }).join(', ');
+	const { name, params } = func;
 
-  return `function ${name}(${paramList})`;
+	// Generate parameter list without TypeScript types
+	const paramList = params
+		.map((param) => {
+			let paramStr = param.name;
+
+			// For JavaScript, we only need the parameter name
+			// Optional and rest parameters are handled naturally
+
+			return paramStr;
+		})
+		.join(", ");
+
+	return `function ${name}(${paramList})`;
 }
 
 /**
@@ -133,33 +137,33 @@ function generateJavaScriptSignature(func) {
  * @returns {string}
  */
 function generateGlobalInterface(serverFunctions) {
-  let globalInterface = `// Global server actions interface
+	let globalInterface = `// Global server actions interface
 declare global {
   namespace ServerActions {
 `;
 
-  for (const [moduleName, moduleInfo] of serverFunctions) {
-    const { functionDetails = [] } = moduleInfo;
-    
-    globalInterface += `    namespace ${capitalizeFirst(moduleName)} {\n`;
-    
-    functionDetails.forEach(func => {
-      const signature = generateFunctionSignature(func);
-      const jsdocComment = func.jsdoc ? formatJSDocForTS(func.jsdoc, '      ') : '';
-      
-      globalInterface += `${jsdocComment}      ${signature};\n`;
-    });
-    
-    globalInterface += `    }\n`;
-  }
+	for (const [moduleName, moduleInfo] of serverFunctions) {
+		const { functionDetails = [] } = moduleInfo;
 
-  globalInterface += `  }
+		globalInterface += `    namespace ${capitalizeFirst(moduleName)} {\n`;
+
+		functionDetails.forEach((func) => {
+			const signature = generateFunctionSignature(func);
+			const jsdocComment = func.jsdoc ? formatJSDocForTS(func.jsdoc, "      ") : "";
+
+			globalInterface += `${jsdocComment}      ${signature};\n`;
+		});
+
+		globalInterface += `    }\n`;
+	}
+
+	globalInterface += `  }
 }
 
 export {};
 `;
 
-  return globalInterface;
+	return globalInterface;
 }
 
 /**
@@ -168,14 +172,14 @@ export {};
  * @param {string} indent - Indentation prefix
  * @returns {string}
  */
-function formatJSDocForTS(jsdoc, indent = '  ') {
-  if (!jsdoc) return '';
-  
-  // Clean up the JSDoc comment and add proper indentation
-  const lines = jsdoc.split('\n');
-  const formattedLines = lines.map(line => `${indent}${line.trim()}`);
-  
-  return formattedLines.join('\n') + '\n';
+function formatJSDocForTS(jsdoc, indent = "  ") {
+	if (!jsdoc) return "";
+
+	// Clean up the JSDoc comment and add proper indentation
+	const lines = jsdoc.split("\n");
+	const formattedLines = lines.map((line) => `${indent}${line.trim()}`);
+
+	return formattedLines.join("\n") + "\n";
 }
 
 /**
@@ -184,7 +188,7 @@ function formatJSDocForTS(jsdoc, indent = '  ') {
  * @returns {string}
  */
 function capitalizeFirst(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
+	return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 /**
@@ -196,24 +200,24 @@ function capitalizeFirst(str) {
  * @returns {string}
  */
 export function generateEnhancedClientProxy(moduleName, functionDetails, options, filePath) {
-  const isDev = process.env.NODE_ENV !== "production";
-  
-  let clientProxy = `\n// vite-server-actions: ${moduleName}\n`;
-  
-  // Add TypeScript types if we have detailed information
-  if (functionDetails.length > 0) {
-    clientProxy += `// Auto-generated types for ${filePath}\n`;
-    
-    functionDetails.forEach(func => {
-      if (func.jsdoc) {
-        clientProxy += `${func.jsdoc}\n`;
-      }
-    });
-  }
+	const isDev = process.env.NODE_ENV !== "production";
 
-  // Add development safety checks
-  if (isDev) {
-    clientProxy += `
+	let clientProxy = `\n// vite-server-actions: ${moduleName}\n`;
+
+	// Add TypeScript types if we have detailed information
+	if (functionDetails.length > 0) {
+		clientProxy += `// Auto-generated types for ${filePath}\n`;
+
+		functionDetails.forEach((func) => {
+			if (func.jsdoc) {
+				clientProxy += `${func.jsdoc}\n`;
+			}
+		});
+	}
+
+	// Add development safety checks
+	if (isDev) {
+		clientProxy += `
 // Development-only safety check
 if (typeof window !== 'undefined') {
   const serverFileError = new Error(
@@ -228,41 +232,43 @@ if (typeof window !== 'undefined') {
   }
 }
 `;
-  }
+	}
 
-  // Generate functions with enhanced type information
-  functionDetails.forEach((func) => {
-    const routePath = options.routeTransform(filePath, func.name);
-    // Generate JavaScript signature (without TypeScript types)
-    const jsSignature = generateJavaScriptSignature(func);
-    
-    // Generate JSDoc with parameter types if not already present
-    let jsdocComment = func.jsdoc;
-    if (!jsdocComment || !jsdocComment.includes('@param')) {
-      // Generate JSDoc from function information
-      jsdocComment = `/**\n * ${func.jsdoc ? func.jsdoc.replace(/\/\*\*|\*\//g, '').trim() : `Server action: ${func.name}`}`;
-      
-      // Add parameter documentation
-      func.params.forEach(param => {
-        const paramType = param.type || 'any';
-        const optionalMark = param.isOptional ? ' [' + param.name.replace('?', '') + ']' : ' ' + param.name;
-        jsdocComment += `\n * @param {${paramType}}${optionalMark}`;
-      });
-      
-      // Add return type documentation
-      if (func.returnType) {
-        jsdocComment += `\n * @returns {${func.returnType}}`;
-      }
-      
-      jsdocComment += '\n */';
-    }
-    
-    clientProxy += `
+	// Generate functions with enhanced type information
+	functionDetails.forEach((func) => {
+		const routePath = options.routeTransform(filePath, func.name);
+		// Generate JavaScript signature (without TypeScript types)
+		const jsSignature = generateJavaScriptSignature(func);
+
+		// Generate JSDoc with parameter types if not already present
+		let jsdocComment = func.jsdoc;
+		if (!jsdocComment || !jsdocComment.includes("@param")) {
+			// Generate JSDoc from function information
+			jsdocComment = `/**\n * ${func.jsdoc ? func.jsdoc.replace(/\/\*\*|\*\//g, "").trim() : `Server action: ${func.name}`}`;
+
+			// Add parameter documentation
+			func.params.forEach((param) => {
+				const paramType = param.type || "any";
+				const optionalMark = param.isOptional ? " [" + param.name.replace("?", "") + "]" : " " + param.name;
+				jsdocComment += `\n * @param {${paramType}}${optionalMark}`;
+			});
+
+			// Add return type documentation
+			if (func.returnType) {
+				jsdocComment += `\n * @returns {${func.returnType}}`;
+			}
+
+			jsdocComment += "\n */";
+		}
+
+		clientProxy += `
 ${jsdocComment}
 export async ${jsSignature} {
   console.log("[Vite Server Actions] 🚀 - Executing ${func.name}");
   
-  ${isDev ? `
+  ${
+		isDev
+			? `
   // Development-only: Mark that we're in a valid proxy context
   if (typeof window !== 'undefined') {
     window.__VITE_SERVER_ACTIONS_PROXY__ = true;
@@ -281,9 +287,9 @@ export async ${jsSignature} {
     }
     
     // Check argument count
-    const requiredParams = ${JSON.stringify(func.params.filter(p => !p.isOptional && !p.isRest))};
-    const maxParams = ${func.params.filter(p => !p.isRest).length};
-    const hasRest = ${func.params.some(p => p.isRest)};
+    const requiredParams = ${JSON.stringify(func.params.filter((p) => !p.isOptional && !p.isRest))};
+    const maxParams = ${func.params.filter((p) => !p.isRest).length};
+    const hasRest = ${func.params.some((p) => p.isRest)};
     
     if (args.length < requiredParams.length) {
       console.warn(\`[Vite Server Actions] Warning: Function '${func.name}' expects at least \${requiredParams.length} arguments, got \${args.length}\`);
@@ -304,7 +310,9 @@ export async ${jsSignature} {
       }
     });
   }
-  ` : ''}
+  `
+			: ""
+	}
   
   try {
     const response = await fetch('${options.apiPrefix}/${routePath}', {
@@ -336,24 +344,32 @@ export async ${jsSignature} {
     console.log("[Vite Server Actions] ✅ - ${func.name} executed successfully");
     const result = await response.json();
     
-    ${isDev ? `
+    ${
+			isDev
+				? `
     // Development-only: Clear the proxy context
     if (typeof window !== 'undefined') {
       window.__VITE_SERVER_ACTIONS_PROXY__ = false;
     }
-    ` : ''}
+    `
+				: ""
+		}
     
     return result;
     
   } catch (error) {
     console.error("[Vite Server Actions] ❗ - Network or execution error in ${func.name}:", error.message);
     
-    ${isDev ? `
+    ${
+			isDev
+				? `
     // Development-only: Clear the proxy context on error
     if (typeof window !== 'undefined') {
       window.__VITE_SERVER_ACTIONS_PROXY__ = false;
     }
-    ` : ''}
+    `
+				: ""
+		}
     
     // Re-throw with more context if it's not already our custom error
     if (!error.status) {
@@ -366,7 +382,7 @@ export async ${jsSignature} {
   }
 }
 `;
-  });
+	});
 
-  return clientProxy;
+	return clientProxy;
 }

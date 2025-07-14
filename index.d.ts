@@ -8,7 +8,7 @@ export interface ValidationOptions {
 	 * @default false
 	 */
 	enabled?: boolean;
-	
+
 	/**
 	 * Validation adapter to use
 	 * @default "zod"
@@ -22,7 +22,7 @@ export interface OpenAPIOptions {
 	 * @default false
 	 */
 	enabled?: boolean;
-	
+
 	/**
 	 * OpenAPI specification info
 	 */
@@ -31,19 +31,19 @@ export interface OpenAPIOptions {
 		version?: string;
 		description?: string;
 	};
-	
+
 	/**
 	 * Path to serve the Swagger UI documentation
 	 * @default "/api/docs"
 	 */
 	docsPath?: string;
-	
+
 	/**
 	 * Path to serve the OpenAPI JSON specification
 	 * @default "/api/openapi.json"
 	 */
 	specPath?: string;
-	
+
 	/**
 	 * Enable Swagger UI
 	 * @default true when OpenAPI is enabled
@@ -57,32 +57,32 @@ export interface ServerActionOptions {
 	 * @default "/api"
 	 */
 	apiPrefix?: string;
-	
+
 	/**
 	 * Include patterns for server action files
 	 * @default ["**\/*.server.js", "**\/*.server.ts"]
 	 */
 	include?: string | string[];
-	
+
 	/**
 	 * Exclude patterns for server action files
 	 * @default []
 	 */
 	exclude?: string | string[];
-	
+
 	/**
 	 * Middleware to run before server action handlers
 	 * Can be a single middleware or array of middleware
 	 */
 	middleware?: RequestHandler | RequestHandler[];
-	
+
 	/**
 	 * Transform function for module names (internal use)
 	 * @param filePath - The file path relative to project root
 	 * @returns The module name to use internally
 	 */
 	moduleNameTransform?: (filePath: string) => string;
-	
+
 	/**
 	 * Transform function for API routes
 	 * @param filePath - The file path relative to project root
@@ -91,12 +91,12 @@ export interface ServerActionOptions {
 	 * @default Clean hierarchical paths (removes src/ and .server.js or .server.ts)
 	 */
 	routeTransform?: (filePath: string, functionName: string) => string;
-	
+
 	/**
 	 * Validation configuration
 	 */
 	validation?: ValidationOptions;
-	
+
 	/**
 	 * OpenAPI documentation configuration
 	 */
@@ -135,7 +135,7 @@ export declare const pathUtils: {
 	 * @returns Clean route path
 	 */
 	createCleanRoute: (filePath: string, functionName: string) => string;
-	
+
 	/**
 	 * Creates legacy underscore-separated routes: "src_actions_todo/create"
 	 * @param filePath - The file path relative to project root
@@ -143,7 +143,7 @@ export declare const pathUtils: {
 	 * @returns Legacy route path
 	 */
 	createLegacyRoute: (filePath: string, functionName: string) => string;
-	
+
 	/**
 	 * Creates minimal routes: "actions/todo.server/create"
 	 * @param filePath - The file path relative to project root
@@ -151,7 +151,7 @@ export declare const pathUtils: {
 	 * @returns Minimal route path
 	 */
 	createMinimalRoute: (filePath: string, functionName: string) => string;
-	
+
 	/**
 	 * Creates module names for internal use
 	 * @param filePath - The file path relative to project root
@@ -183,9 +183,7 @@ export declare const adapters: {
 	zod: ZodAdapter;
 };
 
-export declare function createValidationMiddleware(options: {
-	schemaDiscovery: SchemaDiscovery;
-}): RequestHandler;
+export declare function createValidationMiddleware(options: { schemaDiscovery: SchemaDiscovery }): RequestHandler;
 
 // OpenAPI exports
 export declare class OpenAPIGenerator {

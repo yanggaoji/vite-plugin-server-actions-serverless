@@ -21,13 +21,13 @@
 ### Features
 
 - [ ] Add WebSocket support for real-time server actions (alternative transport mechanism instead of HTTP fetch calls
-  from the client-side)
+      from the client-side)
 - [ ] Add rate limiting middleware example
 - [ ] Add "drop-in" simple authentication middleware that uses cookies/sessions and json/sqlite for storing user
-  accounts and authenticated session (not really meant for prod usage, but it could i guess)
+      accounts and authenticated session (not really meant for prod usage, but it could i guess)
 - [ ] Add support for streaming responses
 
----------
+---
 
 ## Completed Tasks (v1.0.0)
 

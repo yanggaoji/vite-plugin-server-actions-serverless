@@ -9,16 +9,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 describe("TypeScript Production Build", () => {
-  const testDir = join(__dirname, "fixtures", "typescript-build-test");
-  const distDir = join(testDir, "dist");
+	const testDir = join(__dirname, "fixtures", "typescript-build-test");
+	const distDir = join(testDir, "dist");
 
-  beforeAll(async () => {
-    // Create test directory structure
-    await fs.mkdir(testDir, { recursive: true });
-    await fs.mkdir(join(testDir, "src", "actions"), { recursive: true });
+	beforeAll(async () => {
+		// Create test directory structure
+		await fs.mkdir(testDir, { recursive: true });
+		await fs.mkdir(join(testDir, "src", "actions"), { recursive: true });
 
-    // Create a TypeScript server file
-    const tsServerFile = `
+		// Create a TypeScript server file
+		const tsServerFile = `
 import { z } from "zod";
 
 // Define types
@@ -127,13 +127,10 @@ export async function bulkUpdate(
 }
 `;
 
-    await fs.writeFile(
-      join(testDir, "src", "actions", "todo.server.ts"),
-      tsServerFile
-    );
+		await fs.writeFile(join(testDir, "src", "actions", "todo.server.ts"), tsServerFile);
 
-    // Create a simple entry file that imports the server actions
-    const entryFile = `
+		// Create a simple entry file that imports the server actions
+		const entryFile = `
 import { getTodos, addTodo } from "./src/actions/todo.server.ts";
 
 export async function test() {
@@ -142,37 +139,34 @@ export async function test() {
 }
 `;
 
-    await fs.writeFile(join(testDir, "index.js"), entryFile);
+		await fs.writeFile(join(testDir, "index.js"), entryFile);
 
-    // Create package.json with zod dependency
-    const packageJson = {
-      name: "typescript-build-test",
-      version: "1.0.0",
-      dependencies: {
-        zod: "^3.22.4"
-      }
-    };
+		// Create package.json with zod dependency
+		const packageJson = {
+			name: "typescript-build-test",
+			version: "1.0.0",
+			dependencies: {
+				zod: "^3.22.4",
+			},
+		};
 
-    await fs.writeFile(
-      join(testDir, "package.json"),
-      JSON.stringify(packageJson, null, 2)
-    );
-  });
+		await fs.writeFile(join(testDir, "package.json"), JSON.stringify(packageJson, null, 2));
+	});
 
-  afterAll(async () => {
-    // Clean up test directory
-    await fs.rm(testDir, { recursive: true, force: true });
-  });
+	afterAll(async () => {
+		// Clean up test directory
+		await fs.rm(testDir, { recursive: true, force: true });
+	});
 
-  it("should compile TypeScript server files during build", async () => {
-    // Create a simpler test that directly tests the plugin functionality
-    const plugin = serverActions({
-      validation: { enabled: true },
-      openAPI: { enabled: true }
-    });
+	it("should compile TypeScript server files during build", async () => {
+		// Create a simpler test that directly tests the plugin functionality
+		const plugin = serverActions({
+			validation: { enabled: true },
+			openAPI: { enabled: true },
+		});
 
-    // Test the load hook directly with TypeScript content
-    const tsCode = `
+		// Test the load hook directly with TypeScript content
+		const tsCode = `
 export interface Todo {
   id: number;
   text: string;
@@ -187,138 +181,137 @@ export async function addTodo(todo: Todo): Promise<Todo> {
 }
 `;
 
-    // Get the plugin hooks
-    const hooks = Array.isArray(plugin) ? plugin : [plugin];
-    const mainPlugin = hooks.find(p => p.name === 'vite-plugin-server-actions');
-    
-    // Test that the plugin can load and transform TypeScript
-    const loadResult = await mainPlugin.load.call(
-      { emitFile: () => {} },
-      join(testDir, "src/actions/todo.server.ts")
-    );
-    
-    expect(loadResult).toBeDefined();
-    expect(loadResult).toContain("getTodos");
-    expect(loadResult).toContain("addTodo");
-    
-    // Should be transformed to proxy functions
-    expect(loadResult).toContain("fetch");
-    expect(loadResult).toContain("/api/");
-  });
+		// Get the plugin hooks
+		const hooks = Array.isArray(plugin) ? plugin : [plugin];
+		const mainPlugin = hooks.find((p) => p.name === "vite-plugin-server-actions");
 
-  it("should generate .d.ts files with correct TypeScript types", async () => {
-    // Test the type generation directly
-    const serverFunctions = new Map([
-      ["todo_module", {
-        functions: ["getTodos", "addTodo", "updateTodo"],
-        functionDetails: [
-          {
-            name: "getTodos",
-            isAsync: true,
-            params: [],
-            returnType: "Promise<Todo[]>",
-            jsdoc: "/**\n * Get all todos\n */"
-          },
-          {
-            name: "addTodo",
-            isAsync: true,
-            params: [
-              { name: "input", type: "CreateTodoInput", isOptional: false }
-            ],
-            returnType: "Promise<Todo>",
-            jsdoc: "/**\n * Add a new todo\n */"
-          },
-          {
-            name: "updateTodo",
-            isAsync: true,
-            params: [
-              { name: "id", type: "number", isOptional: false },
-              { name: "updates", type: "Partial<Todo>", isOptional: false }
-            ],
-            returnType: "Promise<Todo>",
-            jsdoc: "/**\n * Update a todo\n */"
-          }
-        ],
-        filePath: "src/actions/todo.server.ts"
-      }]
-    ]);
+		// Test that the plugin can load and transform TypeScript
+		const loadResult = await mainPlugin.load.call({ emitFile: () => {} }, join(testDir, "src/actions/todo.server.ts"));
 
-    const options = {
-      moduleNameTransform: (path) => path.replace(/\//g, "_").replace(/\.server\.(js|ts)$/, "")
-    };
+		expect(loadResult).toBeDefined();
+		expect(loadResult).toContain("getTodos");
+		expect(loadResult).toContain("addTodo");
 
-    // Generate type definitions
-    const { generateTypeDefinitions } = await import("../src/type-generator.js");
-    const dtsContent = generateTypeDefinitions(serverFunctions, options);
-    
-    expect(dtsContent).toBeDefined();
-    
-    // Check type definitions
-    expect(dtsContent).toContain("function getTodos(): Promise<Todo[]>");
-    expect(dtsContent).toContain("function addTodo(input: CreateTodoInput): Promise<Todo>");
-    expect(dtsContent).toContain("function updateTodo(id: number, updates: Partial<Todo>): Promise<Todo>");
-    
-    // Check JSDoc preservation
-    expect(dtsContent).toContain("Get all todos");
-    expect(dtsContent).toContain("Add a new todo");
-    expect(dtsContent).toContain("Update a todo");
-  });
+		// Should be transformed to proxy functions
+		expect(loadResult).toContain("fetch");
+		expect(loadResult).toContain("/api/");
+	});
 
-  it("should generate OpenAPI spec from TypeScript types", async () => {
-    // Test OpenAPI generation with TypeScript functions
-    const { OpenAPIGenerator } = await import("../src/openapi.js");
-    const { defaultSchemaDiscovery } = await import("../src/validation.js");
-    
-    const serverFunctions = new Map([
-      ["todo_actions", {
-        functions: ["getTodos", "addTodo"],
-        functionDetails: [
-          {
-            name: "getTodos",
-            isAsync: true,
-            params: [],
-            returnType: "Promise<Todo[]>"
-          },
-          {
-            name: "addTodo", 
-            isAsync: true,
-            params: [
-              { name: "todo", type: "CreateTodoInput" }
-            ],
-            returnType: "Promise<Todo>"
-          }
-        ],
-        filePath: "src/actions/todo.server.ts"
-      }]
-    ]);
+	it("should generate .d.ts files with correct TypeScript types", async () => {
+		// Test the type generation directly
+		const serverFunctions = new Map([
+			[
+				"todo_module",
+				{
+					functions: ["getTodos", "addTodo", "updateTodo"],
+					functionDetails: [
+						{
+							name: "getTodos",
+							isAsync: true,
+							params: [],
+							returnType: "Promise<Todo[]>",
+							jsdoc: "/**\n * Get all todos\n */",
+						},
+						{
+							name: "addTodo",
+							isAsync: true,
+							params: [{ name: "input", type: "CreateTodoInput", isOptional: false }],
+							returnType: "Promise<Todo>",
+							jsdoc: "/**\n * Add a new todo\n */",
+						},
+						{
+							name: "updateTodo",
+							isAsync: true,
+							params: [
+								{ name: "id", type: "number", isOptional: false },
+								{ name: "updates", type: "Partial<Todo>", isOptional: false },
+							],
+							returnType: "Promise<Todo>",
+							jsdoc: "/**\n * Update a todo\n */",
+						},
+					],
+					filePath: "src/actions/todo.server.ts",
+				},
+			],
+		]);
 
-    const openAPIGenerator = new OpenAPIGenerator({
-      info: {
-        title: "Test API",
-        version: "1.0.0"
-      }
-    });
+		const options = {
+			moduleNameTransform: (path) => path.replace(/\//g, "_").replace(/\.server\.(js|ts)$/, ""),
+		};
 
-    const schemaDiscovery = defaultSchemaDiscovery;
-    
-    const openApiSpec = openAPIGenerator.generateSpec(serverFunctions, schemaDiscovery, {
-      apiPrefix: "/api",
-      routeTransform: (path, func) => `${path.replace(/\.server\.(js|ts)$/, "")}/${func}`
-    });
-    
-    expect(openApiSpec).toBeDefined();
-    expect(openApiSpec.paths).toBeDefined();
-    
-    // Check that paths were generated
-    const paths = Object.keys(openApiSpec.paths);
-    expect(paths.length).toBeGreaterThan(0);
-    expect(paths.some(p => p.includes("getTodos"))).toBe(true);
-    expect(paths.some(p => p.includes("addTodo"))).toBe(true);
-  });
+		// Generate type definitions
+		const { generateTypeDefinitions } = await import("../src/type-generator.js");
+		const dtsContent = generateTypeDefinitions(serverFunctions, options);
 
-  it("should handle TypeScript-specific syntax correctly", async () => {
-    // Create a file with advanced TypeScript features
-    const advancedTsFile = `
+		expect(dtsContent).toBeDefined();
+
+		// Check type definitions
+		expect(dtsContent).toContain("function getTodos(): Promise<Todo[]>");
+		expect(dtsContent).toContain("function addTodo(input: CreateTodoInput): Promise<Todo>");
+		expect(dtsContent).toContain("function updateTodo(id: number, updates: Partial<Todo>): Promise<Todo>");
+
+		// Check JSDoc preservation
+		expect(dtsContent).toContain("Get all todos");
+		expect(dtsContent).toContain("Add a new todo");
+		expect(dtsContent).toContain("Update a todo");
+	});
+
+	it("should generate OpenAPI spec from TypeScript types", async () => {
+		// Test OpenAPI generation with TypeScript functions
+		const { OpenAPIGenerator } = await import("../src/openapi.js");
+		const { defaultSchemaDiscovery } = await import("../src/validation.js");
+
+		const serverFunctions = new Map([
+			[
+				"todo_actions",
+				{
+					functions: ["getTodos", "addTodo"],
+					functionDetails: [
+						{
+							name: "getTodos",
+							isAsync: true,
+							params: [],
+							returnType: "Promise<Todo[]>",
+						},
+						{
+							name: "addTodo",
+							isAsync: true,
+							params: [{ name: "todo", type: "CreateTodoInput" }],
+							returnType: "Promise<Todo>",
+						},
+					],
+					filePath: "src/actions/todo.server.ts",
+				},
+			],
+		]);
+
+		const openAPIGenerator = new OpenAPIGenerator({
+			info: {
+				title: "Test API",
+				version: "1.0.0",
+			},
+		});
+
+		const schemaDiscovery = defaultSchemaDiscovery;
+
+		const openApiSpec = openAPIGenerator.generateSpec(serverFunctions, schemaDiscovery, {
+			apiPrefix: "/api",
+			routeTransform: (path, func) => `${path.replace(/\.server\.(js|ts)$/, "")}/${func}`,
+		});
+
+		expect(openApiSpec).toBeDefined();
+		expect(openApiSpec.paths).toBeDefined();
+
+		// Check that paths were generated
+		const paths = Object.keys(openApiSpec.paths);
+		expect(paths.length).toBeGreaterThan(0);
+		expect(paths.some((p) => p.includes("getTodos"))).toBe(true);
+		expect(paths.some((p) => p.includes("addTodo"))).toBe(true);
+	});
+
+	it("should handle TypeScript-specific syntax correctly", async () => {
+		// Create a file with advanced TypeScript features
+		const advancedTsFile = `
 // Type aliases
 type ID = string | number;
 type Status = "active" | "inactive" | "pending";
@@ -377,37 +370,34 @@ export async function processValue<T>(
 }
 `;
 
-    await fs.writeFile(
-      join(testDir, "src", "actions", "advanced.server.ts"),
-      advancedTsFile
-    );
+		await fs.writeFile(join(testDir, "src", "actions", "advanced.server.ts"), advancedTsFile);
 
-    const plugin = serverActions();
+		const plugin = serverActions();
 
-    const bundle = await rollup({
-      input: join(testDir, "index.js"),
-      plugins: [plugin],
-      external: ["zod"]
-    });
+		const bundle = await rollup({
+			input: join(testDir, "index.js"),
+			plugins: [plugin],
+			external: ["zod"],
+		});
 
-    const { output } = await bundle.generate({ format: "es" });
-    await bundle.close();
+		const { output } = await bundle.generate({ format: "es" });
+		await bundle.close();
 
-    // Should compile without errors
-    const mainOutput = output.find(o => o.type === "chunk");
-    expect(mainOutput).toBeDefined();
-    
-    // Should not contain TypeScript-only syntax
-    expect(mainOutput.code).not.toContain("enum Priority");
-    expect(mainOutput.code).not.toContain("interface User");
-    expect(mainOutput.code).not.toContain("type ID =");
-  });
+		// Should compile without errors
+		const mainOutput = output.find((o) => o.type === "chunk");
+		expect(mainOutput).toBeDefined();
 
-  it("should preserve runtime behavior of TypeScript code", async () => {
-    // Test TypeScript compilation through the plugin's transform
-    const { extractExportedFunctions } = await import("../src/ast-parser.js");
-    
-    const tsCode = `
+		// Should not contain TypeScript-only syntax
+		expect(mainOutput.code).not.toContain("enum Priority");
+		expect(mainOutput.code).not.toContain("interface User");
+		expect(mainOutput.code).not.toContain("type ID =");
+	});
+
+	it("should preserve runtime behavior of TypeScript code", async () => {
+		// Test TypeScript compilation through the plugin's transform
+		const { extractExportedFunctions } = await import("../src/ast-parser.js");
+
+		const tsCode = `
 export class Counter {
   private count: number = 0;
   
@@ -433,19 +423,19 @@ export async function resetCounter(): Promise<void> {
 }
 `;
 
-    // Test that we can extract functions from TypeScript code
-    const functions = extractExportedFunctions(tsCode, "test.ts");
-    
-    expect(functions).toBeDefined();
-    expect(functions.length).toBe(2);
-    expect(functions.find(f => f.name === "incrementCounter")).toBeDefined();
-    expect(functions.find(f => f.name === "resetCounter")).toBeDefined();
-    
-    // Check return types
-    const incrementFunc = functions.find(f => f.name === "incrementCounter");
-    expect(incrementFunc.returnType).toBe("Promise<number>");
-    
-    const resetFunc = functions.find(f => f.name === "resetCounter");
-    expect(resetFunc.returnType).toBe("Promise<void>");
-  });
+		// Test that we can extract functions from TypeScript code
+		const functions = extractExportedFunctions(tsCode, "test.ts");
+
+		expect(functions).toBeDefined();
+		expect(functions.length).toBe(2);
+		expect(functions.find((f) => f.name === "incrementCounter")).toBeDefined();
+		expect(functions.find((f) => f.name === "resetCounter")).toBeDefined();
+
+		// Check return types
+		const incrementFunc = functions.find((f) => f.name === "incrementCounter");
+		expect(incrementFunc.returnType).toBe("Promise<number>");
+
+		const resetFunc = functions.find((f) => f.name === "resetCounter");
+		expect(resetFunc.returnType).toBe("Promise<void>");
+	});
 });

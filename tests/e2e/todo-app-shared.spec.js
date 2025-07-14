@@ -11,7 +11,7 @@ test.describe("Todo App Integration", () => {
 	test.beforeEach(async ({ page }) => {
 		// Start with a fresh page
 		await page.goto("/");
-		
+
 		// Wait for the app to load - all frameworks have "Todo List" in the h1
 		await expect(page.locator("h1")).toContainText("Todo List");
 
@@ -35,12 +35,12 @@ test.describe("Todo App Integration", () => {
 		// Then clear any remaining via UI (with safer cleanup)
 		const maxDeletions = 10; // Prevent infinite loops
 		let deletions = 0;
-		
+
 		try {
 			while (deletions < maxDeletions) {
 				const deleteButtons = await page.getByTestId("delete-button").all();
 				if (deleteButtons.length === 0) break;
-				
+
 				await deleteButtons[0].click();
 				await page.waitForTimeout(100); // Small delay to ensure deletion
 				deletions++;
@@ -63,7 +63,7 @@ test.describe("Todo App Integration", () => {
 
 	test("should load the todo app", async ({ page }) => {
 		const framework = getFrameworkName();
-		
+
 		// Check that the page loads correctly
 		const frameworkTitle = framework.charAt(0).toUpperCase() + framework.slice(1);
 		await expect(page).toHaveTitle(new RegExp(`TODO Example ${frameworkTitle}`, "i"));
@@ -122,7 +122,6 @@ test.describe("Todo App Integration", () => {
 		await expect(page.getByTestId("todo-text").filter({ hasText: todoText })).not.toBeVisible();
 	});
 
-
 	test("should handle multiple todos", async ({ page }) => {
 		// Add multiple todos
 		const todos = ["First todo", "Second todo", "Third todo"];
@@ -140,27 +139,29 @@ test.describe("Todo App Integration", () => {
 		await page.getByTestId("todo-item").nth(1).getByTestId("todo-checkbox").click();
 
 		// Verify only second todo is completed
-		await expect(page.locator(".todo-item span.completed, .todo-item .todo-text.completed")).toContainText("Second todo");
+		await expect(page.locator(".todo-item span.completed, .todo-item .todo-text.completed")).toContainText(
+			"Second todo",
+		);
 		await expect(page.locator(".todo-item span.completed, .todo-item .todo-text.completed")).toHaveCount(1);
 	});
 
 	test("should not add empty todos", async ({ page }) => {
 		const framework = getFrameworkName();
-		
-		if (framework === 'svelte') {
+
+		if (framework === "svelte") {
 			// Svelte doesn't disable the button, so just verify no todo is created
 			await page.getByTestId("add-button").click();
-			
+
 			// Wait for potential network activity
 			await page.waitForTimeout(500);
 		} else {
 			// Vue and React disable the button when input is empty
 			await expect(page.getByTestId("add-button")).toBeDisabled();
-			
+
 			// Fill and clear the input
 			await page.getByTestId("todo-input").fill("Test");
 			await expect(page.getByTestId("add-button")).toBeEnabled();
-			
+
 			await page.getByTestId("todo-input").clear();
 			await expect(page.getByTestId("add-button")).toBeDisabled();
 		}
@@ -174,7 +175,7 @@ test.describe("API Integration", () => {
 	test.afterEach(async ({ page }) => {
 		await page.close();
 	});
-	
+
 	test("should have working API endpoints", async ({ page }) => {
 		// Test OpenAPI spec endpoint
 		const response = await page.request.get("/api/openapi.json");
@@ -182,7 +183,7 @@ test.describe("API Integration", () => {
 
 		const spec = await response.json();
 		expect(spec.openapi).toBe("3.0.3");
-		
+
 		// Title varies by framework
 		const framework = test.info().project.name;
 		const expectedTitle = `${framework.charAt(0).toUpperCase() + framework.slice(1)} Todo App API`;
@@ -200,7 +201,7 @@ test.describe("API Integration", () => {
 
 		// Should load Swagger UI
 		await expect(page.locator(".swagger-ui").first()).toBeVisible();
-		
+
 		// Title check
 		const framework = test.info().project.name;
 		const expectedTitle = `${framework.charAt(0).toUpperCase() + framework.slice(1)} Todo App API`;

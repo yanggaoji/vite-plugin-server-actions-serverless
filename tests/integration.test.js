@@ -214,9 +214,9 @@ describe("Integration Tests - Validation System", () => {
 							path: "age",
 							message: "Number must be greater than or equal to 18",
 						}),
-					])
+					]),
 				}),
-				timestamp: expect.any(String)
+				timestamp: expect.any(String),
 			});
 			expect(mockNext).not.toHaveBeenCalled();
 		});
@@ -367,7 +367,7 @@ describe("Integration Tests - Validation System", () => {
 			};
 
 			const mockReq = {
-				get: vi.fn().mockReturnValue('localhost:5173')
+				get: vi.fn().mockReturnValue("localhost:5173"),
 			};
 			specHandler(mockReq, mockRes);
 
@@ -432,7 +432,7 @@ describe("Integration Tests - Validation System", () => {
 			};
 
 			const mockReq = {
-				get: vi.fn().mockReturnValue('localhost:5173')
+				get: vi.fn().mockReturnValue("localhost:5173"),
 			};
 			specHandler(mockReq, mockRes);
 
@@ -612,7 +612,7 @@ describe("Integration Tests - Validation System", () => {
 
 			const mockRes = { json: vi.fn() };
 			const mockReq = {
-				get: vi.fn().mockReturnValue('localhost:5173')
+				get: vi.fn().mockReturnValue("localhost:5173"),
 			};
 			specHandler(mockReq, mockRes);
 
@@ -671,9 +671,9 @@ describe("Integration Tests - Validation System", () => {
 				message: "Internal server error",
 				code: "INTERNAL_ERROR",
 				details: expect.objectContaining({
-					message: "Function error"
+					message: "Function error",
 				}),
-				timestamp: expect.any(String)
+				timestamp: expect.any(String),
 			});
 		});
 	});
@@ -898,9 +898,9 @@ describe("End-to-end validation workflow", () => {
 						path: "1.email",
 						message: expect.stringContaining("Invalid email"),
 					}),
-				])
+				]),
 			}),
-			timestamp: expect.any(String)
+			timestamp: expect.any(String),
 		});
 		expect(nextSpy).not.toHaveBeenCalled();
 
