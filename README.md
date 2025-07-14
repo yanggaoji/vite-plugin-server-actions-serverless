@@ -1,4 +1,4 @@
-# ⚡ Vite Server Actions
+# Vite Server Actions
 
 [![npm version](https://img.shields.io/npm/v/vite-plugin-server-actions.svg?style=flat)](https://www.npmjs.com/package/vite-plugin-server-actions)
 [![Downloads](https://img.shields.io/npm/dm/vite-plugin-server-actions.svg?style=flat)](https://www.npmjs.com/package/vite-plugin-server-actions)
@@ -20,28 +20,28 @@ import { getUsers } from "./server/db.server.js";
 const users = await getUsers(); // Just call it!
 ```
 
-## 🚀 Why Vite Server Actions?
+## Why Vite Server Actions?
 
 - **Zero API Boilerplate** - No need to define routes, handle HTTP methods, or parse request bodies
-- **Enhanced TypeScript** - Industry-leading TypeScript support with automatic type generation and real-time compilation
-- **Built-in Validation** - Automatic request validation using Zod schemas with type safety
-- **Auto Documentation** - OpenAPI 3.0 specs and interactive Swagger UI generated from your TypeScript code
-- **Production Ready** - Builds to optimized Node.js Express server with full feature parity
-- **Superior DX** - AST-based parsing, helpful error messages, hot reload, and comprehensive development feedback
+- **TypeScript Support** - Full TypeScript support with automatic type generation
+- **Built-in Validation** - Automatic request validation using Zod schemas
+- **Auto Documentation** - OpenAPI 3.0 specs and Swagger UI generated automatically
+- **Production Ready** - Builds to optimized Node.js Express server
+- **Developer Experience** - Clear error messages, hot reload, and development-time validation
 
-## ✨ Core Features
+## Core Features
 
-- 🔗 **Seamless Imports** - Import server functions like any other module
-- 🛡️ **Secure by Default** - Server code never exposed to client, path traversal protection
-- ⚡ **Enhanced TypeScript** - Real-time compilation, automatic `.d.ts` generation, AST-based parsing
-- ✅ **Smart Validation** - Zod schemas with automatic type inference and OpenAPI generation
-- 📖 **Auto Documentation** - Comprehensive OpenAPI 3.0 specs with interactive Swagger UI
-- 🔌 **Middleware Support** - Authentication, logging, CORS, and custom middleware
-- 🎯 **Flexible Routing** - Multiple routing strategies with clean hierarchical paths
-- 🏗️ **Superior DX** - Helpful error messages, development warnings, and comprehensive feedback
-- 📦 **Production Optimized** - Efficient Express server builds with all development features
+- **Seamless Imports** - Import server functions like any other module
+- **Secure by Default** - Server code never exposed to client, path traversal protection
+- **TypeScript** - Automatic compilation, type generation, and AST-based parsing
+- **Validation** - Zod schemas with type inference and OpenAPI generation
+- **Documentation** - OpenAPI 3.0 specs with Swagger UI
+- **Middleware Support** - Authentication, logging, CORS, and custom middleware
+- **Flexible Routing** - Multiple routing strategies with hierarchical paths
+- **Developer Experience** - Helpful error messages and development warnings
+- **Production Optimized** - Efficient Express server builds
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Install
 
@@ -110,12 +110,12 @@ function TodoApp({ userId }) {
 
 That's it! The plugin automatically:
 
-- ✅ Creates API endpoints for each function
-- ✅ Handles serialization/deserialization
-- ✅ Provides full TypeScript support
-- ✅ Works in development and production
+- Creates API endpoints for each function
+- Handles serialization/deserialization
+- Provides TypeScript support
+- Works in development and production
 
-## 📚 Real-World Examples
+## Real-World Examples
 
 ### Database Operations
 
@@ -201,7 +201,7 @@ login.schema = LoginSchema;
 - [Todo App with React](examples/react-todo-app) - Same todo app built with React
 - More examples coming soon for other frameworks
 
-## 🔍 How It Works
+## How It Works
 
 When you import a `.server.js` file in your client code, Vite Server Actions:
 
@@ -227,7 +227,7 @@ const user = await fetch("/api/user/getUser", {
 - **Development**: Server functions run as Express middleware in Vite's dev server
 - **Production**: Builds to a standalone Express server with all your functions
 
-## ⚙️ Configuration
+## Configuration
 
 ### Common Use Cases
 
@@ -566,16 +566,16 @@ export async function readAllowedFile(filename) {
 readAllowedFile.schema = FileSchema;
 ```
 
-## 💻 Enhanced TypeScript Support
+## TypeScript Support
 
-Vite Server Actions provides industry-leading TypeScript support with automatic type generation, enhanced DX features, and seamless development experience:
+Vite Server Actions provides TypeScript support with automatic type generation:
 
-### ✨ **New**: Full TypeScript Integration
+### TypeScript Features
 
-- 🎯 **Automatic Type Generation** - `.d.ts` files generated for all server actions
-- 🔄 **Real-time Compilation** - TypeScript files compiled on-the-fly in development
-- 📝 **Enhanced Error Messages** - Helpful suggestions for better TypeScript usage
-- 🏗️ **Production Ready** - Full TypeScript compilation in build process
+- **Automatic Type Generation** - `.d.ts` files generated for all server actions
+- **Real-time Compilation** - TypeScript files compiled on-the-fly in development
+- **Helpful Error Messages** - Development-time suggestions for TypeScript usage
+- **Production Build Support** - Full TypeScript compilation in build process
 
 ```typescript
 // server/users.server.ts
@@ -600,7 +600,7 @@ import { getUser, type User } from "./server/users.server";
 const user = await getUser(123); // Type: User | null
 ```
 
-### 🛡️ Advanced Validation with Type Safety
+### Validation with Type Safety
 
 ```typescript
 import { z } from "zod";
@@ -627,9 +627,9 @@ export async function createUser(data: CreateUserInput): Promise<User> {
 createUser.schema = z.tuple([CreateUserSchema]);
 ```
 
-### 📖 **New**: Automatic Documentation Generation
+### Documentation Generation
 
-TypeScript types and JSDoc comments automatically generate comprehensive API documentation:
+TypeScript types and JSDoc comments automatically generate API documentation:
 
 ```typescript
 /**
@@ -648,15 +648,15 @@ export async function uploadFile(fileData: {
 
 This automatically generates:
 
-- 📄 **OpenAPI 3.0 specs** with proper TypeScript types
-- 🔍 **Swagger UI documentation** with interactive examples
-- 🏷️ **Type definitions** (`.d.ts`) for client-side imports
+- **OpenAPI 3.0 specs** with TypeScript types
+- **Swagger UI documentation** with interactive examples
+- **Type definitions** (`.d.ts`) for client-side imports
 
-## 🏗️ Enhanced Developer Experience
+## Developer Experience
 
-Vite Server Actions provides comprehensive development feedback and intelligent suggestions to improve your code quality:
+Vite Server Actions provides development feedback and suggestions to improve code quality:
 
-### 🔍 Smart Code Analysis
+### Code Analysis
 
 The plugin uses AST-based parsing to analyze your server functions and provide helpful feedback:
 
@@ -679,10 +679,10 @@ export async function getUser(id) {
 export async function updateUser(id, data) {
   return await db.user.update({ where: { id }, data });
 }
-// 💡 Suggestion: Add schema: updateUser.schema = z.tuple([...])
+// Suggestion: Add schema: updateUser.schema = z.tuple([...])
 ```
 
-### 📝 Development Warnings & Suggestions
+### Development Warnings & Suggestions
 
 - **Type Safety Hints** - Suggestions for adding TypeScript types and return annotations
 - **Schema Validation** - Recommendations for adding Zod schemas to improve API reliability
@@ -690,14 +690,14 @@ export async function updateUser(id, data) {
 - **Security Warnings** - Path traversal detection and secure coding suggestions
 - **Performance Tips** - Optimization suggestions for production builds
 
-### 🎯 **New**: Test Coverage & Quality Assurance
+### Test Coverage
 
-- **100% Test Coverage** - Comprehensive unit and e2e test suites ensure reliability
-- **Multiple Framework Support** - Tested with Svelte, Vue, React, and TypeScript React
-- **Production Validation** - Full feature parity between development and production modes
-- **Cross-platform Compatibility** - Works seamlessly across different operating systems
+- **Test Coverage** - Unit and e2e test suites
+- **Framework Support** - Tested with Svelte, Vue, React, and TypeScript React
+- **Production Testing** - Feature parity between development and production modes
+- **Cross-platform** - Works across different operating systems
 
-## 🔧 Error Handling
+## Error Handling
 
 Server errors are automatically caught and returned with proper HTTP status codes:
 
@@ -725,7 +725,7 @@ export async function authenticate(token) {
 }
 ```
 
-## 🎯 Common Patterns
+## Common Patterns
 
 ### Authenticated Actions
 
@@ -769,13 +769,13 @@ export async function getExpensiveData(key) {
 }
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
-## 📄 License
+## License
 
 This project is [MIT](LICENSE) licensed.
 
