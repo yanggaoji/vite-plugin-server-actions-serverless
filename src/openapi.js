@@ -13,12 +13,8 @@ export class OpenAPIGenerator {
 			description: "Auto-generated API documentation for Vite Server Actions",
 			...options.info,
 		};
-		this.servers = options.servers || [
-			{
-				url: "http://localhost:5173",
-				description: "Development server",
-			},
-		];
+		// Don't set a default server - let it be determined dynamically
+		this.servers = options.servers || [];
 	}
 
 	/**
@@ -29,15 +25,14 @@ export class OpenAPIGenerator {
 	 * @returns {object} Complete OpenAPI 3.0 specification
 	 */
 	generateSpec(serverFunctions, schemaDiscovery, options = {}) {
-		// Override servers with dynamic port if provided
-		const servers = options.port
-			? [
-					{
-						url: `http://localhost:${options.port}`,
-						description: "Development server",
-					},
-				]
-			: this.servers;
+		// Always use dynamic port if provided, otherwise fallback to environment or default
+		const port = options.port || process.env.PORT || 3000;
+		const servers = [
+			{
+				url: `http://localhost:${port}`,
+				description: options.port ? "Development server" : "Server",
+			},
+		];
 
 		const spec = {
 			openapi: "3.0.3",

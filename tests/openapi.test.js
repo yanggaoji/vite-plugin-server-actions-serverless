@@ -29,8 +29,8 @@ describe("OpenAPIGenerator", () => {
 	it("should initialize with default options", () => {
 		expect(generator.info.title).toBe("Server Actions API");
 		expect(generator.info.version).toBe("1.0.0");
-		expect(generator.servers).toHaveLength(1);
-		expect(generator.servers[0].url).toBe("http://localhost:5173");
+		// Servers are now determined dynamically, not set during initialization
+		expect(generator.servers).toHaveLength(0);
 	});
 
 	it("should initialize with custom options", () => {
