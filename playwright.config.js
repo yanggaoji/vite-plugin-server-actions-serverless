@@ -47,6 +47,14 @@ export default defineConfig({
 			},
 			testMatch: "**/todo-app-shared.spec.js",
 		},
+		{
+			name: "analytics-demo",
+			use: {
+				browserName: "chromium",
+				baseURL: "http://localhost:5178",
+			},
+			testMatch: "**/analytics-demo.spec.js",
+		},
 	],
 	webServer: [
 		{
@@ -70,6 +78,12 @@ export default defineConfig({
 		{
 			command: "cd examples/react-todo-app-typescript && npm run dev -- --port 5176",
 			url: "http://localhost:5176",
+			reuseExistingServer: !process.env.CI,
+			timeout: 120 * 1000,
+		},
+		{
+			command: "cd examples/typescript-analytics-demo && npm run dev -- --port 5178",
+			url: "http://localhost:5178",
 			reuseExistingServer: !process.env.CI,
 			timeout: 120 * 1000,
 		},

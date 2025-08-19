@@ -1,26 +1,50 @@
 [
   {
-    "id": 1,
-    "text": "Learn Vite Server Actions",
-    "description": "Explore how server-side functions work in Vite",
-    "completed": false,
-    "priority": "high",
-    "createdAt": "2024-01-01T10:00:00.000Z"
-  },
-  {
-    "id": 2,
-    "text": "Build a full-stack app",
-    "description": "Create a complete application with server actions",
-    "completed": false,
-    "priority": "medium",
-    "createdAt": "2024-01-01T11:00:00.000Z"
-  },
-  {
-    "id": 3,
-    "text": "Deploy to production",
-    "description": "Deploy the application to a hosting service",
+    "id": 1755593254907,
+    "text": "Complete todo",
+    "description": "This is a detailed description of the todo item",
     "completed": false,
     "priority": "low",
-    "createdAt": "2024-01-01T12:00:00.000Z"
+    "createdAt": "2025-08-19T08:47:34.907Z"
+  },
+  {
+    "id": 1755593255041,
+    "text": "Simple todo",
+    "description": null,
+    "completed": false,
+    "priority": "medium",
+    "createdAt": "2025-08-19T08:47:35.041Z"
+  },
+  {
+    "id": 1755596323784,
+    "text": "Test todo",
+    "description": null,
+    "completed": false,
+    "priority": "high",
+    "createdAt": "2025-08-19T09:38:43.784Z"
+  },
+  {
+    "id": 1755597945351,
+    "text": "Test todo",
+    "description": null,
+    "completed": false,
+    "priority": "high",
+    "createdAt": "2025-08-19T10:05:45.351Z"
+  },
+  {
+    "id": 1755598019701,
+    "text": "Test todo",
+    "description": null,
+    "completed": false,
+    "priority": "high",
+    "createdAt": "2025-08-19T10:06:59.701Z"
+  },
+  {
+    "id": 1755598031319,
+    "text": "Test todo",
+    "description": null,
+    "completed": false,
+    "priority": "high",
+    "createdAt": "2025-08-19T10:07:11.319Z"
   }
 ]

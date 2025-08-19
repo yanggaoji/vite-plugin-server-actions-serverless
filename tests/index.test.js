@@ -71,13 +71,13 @@ describe("vite-plugin-server-actions", () => {
 		it("should not resolve non-server files", async () => {
 			const plugin = serverActions();
 			const result = await plugin.resolveId("regular.js", "/src/App.svelte");
-			expect(result).toBeUndefined();
+			expect(result).toBeNull();
 		});
 
 		it("should not resolve without importer", async () => {
 			const plugin = serverActions();
 			const result = await plugin.resolveId("todo.server.js");
-			expect(result).toBeUndefined();
+			expect(result).toBeNull();
 		});
 	});
 

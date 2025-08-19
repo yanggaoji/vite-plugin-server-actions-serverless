@@ -43,7 +43,10 @@
 			"Bash(tree:*)",
 			"Bash(pkill:*)",
 			"Bash(npm run format:*)",
-			"Bash(gh pr view:*)"
+			"Bash(gh pr view:*)",
+			"Bash(DEBUG=*)",
+			"Bash(gh issue list:*)",
+			"Bash(gh issue view:*)"
 		],
 		"deny": []
 	}

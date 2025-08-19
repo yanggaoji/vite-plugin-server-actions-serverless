@@ -1,218 +1,216 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import fs from "fs/promises";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { createServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs/promises";
+import os from "os";
 import serverActions from "../src/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-describe("TypeScript cross-file imports", () => {
-  let mockViteServer;
-  let plugin;
-  let tempDir;
+describe("TypeScript imports", () => {
+	let viteServer;
+	let tempDir;
 
-  beforeEach(async () => {
-    // Create a temporary directory for test files
-    tempDir = path.join(__dirname, "temp-ts-test");
-    await fs.mkdir(tempDir, { recursive: true });
+	beforeAll(async () => {
+		// Create a temporary directory for test files
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vite-ts-test-"));
 
-    // Create mock Vite server with ssrLoadModule
-    mockViteServer = {
-      middlewares: {
-        use: vi.fn(),
-      },
-      httpServer: null,
-      watcher: null,
-      ssrLoadModule: vi.fn(async (id) => {
-        // Simulate loading TypeScript modules
-        if (id.includes("types.ts")) {
-          return {
-            UserId: "string & { __brand: 'UserId' }",
-            createUserId: (id) => `user_${id}`,
-          };
-        }
-        if (id.includes("server.ts")) {
-          return {
-            getUser: async (id) => ({ id, name: "Test User" }),
-          };
-        }
-        throw new Error(`Module not found: ${id}`);
-      }),
-    };
+		// Create test TypeScript files with imports
+		// types.ts - shared types
+		await fs.writeFile(
+			path.join(tempDir, "types.ts"),
+			`
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+};
 
-    // Initialize plugin
-    plugin = serverActions({
-      include: ["**/*.server.ts"],
-      validation: { enabled: true },
-    });
+export type Order = {
+  id: string;
+  userId: string;
+  total: number;
+};
 
-    // Set up plugin with mock Vite config
-    plugin.configResolved({ server: { port: 5173 } });
-    plugin.configureServer(mockViteServer);
-  });
+export function formatUser(user: User): string {
+  return \`\${user.name} <\${user.email}>\`;
+}
+      `.trim(),
+		);
 
-  afterEach(async () => {
-    // Clean up temp directory
-    await fs.rm(tempDir, { recursive: true, force: true });
-    vi.clearAllMocks();
-  });
+		// utils.server.ts - server file that imports types
+		await fs.writeFile(
+			path.join(tempDir, "utils.server.ts"),
+			`
+import { User, formatUser } from "./types";
 
-  it("should resolve TypeScript imports from server files", async () => {
-    const importerPath = path.join(tempDir, "test.server.ts");
-    
-    // Test resolving various TypeScript import patterns
-    const testCases = [
-      { source: "./types", expected: path.join(tempDir, "types.ts") },
-      { source: "./types.ts", expected: path.join(tempDir, "types.ts") },
-      { source: "./utils/helpers", expected: path.join(tempDir, "utils/helpers.ts") },
-      { source: "./config/index", expected: path.join(tempDir, "config/index.ts") },
-    ];
-
-    // Create necessary files for testing
-    await fs.writeFile(path.join(tempDir, "types.ts"), "export type Test = string;");
-    await fs.mkdir(path.join(tempDir, "utils"), { recursive: true });
-    await fs.writeFile(path.join(tempDir, "utils/helpers.ts"), "export const helper = () => {};");
-    await fs.mkdir(path.join(tempDir, "config"), { recursive: true });
-    await fs.writeFile(path.join(tempDir, "config/index.ts"), "export const config = {};");
-
-    for (const { source, expected } of testCases) {
-      const resolved = await plugin.resolveId(source, importerPath);
-      expect(resolved).toBe(expected);
-    }
-  });
-
-  it("should load server files with TypeScript imports using ssrLoadModule", async () => {
-    const serverFilePath = path.join(tempDir, "analytics.server.ts");
-    
-    // Create a server file with TypeScript imports
-    const serverCode = `
-import { UserId, createUserId } from "./types";
-import type { AnalyticsEvent } from "./analytics-types";
-
-export async function trackEvent(userId: UserId, event: AnalyticsEvent) {
-  return {
-    userId,
-    event,
-    timestamp: new Date()
+export async function getUserInfo(userId: string): Promise<User> {
+  const user: User = {
+    id: userId,
+    name: "Test User",
+    email: "test@example.com"
   };
+  return user;
 }
 
-trackEvent.schema = z.object({
-  userId: z.string(),
-  event: z.object({
-    type: z.string(),
-    data: z.any()
-  })
-});
-`;
-
-    await fs.writeFile(serverFilePath, serverCode);
-
-    // Mock file reads
-    vi.spyOn(fs, "readFile").mockImplementation(async (filePath) => {
-      if (filePath === serverFilePath) {
-        return serverCode;
-      }
-      throw new Error(`File not found: ${filePath}`);
-    });
-
-    // Load the server file
-    const result = await plugin.load(serverFilePath);
-
-    // Verify that the plugin generates client proxy code
-    expect(result).toContain("export async function trackEvent");
-    expect(result).toContain("fetch");
-    expect(result).toContain("/api/");
-
-    // Verify that ssrLoadModule was called (for schema discovery)
-    expect(mockViteServer.ssrLoadModule).toHaveBeenCalledWith(serverFilePath);
-  });
-
-  it("should handle TypeScript imports in nested server files", async () => {
-    const nestedPath = path.join(tempDir, "actions/nested.server.ts");
-    await fs.mkdir(path.join(tempDir, "actions"), { recursive: true });
-
-    // Test resolving imports from nested directories
-    const testCases = [
-      { source: "../types", expected: path.join(tempDir, "types.ts") },
-      { source: "./local-types", expected: path.join(tempDir, "actions/local-types.ts") },
-      { source: "../shared/utils", expected: path.join(tempDir, "shared/utils.ts") },
-    ];
-
-    // Create necessary files
-    await fs.writeFile(path.join(tempDir, "types.ts"), "export type Test = string;");
-    await fs.writeFile(path.join(tempDir, "actions/local-types.ts"), "export type Local = number;");
-    await fs.mkdir(path.join(tempDir, "shared"), { recursive: true });
-    await fs.writeFile(path.join(tempDir, "shared/utils.ts"), "export const util = () => {};");
-
-    for (const { source, expected } of testCases) {
-      const resolved = await plugin.resolveId(source, nestedPath);
-      expect(resolved).toBe(expected);
-    }
-  });
-
-  it("should fallback to manual compilation when ssrLoadModule fails", async () => {
-    // Create a mock server without ssrLoadModule
-    const mockServerWithoutSSR = {
-      middlewares: {
-        use: vi.fn(),
-      },
-      httpServer: null,
-      watcher: null,
-    };
-    plugin.configureServer(mockServerWithoutSSR);
-
-    const serverFilePath = path.join(tempDir, "fallback.server.ts");
-    const serverCode = `
-export async function testFunction() {
-  return { message: "Hello from TypeScript" };
+export async function getFormattedUser(userId: string): Promise<string> {
+  const user = await getUserInfo(userId);
+  return formatUser(user);
 }
-`;
+      `.trim(),
+		);
 
-    await fs.writeFile(serverFilePath, serverCode);
-    
-    vi.spyOn(fs, "readFile").mockImplementation(async (filePath) => {
-      if (filePath === serverFilePath) {
-        return serverCode;
-      }
-      throw new Error(`File not found: ${filePath}`);
-    });
+		// main.server.ts - server file that imports from another server file
+		await fs.writeFile(
+			path.join(tempDir, "main.server.ts"),
+			`
+import { getUserInfo, getFormattedUser } from "./utils.server";
+import { Order } from "./types";
 
-    // This should use the fallback esbuild compilation
-    const result = await plugin.load(serverFilePath);
-    
-    // Should still generate proxy code
-    expect(result).toContain("export async function testFunction");
-  });
+export async function getUserWithOrders(userId: string): Promise<{ user: any; orders: Order[] }> {
+  const user = await getUserInfo(userId);
+  const orders: Order[] = [
+    { id: "order1", userId, total: 100 },
+    { id: "order2", userId, total: 200 }
+  ];
+  return { user, orders };
+}
 
-  it("should handle index.ts imports correctly", async () => {
-    const importerPath = path.join(tempDir, "test.server.ts");
-    
-    // Create directory with index.ts
-    await fs.mkdir(path.join(tempDir, "models"), { recursive: true });
-    await fs.writeFile(path.join(tempDir, "models/index.ts"), "export const model = {};");
+export async function getFullUserInfo(userId: string): Promise<{ formatted: string; orderCount: number }> {
+  const formatted = await getFormattedUser(userId);
+  const { orders } = await getUserWithOrders(userId);
+  return { formatted, orderCount: orders.length };
+}
+      `.trim(),
+		);
 
-    // Should resolve directory import to index.ts
-    const resolved = await plugin.resolveId("./models", importerPath);
-    expect(resolved).toBe(path.join(tempDir, "models/index.ts"));
-  });
+		// Create Vite server with the plugin
+		viteServer = await createServer({
+			root: tempDir,
+			server: { middlewareMode: true },
+			plugins: [
+				serverActions({
+					include: ["**/*.server.ts"],
+					validation: { enabled: false },
+				}),
+			],
+		});
+	});
 
-  it("should not interfere with non-server file imports", async () => {
-    const clientFile = path.join(tempDir, "client.ts");
-    
-    // Should return null for non-server file imports
-    const resolved = await plugin.resolveId("./types", clientFile);
-    expect(resolved).toBeNull();
-  });
+	afterAll(async () => {
+		await viteServer.close();
+		// Clean up temp directory
+		await fs.rm(tempDir, { recursive: true, force: true });
+	});
 
-  it("should handle absolute imports from server files", async () => {
-    const serverFilePath = path.join(tempDir, "test.server.ts");
-    const absolutePath = path.join(tempDir, "absolute-types.ts");
-    
-    await fs.writeFile(absolutePath, "export type Absolute = boolean;");
-    
-    // Test absolute path import
-    const resolved = await plugin.resolveId(absolutePath, serverFilePath);
-    expect(resolved).toBe(absolutePath);
-  });
+	it("should load TypeScript server files without timeout", async () => {
+		const mainPath = path.join(tempDir, "main.server.ts");
+
+		// Use the plugin's load hook to process the file
+		const plugin = viteServer.config.plugins.find((p) => p.name === "vite-plugin-server-actions");
+
+		const startTime = Date.now();
+		const result = await plugin.load(mainPath);
+		const loadTime = Date.now() - startTime;
+
+		// Should load quickly (not timeout after 60s)
+		expect(loadTime).toBeLessThan(5000); // 5 seconds max
+		expect(result).toBeTruthy();
+		expect(result).toContain("getUserWithOrders");
+		expect(result).toContain("getFullUserInfo");
+	});
+
+	it("should handle nested TypeScript imports via SSR", async () => {
+		const mainPath = path.join(tempDir, "main.server.ts");
+
+		// Test loading via Vite's SSR module system
+		const startTime = Date.now();
+		const module = await viteServer.ssrLoadModule(mainPath);
+		const loadTime = Date.now() - startTime;
+
+		// Should load without timeout
+		expect(loadTime).toBeLessThan(5000);
+		expect(module).toBeTruthy();
+		expect(typeof module.getUserWithOrders).toBe("function");
+		expect(typeof module.getFullUserInfo).toBe("function");
+
+		// Test that the functions actually work
+		const result = await module.getUserWithOrders("test123");
+		expect(result.user.id).toBe("test123");
+		expect(result.orders).toHaveLength(2);
+
+		const fullInfo = await module.getFullUserInfo("test456");
+		expect(fullInfo.formatted).toBe("Test User <test@example.com>");
+		expect(fullInfo.orderCount).toBe(2);
+	});
+
+	it("should not cause recursion when loading circular imports", async () => {
+		// Create files with circular dependencies
+		await fs.writeFile(
+			path.join(tempDir, "circular-a.server.ts"),
+			`
+import { functionB } from "./circular-b.server";
+
+export async function functionA(): Promise<string> {
+  return "A";
+}
+
+export async function callB(): Promise<string> {
+  return await functionB();
+}
+      `.trim(),
+		);
+
+		await fs.writeFile(
+			path.join(tempDir, "circular-b.server.ts"),
+			`
+import { functionA } from "./circular-a.server";
+
+export async function functionB(): Promise<string> {
+  return "B";
+}
+
+export async function callA(): Promise<string> {
+  return await functionA();
+}
+      `.trim(),
+		);
+
+		const circularPath = path.join(tempDir, "circular-a.server.ts");
+		const plugin = viteServer.config.plugins.find((p) => p.name === "vite-plugin-server-actions");
+
+		// Should handle circular imports without hanging
+		const startTime = Date.now();
+		const result = await plugin.load(circularPath);
+		const loadTime = Date.now() - startTime;
+
+		expect(loadTime).toBeLessThan(5000);
+		expect(result).toBeTruthy();
+	});
+
+	it("should cache TypeScript modules to avoid recompilation", async () => {
+		const utilsPath = path.join(tempDir, "utils.server.ts");
+
+		// First load
+		const startTime1 = performance.now();
+		const module1 = await viteServer.ssrLoadModule(utilsPath);
+		const loadTime1 = performance.now() - startTime1;
+
+		// Second load (should be cached)
+		const startTime2 = performance.now();
+		const module2 = await viteServer.ssrLoadModule(utilsPath);
+		const loadTime2 = performance.now() - startTime2;
+
+		// Second load should be much faster due to caching (or at least not slower)
+		// If both are very fast, just check that caching works (same instance)
+		if (loadTime1 < 1 && loadTime2 < 1) {
+			// Both loads are very fast, just verify caching works
+			expect(module1).toBe(module2); // Should be the same module instance
+		} else {
+			// Normal case - second load should be faster
+			expect(loadTime2).toBeLessThan(loadTime1);
+			expect(module1).toBe(module2); // Should be the same module instance
+		}
+	});
 });

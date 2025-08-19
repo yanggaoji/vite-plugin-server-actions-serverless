@@ -4,15 +4,41 @@ import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs/promises";
 import fetch from "node-fetch";
+import net from "net";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const todoAppDir = path.join(__dirname, "../examples/svelte-todo-app");
 
+// Helper function to find an available port
+async function getAvailablePort(startPort = 3000) {
+	return new Promise((resolve, reject) => {
+		const server = net.createServer();
+		server.listen(startPort, (err) => {
+			if (err) {
+				// Port is in use, try next one
+				server.close();
+				getAvailablePort(startPort + 1).then(resolve).catch(reject);
+			} else {
+				const port = server.address().port;
+				server.close(() => resolve(port));
+			}
+		});
+		server.on('error', () => {
+			// Port is in use, try next one
+			getAvailablePort(startPort + 1).then(resolve).catch(reject);
+		});
+	});
+}
+
 describe("Production Build", () => {
 	let serverProcess;
-	const PORT = 3009; // Use a different port to avoid conflicts
+	let PORT; // Will be assigned dynamically
 
 	beforeAll(async () => {
+		// Find an available port
+		PORT = await getAvailablePort(3009);
+		console.log(`Using port ${PORT} for production build test`);
+		
 		console.log("Building todo app...");
 		// Build the app
 		await new Promise((resolve, reject) => {

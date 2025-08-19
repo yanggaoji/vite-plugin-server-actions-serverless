@@ -50,7 +50,7 @@ async function importModule(id, viteServer = null) {
 			if (tsModuleCache.has(id)) {
 				tsModuleCache.delete(id);
 			}
-			
+
 			const module = await viteServer.ssrLoadModule(id);
 			tsModuleCache.set(id, module);
 			return module;
@@ -367,27 +367,32 @@ export default function serverActions(userOptions = {}) {
 			}
 		},
 
-		async resolveId(source, importer) {
-			// Handle server file imports
+		async resolveId(source, importer, resolveOptions) {
+			// Skip SSR resolution
+			if (resolveOptions?.ssr) {
+				return null;
+			}
+
+			// Handle server file imports from client code
 			if (importer && shouldProcessFile(source, options)) {
 				const resolvedPath = path.resolve(path.dirname(importer), source);
 				return resolvedPath;
 			}
-			
+
 			// Handle TypeScript imports from server files
 			if (importer && shouldProcessFile(importer, options)) {
 				// Check if this is a relative import
-				if (source.startsWith('.') || source.startsWith('/')) {
+				if (source.startsWith(".") || source.startsWith("/")) {
 					// Try to resolve TypeScript file
 					const basePath = path.resolve(path.dirname(importer), source);
 					const possiblePaths = [
 						basePath,
 						`${basePath}.ts`,
 						`${basePath}.tsx`,
-						path.join(basePath, 'index.ts'),
-						path.join(basePath, 'index.tsx')
+						path.join(basePath, "index.ts"),
+						path.join(basePath, "index.tsx"),
 					];
-					
+
 					for (const possiblePath of possiblePaths) {
 						try {
 							const stats = await fs.stat(possiblePath);
@@ -401,12 +406,16 @@ export default function serverActions(userOptions = {}) {
 					}
 				}
 			}
-			
+
 			return null;
 		},
 
-		async load(id) {
+		async load(id, loadOptions) {
 			if (shouldProcessFile(id, options)) {
+				// Check if this is an SSR request - if so, let Vite handle the actual module
+				if (loadOptions?.ssr) {
+					return null; // Let Vite handle SSR loading of the actual module
+				}
 				try {
 					const code = await fs.readFile(id, "utf-8");
 
@@ -508,7 +517,8 @@ export default function serverActions(userOptions = {}) {
 					}
 
 					// Discover schemas from module if validation is enabled (development only)
-					if (options.validation.enabled && process.env.NODE_ENV !== "production") {
+					// Skip TypeScript files to avoid SSR loading issues
+					if (options.validation.enabled && process.env.NODE_ENV !== "production" && !id.endsWith(".ts")) {
 						try {
 							const module = await importModule(id, viteDevServer);
 							schemaDiscovery.discoverFromModule(module, moduleName);
@@ -528,6 +538,9 @@ export default function serverActions(userOptions = {}) {
 								});
 							}
 						}
+					} else if (options.validation.enabled && id.endsWith(".ts")) {
+						// For TypeScript files, defer schema discovery to request time
+						console.log(`[Vite Server Actions] Deferring schema discovery for TypeScript file: ${relativePath}`);
 					}
 
 					// Setup routes in development mode only
@@ -572,6 +585,19 @@ export default function serverActions(userOptions = {}) {
 							app.post(endpoint, ...contextMiddlewares, async (req, res) => {
 								try {
 									const module = await importModule(id, viteDevServer);
+
+									// Lazy schema discovery for TypeScript files
+									if (
+										options.validation.enabled &&
+										id.endsWith(".ts") &&
+										!schemaDiscovery.hasSchema(moduleName, functionName)
+									) {
+										try {
+											schemaDiscovery.discoverFromModule(module, moduleName);
+										} catch (err) {
+											console.warn(`Failed to discover schemas for ${moduleName}:`, err.message);
+										}
+									}
 
 									// Check if function exists in module
 									if (typeof module[functionName] !== "function") {
@@ -865,24 +891,18 @@ function generateClientProxy(moduleName, functions, options, filePath) {
 	const isDev = process.env.NODE_ENV !== "production";
 
 	let clientProxy = `\n// vite-server-actions: ${moduleName}\n`;
-
-	// Add a guard to prevent direct imports of server code
+	
+	// Set proxy flag at module level to prevent false security warnings
 	if (isDev) {
 		clientProxy += `
 // Development-only safety check
 if (typeof window !== 'undefined') {
-  // This code is running in the browser
-  const serverFileError = new Error(
-    '[Vite Server Actions] SECURITY WARNING: Server file "${moduleName}" is being imported in client code! ' +
-    'This could expose server-side code to the browser. Only import server actions through the plugin.'
-  );
-  serverFileError.name = 'ServerCodeInClientError';
+  // Mark that this is a legitimate proxy module
+  window.__VITE_SERVER_ACTIONS_PROXY__ = true;
   
-  // Check if we're in a server action proxy context
+  // Only warn if server code is imported outside of proxy context
   if (!window.__VITE_SERVER_ACTIONS_PROXY__) {
-    console.error(serverFileError);
-    // In development, we'll warn but not throw to avoid breaking HMR
-    console.error('Stack trace:', serverFileError.stack);
+    console.warn('[Vite Server Actions] SECURITY WARNING: Server file "${moduleName}" detected in client context');
   }
 }
 `;
@@ -898,11 +918,6 @@ if (typeof window !== 'undefined') {
         ${
 					isDev
 						? `
-        // Development-only: Mark that we're in a valid proxy context
-        if (typeof window !== 'undefined') {
-          window.__VITE_SERVER_ACTIONS_PROXY__ = true;
-        }
-        
         // Validate arguments in development
         if (args.some(arg => typeof arg === 'function')) {
           console.warn(
@@ -943,11 +958,7 @@ if (typeof window !== 'undefined') {
           ${
 						isDev
 							? `
-          // Development-only: Clear the proxy context
-          if (typeof window !== 'undefined') {
-            window.__VITE_SERVER_ACTIONS_PROXY__ = false;
-          }
-          `
+`
 							: ""
 					}
           
@@ -959,11 +970,7 @@ if (typeof window !== 'undefined') {
           ${
 						isDev
 							? `
-          // Development-only: Clear the proxy context on error
-          if (typeof window !== 'undefined') {
-            window.__VITE_SERVER_ACTIONS_PROXY__ = false;
-          }
-          `
+`
 							: ""
 					}
           

@@ -190,6 +190,17 @@ export class SchemaDiscovery {
 	}
 
 	/**
+	 * Check if schema exists for a function
+	 * @param {string} moduleName - Module name
+	 * @param {string} functionName - Function name
+	 * @returns {boolean} True if schema exists
+	 */
+	hasSchema(moduleName, functionName) {
+		const key = `${moduleName}.${functionName}`;
+		return this.schemas.has(key);
+	}
+
+	/**
 	 * Get all schemas
 	 * @returns {Map} All registered schemas
 	 */

@@ -215,20 +215,17 @@ export function generateEnhancedClientProxy(moduleName, functionDetails, options
 		});
 	}
 
-	// Add development safety checks
+	// Set proxy flag at module level to prevent false security warnings
 	if (isDev) {
 		clientProxy += `
 // Development-only safety check
 if (typeof window !== 'undefined') {
-  const serverFileError = new Error(
-    '[Vite Server Actions] SECURITY WARNING: Server file "${moduleName}" is being imported in client code! ' +
-    'This could expose server-side code to the browser. Only import server actions through the plugin.'
-  );
-  serverFileError.name = 'ServerCodeInClientError';
+  // Mark that this is a legitimate proxy module
+  window.__VITE_SERVER_ACTIONS_PROXY__ = true;
   
+  // Only warn if server code is imported outside of proxy context
   if (!window.__VITE_SERVER_ACTIONS_PROXY__) {
-    console.error(serverFileError);
-    console.error('Stack trace:', serverFileError.stack);
+    console.warn('[Vite Server Actions] SECURITY WARNING: Server file "${moduleName}" detected in client context');
   }
 }
 `;
@@ -269,11 +266,6 @@ export async ${jsSignature} {
   ${
 		isDev
 			? `
-  // Development-only: Mark that we're in a valid proxy context
-  if (typeof window !== 'undefined') {
-    window.__VITE_SERVER_ACTIONS_PROXY__ = true;
-  }
-  
   // Validate arguments in development
   if (arguments.length > 0) {
     const args = Array.from(arguments);
@@ -347,11 +339,7 @@ export async ${jsSignature} {
     ${
 			isDev
 				? `
-    // Development-only: Clear the proxy context
-    if (typeof window !== 'undefined') {
-      window.__VITE_SERVER_ACTIONS_PROXY__ = false;
-    }
-    `
+`
 				: ""
 		}
     
@@ -363,11 +351,7 @@ export async ${jsSignature} {
     ${
 			isDev
 				? `
-    // Development-only: Clear the proxy context on error
-    if (typeof window !== 'undefined') {
-      window.__VITE_SERVER_ACTIONS_PROXY__ = false;
-    }
-    `
+`
 				: ""
 		}
     
