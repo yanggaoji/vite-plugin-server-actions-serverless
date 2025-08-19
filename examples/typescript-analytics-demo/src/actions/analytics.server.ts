@@ -4,8 +4,8 @@ import type {
   MetricValue,
   Aggregation,
   GroupedData
-} from "../types/analytics";
-import { generateEvents } from "./data-generator.server";
+} from "../types/analytics.ts";
+import { generateEvents } from "./data-generator.server.ts";
 
 // Schemas
 const MetricQuerySchema = z.object({
@@ -243,3 +243,25 @@ export async function queryMetrics(
 }
 
 queryMetrics.schema = MetricQuerySchema;
+
+/**
+ * Wrapper for generateTimeSeries to make it available to client
+ * This ensures proper transformation by the plugin
+ */
+export async function getTimeSeries(
+  metric: "revenue" | "users" | "conversion",
+  dateRange: { start: string; end: string },
+  interval: "hourly" | "daily" = "daily"
+) {
+  const { generateTimeSeries } = await import("./data-generator.server.ts");
+  return generateTimeSeries(metric, dateRange, interval);
+}
+
+getTimeSeries.schema = z.tuple([
+  z.enum(["revenue", "users", "conversion"]),
+  z.object({
+    start: z.string().datetime(),
+    end: z.string().datetime()
+  }),
+  z.enum(["hourly", "daily"]).optional()
+]);

@@ -4,8 +4,8 @@ import serverActions from "vite-plugin-server-actions";
 
 export default defineConfig({
   plugins: [
-    react(),
     serverActions({
+      include: ["**/*.server.ts", "**/*.server.js"],
       validation: {
         enabled: true,
       },
@@ -18,5 +18,6 @@ export default defineConfig({
         },
       },
     }),
+    react(),
   ],
 });

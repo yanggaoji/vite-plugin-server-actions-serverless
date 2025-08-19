@@ -4,8 +4,8 @@ import {
   createOrderId, 
   createProductId,
   type UserId
-} from "../types/branded";
-import type { AnalyticsEvent, TimeSeriesData } from "../types/analytics";
+} from "../types/branded.ts";
+import type { AnalyticsEvent, TimeSeriesData } from "../types/analytics.ts";
 
 // Zod schemas for validation
 const DateRangeSchema = z.object({

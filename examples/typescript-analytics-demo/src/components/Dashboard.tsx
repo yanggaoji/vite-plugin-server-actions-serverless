@@ -6,7 +6,7 @@ import {
   calculateMetric
 } from "../actions/analytics.server";
 import { generateTimeSeries } from "../actions/data-generator.server";
-import type { MetricName } from "../types/analytics";
+import type { MetricName } from "../types/analytics-types";
 
 interface DashboardProps {
   showTypeInfo: boolean;
@@ -50,7 +50,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ showTypeInfo }) => {
 
       // Transform time series for chart
       setTimeSeriesData(timeSeries.map(point => ({
-        date: point.timestamp.toLocaleDateString(),
+        date: new Date(point.timestamp).toLocaleDateString(),
         value: typeof point.value === "number" ? point.value : 0,
         confidence: point.metadata?.confidence || 1
       })));

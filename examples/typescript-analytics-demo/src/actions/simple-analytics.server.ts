@@ -14,18 +14,18 @@ type MetricName = `${MetricType}_${TimeFrame}`;
 
 // Conditional types
 type MetricValue<T extends MetricName> = 
-  T extends `pageviews_${infer TF}` ? number :
-  T extends `users_${infer TF}` ? { active: number; new: number } :
-  T extends `revenue_${infer TF}` ? { amount: number; currency: string } :
+  T extends `pageviews_${TimeFrame}` ? number :
+  T extends `users_${TimeFrame}` ? { active: number; new: number } :
+  T extends `revenue_${TimeFrame}` ? { amount: number; currency: string } :
   never;
 
 // Branded types
 type UserId = string & { __brand: "UserId" };
-type SessionId = string & { __brand: "SessionId" };
+// type SessionId = string & { __brand: "SessionId" };
 
 // Helper functions
 const createUserId = (id: string): UserId => `user_${id}` as UserId;
-const createSessionId = (id: string): SessionId => `sess_${id}` as SessionId;
+// const createSessionId = (id: string): SessionId => `sess_${id}` as SessionId;
 
 // Discriminated union
 type AnalyticsEvent = 
@@ -48,7 +48,7 @@ type TimestampedData<T> = T & {
  */
 export async function getMetric<T extends MetricName>(
   metric: T,
-  dateRange: { start: string; end: string }
+  _dateRange: { start: string; end: string }
 ): Promise<MetricValue<T>> {
   // Simulate different return types based on metric name
   if (metric.startsWith("pageviews_")) {
