@@ -22,37 +22,5 @@
     "completed": false,
     "priority": "low",
     "createdAt": "2024-01-01T12:00:00.000Z"
-  },
-  {
-    "id": 1752497256900,
-    "text": "Test todo",
-    "description": null,
-    "completed": false,
-    "priority": "high",
-    "createdAt": "2025-07-14T12:47:36.900Z"
-  },
-  {
-    "id": 1752497272914,
-    "text": "Test todo",
-    "description": null,
-    "completed": false,
-    "priority": "high",
-    "createdAt": "2025-07-14T12:47:52.914Z"
-  },
-  {
-    "id": 1752497546341,
-    "text": "Test todo",
-    "description": null,
-    "completed": false,
-    "priority": "high",
-    "createdAt": "2025-07-14T12:52:26.341Z"
-  },
-  {
-    "id": 1752497593211,
-    "text": "Test todo",
-    "description": null,
-    "completed": false,
-    "priority": "high",
-    "createdAt": "2025-07-14T12:53:13.211Z"
   }
 ]
