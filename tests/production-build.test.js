@@ -17,15 +17,19 @@ async function getAvailablePort(startPort = 3000) {
 			if (err) {
 				// Port is in use, try next one
 				server.close();
-				getAvailablePort(startPort + 1).then(resolve).catch(reject);
+				getAvailablePort(startPort + 1)
+					.then(resolve)
+					.catch(reject);
 			} else {
 				const port = server.address().port;
 				server.close(() => resolve(port));
 			}
 		});
-		server.on('error', () => {
+		server.on("error", () => {
 			// Port is in use, try next one
-			getAvailablePort(startPort + 1).then(resolve).catch(reject);
+			getAvailablePort(startPort + 1)
+				.then(resolve)
+				.catch(reject);
 		});
 	});
 }
@@ -38,7 +42,7 @@ describe("Production Build", () => {
 		// Find an available port
 		PORT = await getAvailablePort(3009);
 		console.log(`Using port ${PORT} for production build test`);
-		
+
 		console.log("Building todo app...");
 		// Build the app
 		await new Promise((resolve, reject) => {

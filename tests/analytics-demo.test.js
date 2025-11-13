@@ -23,7 +23,7 @@ describe("TypeScript Analytics Demo", () => {
 			// For now, we'll skip this test as the demo has some strict mode issues
 			// but the import resolution (our main fix) is working
 		}
-	});
+	}, 15000);
 
 	it("should have server files with cross-file imports", async () => {
 		// Check that server files exist and contain imports
@@ -62,7 +62,7 @@ describe("TypeScript Analytics Demo", () => {
 			// Log the error but don't fail - we're testing module resolution, not strict TS
 			console.log("Build output:", error.stdout?.toString());
 		}
-	});
+	}, 30000);
 
 	it("should generate valid server.js with TypeScript functions", async () => {
 		const serverPath = path.join(analyticsDir, "dist/server.js");

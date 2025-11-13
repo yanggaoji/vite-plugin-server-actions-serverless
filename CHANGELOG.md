@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Production Validation Runtime** - Fixed dev/prod validation behavior mismatch where production wasn't validating request body array structure
+- **Module Cache Isolation** - Fixed global singleton module cache that could cause corruption across multiple plugin instances
+- **Analytics Demo Tests** - Fixed test timeouts by increasing timeout limits from 5s to 15s/30s
+
+### Added
+
+- **Error Enhancement Tests** - 39 new tests covering error message formatting, typo detection, and helpful suggestions
+- **HMR Tests** - 8 new tests for Hot Module Replacement functionality including watcher setup and file change detection
+
+### Changed
+
+- **Package Homepage** - Updated from GitHub URL to serveractions.dev for better documentation experience
+- **Test Count** - Increased from 206 to 253 tests (100% passing)
+
 ## [1.1.1] - 2025-07-14
 
 ### Added

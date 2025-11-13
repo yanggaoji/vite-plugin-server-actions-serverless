@@ -21,7 +21,7 @@
     "middleware",
     "express"
   ],
-  "homepage": "https://github.com/HelgeSverre/vite-plugin-server-actions",
+  "homepage": "https://serveractions.dev",
   "bugs": {
     "url": "https://github.com/HelgeSverre/vite-plugin-server-actions/issues"
   },

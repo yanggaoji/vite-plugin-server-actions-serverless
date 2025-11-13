@@ -48,11 +48,35 @@ export function createValidationMiddleware(options = {}) {
 		}
 
 		try {
+			// Request body should be an array of arguments for server functions
+			if (!Array.isArray(req.body) || req.body.length === 0) {
+				return res.status(400).json({
+					error: "Validation failed",
+					message: "Request body must be a non-empty array of function arguments",
+				});
+			}
+
+			// Validate based on schema type
+			let validationData;
+			if (schema._def?.typeName === "ZodTuple") {
+				// Schema expects multiple arguments (tuple)
+				validationData = req.body;
+			} else {
+				// Schema expects single argument (first element of array)
+				validationData = req.body[0];
+			}
+
 			// Validate request body using Zod
 			if (schema.parse) {
 				// It's a Zod schema
-				const validatedData = await schema.parseAsync(req.body);
-				req.body = validatedData;
+				const validatedData = await schema.parseAsync(validationData);
+
+				// Replace request body with validated data
+				if (schema._def?.typeName === "ZodTuple") {
+					req.body = validatedData;
+				} else {
+					req.body = [validatedData];
+				}
 			}
 			next();
 		} catch (error) {

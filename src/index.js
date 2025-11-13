@@ -28,16 +28,16 @@ import {
 	validateSchemaAttachment,
 } from "./dev-validator.js";
 
-// Cache for compiled TypeScript modules in development
-const tsModuleCache = new Map();
+// Module cache moved to plugin instance to avoid cross-instance pollution
 
 /**
  * Import a module, handling TypeScript files in development
  * @param {string} id - Module path
  * @param {any} viteServer - Vite dev server instance
+ * @param {Map} cache - Module cache for this plugin instance
  * @returns {Promise<any>} - Imported module
  */
-async function importModule(id, viteServer = null) {
+async function importModule(id, viteServer = null, cache = new Map()) {
 	// In production or for JS files, use regular import
 	if (process.env.NODE_ENV === "production" || !id.endsWith(".ts")) {
 		return import(id);
@@ -47,12 +47,12 @@ async function importModule(id, viteServer = null) {
 	if (viteServer && viteServer.ssrLoadModule) {
 		try {
 			// Clear from cache if it exists to ensure fresh load
-			if (tsModuleCache.has(id)) {
-				tsModuleCache.delete(id);
+			if (cache.has(id)) {
+				cache.delete(id);
 			}
 
 			const module = await viteServer.ssrLoadModule(id);
-			tsModuleCache.set(id, module);
+			cache.set(id, module);
 			return module;
 		} catch (error) {
 			console.error(`Failed to load module ${id} via Vite SSR:`, error);
@@ -61,8 +61,8 @@ async function importModule(id, viteServer = null) {
 	}
 
 	// Check cache first
-	if (tsModuleCache.has(id)) {
-		return tsModuleCache.get(id);
+	if (cache.has(id)) {
+		return cache.get(id);
 	}
 
 	// Fallback: Manual TypeScript compilation (when Vite server is not available)
@@ -101,7 +101,7 @@ async function importModule(id, viteServer = null) {
 				const module = await import(`${tmpFile}?t=${Date.now()}`);
 
 				// Cache the module
-				tsModuleCache.set(id, module);
+				cache.set(id, module);
 
 				// Clean up temp file immediately
 				await fs.unlink(tmpFile).catch(() => {});
@@ -230,6 +230,7 @@ export default function serverActions(userOptions = {}) {
 
 	const serverFunctions = new Map();
 	const schemaDiscovery = defaultSchemaDiscovery;
+	const tsModuleCache = new Map(); // Per-instance cache for TypeScript modules
 	let app;
 	let openAPIGenerator;
 	let validationMiddleware = null;
@@ -520,7 +521,7 @@ export default function serverActions(userOptions = {}) {
 					// Skip TypeScript files to avoid SSR loading issues
 					if (options.validation.enabled && process.env.NODE_ENV !== "production" && !id.endsWith(".ts")) {
 						try {
-							const module = await importModule(id, viteDevServer);
+							const module = await importModule(id, viteDevServer, tsModuleCache);
 							schemaDiscovery.discoverFromModule(module, moduleName);
 
 							// Validate schema attachment in development
@@ -584,7 +585,7 @@ export default function serverActions(userOptions = {}) {
 							// Apply middleware before the handler
 							app.post(endpoint, ...contextMiddlewares, async (req, res) => {
 								try {
-									const module = await importModule(id, viteDevServer);
+									const module = await importModule(id, viteDevServer, tsModuleCache);
 
 									// Lazy schema discovery for TypeScript files
 									if (
@@ -891,7 +892,7 @@ function generateClientProxy(moduleName, functions, options, filePath) {
 	const isDev = process.env.NODE_ENV !== "production";
 
 	let clientProxy = `\n// vite-server-actions: ${moduleName}\n`;
-	
+
 	// Set proxy flag at module level to prevent false security warnings
 	if (isDev) {
 		clientProxy += `

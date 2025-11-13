@@ -54,7 +54,7 @@ describe("TypeScript Module Resolution Fix", () => {
 		expect(result).toBeTruthy();
 		expect(result).toContain("export async function testFunction");
 		expect(result).toContain("fetch");
-		
+
 		// ssrLoadModule should NOT be called in the load hook (deferred to request time)
 		expect(mockViteServer.ssrLoadModule).not.toHaveBeenCalled();
 	});
