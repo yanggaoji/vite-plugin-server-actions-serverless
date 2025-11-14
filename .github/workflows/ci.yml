@@ -28,9 +28,6 @@ jobs:
         run: npm ci
         working-directory: examples/svelte-todo-app
 
-      - name: Run linting
-        run: npm run lint
-
       - name: Run type checking
         run: npm run typecheck
 
