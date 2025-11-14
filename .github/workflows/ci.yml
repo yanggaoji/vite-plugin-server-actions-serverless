@@ -24,9 +24,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install example dependencies (svelte)
-        run: npm ci
-        working-directory: examples/svelte-todo-app
+      - name: Install example dependencies
+        run: |
+          cd examples/svelte-todo-app && npm ci
+          cd ../vue-todo-app && npm ci
+          cd ../react-todo-app && npm ci
+          cd ../react-todo-app-typescript && npm ci
 
       - name: Run type checking
         run: npm run typecheck
