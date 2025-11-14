@@ -29,12 +29,10 @@ Key files:
 ### Main project:
 
 - `npm run format` - Format code with Prettier
-- `npm run lint` - Check code quality with ESLint
-- `npm run lint:fix` - Fix auto-fixable linting issues
 - `npm run test` - Run tests in watch mode
 - `npm run test:run` - Run tests once
 - `npm run typecheck` - Check TypeScript types
-- `npm run check` - Run all quality checks (tests, lint, typecheck)
+- `npm run check` - Run all quality checks (tests, typecheck)
 - `npm run sort` - Sort package.json
 - `npm run example:svelte:dev` - Run the Svelte todo app example in development
 - `npm run example:svelte:build` - Build the Svelte todo app example

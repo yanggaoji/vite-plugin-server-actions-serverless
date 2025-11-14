@@ -41,6 +41,11 @@ const users = await getUsers(); // Just call it!
 - **Developer Experience** - Helpful error messages and development warnings
 - **Production Optimized** - Efficient Express server builds
 
+## Requirements
+
+- Node.js 18+ (Node 16 reached EOL)
+- Vite 4, 5, 6, or 7
+
 ## Quick Start
 
 ### 1. Install

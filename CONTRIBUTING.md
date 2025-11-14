@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Vite Server Actions! This documen
 
 ### Prerequisites
 
-- Node.js 16+ (18+ recommended)
+- Node.js 18+ (Node 16 reached EOL)
 - npm or yarn
 - Git
 
@@ -75,19 +75,13 @@ npm test validation.test.js
 ### Code Quality
 
 ```bash
-# Check code with ESLint
-npm run lint
-
-# Fix auto-fixable lint issues
-npm run lint:fix
-
 # Check TypeScript types
 npm run typecheck
 
 # Format code with Prettier
 npm run format
 
-# Run all checks (tests, lint, typecheck)
+# Run all checks (tests, typecheck)
 npm run check
 ```
 
@@ -166,7 +160,7 @@ The E2E tests run against all three framework examples (Svelte, Vue, React) usin
 - Prefer `const` over `let`
 - Use meaningful variable names
 - Add JSDoc comments for public APIs
-- Use tabs for indentation (configured in ESLint)
+- Use tabs for indentation
 - No semicolons (configured in Prettier)
 
 ### Commit Messages
