@@ -162,6 +162,7 @@ export class OpenAPIGenerator {
 
 	/**
 	 * Get standard error response schema
+	 * Matches the format returned by createErrorResponse in security.js
 	 * @returns {object} OpenAPI error schema
 	 */
 	getErrorSchema() {
@@ -169,36 +170,67 @@ export class OpenAPIGenerator {
 			type: "object",
 			properties: {
 				error: {
+					type: "boolean",
+					description: "Error flag (always true for errors)",
+				},
+				status: {
+					type: "integer",
+					format: "int32",
+					description: "HTTP status code",
+				},
+				message: {
 					type: "string",
 					description: "Error message",
 				},
-				details: {
+				code: {
 					type: "string",
-					description: "Error details",
+					description: "Error code for client handling",
 				},
-				validationErrors: {
-					type: "array",
-					description: "Validation errors (if applicable)",
-					items: {
-						type: "object",
-						properties: {
-							path: {
-								type: "string",
-								description: "Field path",
-							},
-							message: {
-								type: "string",
-								description: "Error message",
-							},
-							code: {
-								type: "string",
-								description: "Error code",
+				timestamp: {
+					type: "string",
+					format: "date-time",
+					description: "Error timestamp",
+				},
+				details: {
+					type: "object",
+					description: "Additional error details",
+					properties: {
+						message: {
+							type: "string",
+							description: "Detailed error message (development only)",
+						},
+						stack: {
+							type: "string",
+							description: "Stack trace (development only)",
+						},
+						validationErrors: {
+							type: "array",
+							description: "Validation errors (if applicable)",
+							items: {
+								type: "object",
+								properties: {
+									path: {
+										type: "string",
+										description: "Field path",
+									},
+									message: {
+										type: "string",
+										description: "Error message",
+									},
+									code: {
+										type: "string",
+										description: "Error code",
+									},
+									value: {
+										description: "Invalid value",
+									},
+								},
 							},
 						},
 					},
 				},
 			},
-			required: ["error"],
+			required: ["error", "status", "message", "timestamp"],
 		};
 	}
 }

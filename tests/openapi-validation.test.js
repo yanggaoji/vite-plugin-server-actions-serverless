@@ -197,8 +197,9 @@ describe("OpenAPI generation with Zod validation", () => {
 		expect(responses["400"].content["application/json"].schema).toMatchObject({
 			type: "object",
 			properties: {
-				error: { type: "string" },
-				details: { type: "string" },
+				error: { type: "boolean" },
+				status: { type: "integer" },
+				message: { type: "string" },
 			},
 		});
 	});

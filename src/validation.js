@@ -80,10 +80,18 @@ export class ZodAdapter extends ValidationAdapter {
 			const registry = new OpenAPIRegistry();
 			const schemaName = "_TempSchema";
 
-			// The library requires schemas to be registered with openapi metadata
-			// For simple conversion, we'll create a temporary registry
-			const extendedSchema = schema.openapi ? schema : schema;
-			registry.register(schemaName, extendedSchema);
+			// The library requires schemas to have .openapi() metadata
+			// If the schema doesn't have it, add it dynamically
+			let schemaToRegister = schema;
+			if (typeof schema.openapi === "function") {
+				// Add openapi metadata with the temp schema name
+				schemaToRegister = schema.openapi(schemaName);
+			} else {
+				// Schema wasn't created with extendZodWithOpenApi - use basic fallback
+				return this._basicZodToOpenAPI(schema);
+			}
+
+			registry.register(schemaName, schemaToRegister);
 
 			// Generate the OpenAPI components
 			const generator = new OpenApiGeneratorV3(registry.definitions);
@@ -94,13 +102,79 @@ export class ZodAdapter extends ValidationAdapter {
 
 			if (!openAPISchema) {
 				// Fallback for schemas that couldn't be converted
-				return { type: "object", description: "Schema conversion not supported" };
+				return this._basicZodToOpenAPI(schema);
 			}
 
 			return openAPISchema;
 		} catch (error) {
-			console.warn(`Failed to convert Zod schema to OpenAPI: ${error.message}`);
-			return { type: "object", description: "Schema conversion failed" };
+			// Only log warning for unexpected errors
+			if (process.env.NODE_ENV === "development") {
+				console.warn(`Failed to convert Zod schema to OpenAPI: ${error.message}`);
+			}
+			return this._basicZodToOpenAPI(schema);
+		}
+	}
+
+	/**
+	 * Basic Zod to OpenAPI conversion for schemas without .openapi() extension
+	 * @param {any} schema - Zod schema
+	 * @returns {object} OpenAPI schema
+	 */
+	_basicZodToOpenAPI(schema) {
+		if (!schema || !schema._def) {
+			return { type: "object", description: "Unknown schema" };
+		}
+
+		const typeName = schema._def.typeName;
+
+		switch (typeName) {
+			case "ZodString":
+				return { type: "string" };
+			case "ZodNumber":
+				return { type: "number" };
+			case "ZodBoolean":
+				return { type: "boolean" };
+			case "ZodArray":
+				return {
+					type: "array",
+					items: this._basicZodToOpenAPI(schema._def.type),
+				};
+			case "ZodObject": {
+				const shape = schema._def.shape ? schema._def.shape() : {};
+				const properties = {};
+				const required = [];
+				for (const [key, value] of Object.entries(shape)) {
+					properties[key] = this._basicZodToOpenAPI(value);
+					if (!value.isOptional?.()) {
+						required.push(key);
+					}
+				}
+				return {
+					type: "object",
+					properties,
+					...(required.length > 0 ? { required } : {}),
+				};
+			}
+			case "ZodOptional":
+				return this._basicZodToOpenAPI(schema._def.innerType);
+			case "ZodDefault":
+				return this._basicZodToOpenAPI(schema._def.innerType);
+			case "ZodEnum":
+				return {
+					type: "string",
+					enum: schema._def.values,
+				};
+			case "ZodTuple": {
+				const items = schema._def.items.map((item) => this._basicZodToOpenAPI(item));
+				return {
+					type: "array",
+					items: items.length === 1 ? items[0] : { oneOf: items },
+					minItems: items.length,
+					maxItems: items.length,
+				};
+			}
+			default:
+				return { type: "object", description: `Zod type: ${typeName}` };
 		}
 	}
 
@@ -239,7 +313,17 @@ export class SchemaDiscovery {
  * Validation middleware factory
  */
 export function createValidationMiddleware(options = {}) {
-	const adapter = options.adapter || new ZodAdapter();
+	// Handle adapter as string key (e.g., "zod") or instance
+	let adapter;
+	if (typeof options.adapter === "string") {
+		const AdapterClass = adapters[options.adapter];
+		if (!AdapterClass) {
+			throw new Error(`Unknown validation adapter: ${options.adapter}. Available: ${Object.keys(adapters).join(", ")}`);
+		}
+		adapter = new AdapterClass();
+	} else {
+		adapter = options.adapter || new ZodAdapter();
+	}
 	const schemaDiscovery = options.schemaDiscovery || new SchemaDiscovery(adapter);
 
 	return async function validationMiddleware(req, res, next) {

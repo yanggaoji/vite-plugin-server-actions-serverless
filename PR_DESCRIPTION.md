@@ -1,50 +1,68 @@
-# Fix Port Configuration and Enhance TypeScript Type Generation
+# Release v1.2.0 - Stability & Correctness Improvements
 
 ## Summary
 
-This PR addresses issue #3 where custom port configuration was not properly propagated to OpenAPI documentation. Additionally, it significantly enhances TypeScript type generation to support complex type patterns.
+This release focuses on stability, correctness, and documentation accuracy in preparation for wider public adoption. It includes critical bug fixes for falsy return values, validation adapter initialization, and error response consistency.
+
+## Issues Addressed
+
+- **Closes #3** - Port configuration now correctly propagates to OpenAPI documentation
+- **Issue #5** - Verified that `fs` and other Node.js built-ins work correctly in `.server.ts` files (the existing TypeScript examples already demonstrate this working)
 
 ## Changes
 
-### Bug Fixes
+### Critical Bug Fixes
 
-- Fixed hardcoded port 5173 throughout the codebase
-- Port configuration now correctly propagates from Vite config to OpenAPI spec
-- Dynamic port detection in both development and production modes
+| Issue                      | Fix                                                                                                                               |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Falsy Return Values**    | Server actions returning `0`, `false`, `""`, or `null` now work correctly. Actions returning `undefined` send HTTP 204 No Content |
+| **Validation Adapter**     | Fixed bug where adapter configured as string `"zod"` wasn't properly instantiated                                                 |
+| **Zod OpenAPI Conversion** | Added fallback converter for schemas without `.openapi()` metadata                                                                |
+| **Error Response Shapes**  | Aligned error formats across dev, prod, and OpenAPI documentation                                                                 |
 
-### TypeScript Enhancements
+### Other Fixes
 
-- Added support for 95% of TypeScript type patterns in AST parser
-- New type support includes:
-  - Intersection types (`A & B`)
-  - Tuple types (`[string, number]`)
-  - Template literal types
-  - Conditional types (`T extends U ? X : Y`)
-  - Index signatures (`{ [key: string]: any }`)
-  - Type operators (`keyof`, `typeof`, `readonly`)
-  - Mapped types, type predicates, import types, and more
-- Added comprehensive test coverage (20+ new test cases)
+- **Production Validation Runtime** - Fixed dev/prod behavior mismatch for request body validation
+- **Module Cache Isolation** - Prevents corruption across multiple plugin instances
+- **Dead Code Removal** - Removed unreachable client proxy security check
+
+### Type Definitions
+
+- Added missing methods to `SchemaDiscovery` class (`hasSchema`, `clear`)
+- Added missing methods to `ValidationAdapter` class (`toOpenAPISchema`, `getParameters`)
+- Fixed `adapters` export type (was class reference, now properly typed)
+- Added `defaultAdapter` and `defaultSchemaDiscovery` exports
 
 ### Documentation
 
-- Removed marketing language from README
-- Reduced emoji usage throughout documentation
-- Added future improvements roadmap to TODO.md
+- Clarified default route transform creates clean hierarchical paths
+- Clarified that validation is disabled by default
+- Updated README examples for accuracy
 
-## Testing
+### Testing
 
-- All 194 unit tests passing
-- All 52 E2E tests passing
-- Added new test files:
-  - `tests/generate-code.test.js` - Comprehensive TypeScript type testing
-  - `tests/advanced-types-parsing.test.js` - Real-world type pattern validation
-  - `examples/react-todo-app-typescript/src/actions/advanced-types.server.ts` - Advanced type examples
+- All **253 unit tests** passing
+- All **E2E tests** passing (Svelte, Vue, React, React-TS)
+- Added 39 error enhancement tests
+- Added 8 HMR tests
 
-## Version
+## Testing Verification
 
-- Bumped version to 1.1.1
-- Updated CHANGELOG.md with all changes
+```bash
+# Unit tests
+npm run test:run  # ✓ 253 tests passing
+
+# Type checking
+npm run typecheck  # ✓ No errors
+
+# E2E tests (requires servers to be running)
+npm run test:e2e  # ✓ All projects passing
+```
 
 ## Breaking Changes
 
 None - All changes are backward compatible.
+
+## Version
+
+Bump to 1.2.0 (minor version for new features and bug fixes)

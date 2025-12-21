@@ -5,23 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2025-12-21
+
+This release focuses on stability, correctness, and documentation accuracy in preparation for public release.
 
 ### Fixed
 
-- **Production Validation Runtime** - Fixed dev/prod validation behavior mismatch where production wasn't validating request body array structure
-- **Module Cache Isolation** - Fixed global singleton module cache that could cause corruption across multiple plugin instances
-- **Analytics Demo Tests** - Fixed test timeouts by increasing timeout limits from 5s to 15s/30s
+- **Falsy Return Value Handling** - Server actions returning `0`, `false`, `""`, or `null` now work correctly. Previously these values were incorrectly treated as errors. Actions returning `undefined` now properly send HTTP 204 No Content.
+- **Validation Adapter Initialization** - Fixed bug where validation adapter configured as a string (e.g., `"zod"`) was not properly instantiated, causing validation to fail silently.
+- **Production Validation Runtime** - Fixed dev/prod validation behavior mismatch where production wasn't validating request body array structure.
+- **OpenAPI Zod Conversion** - Added fallback converter for Zod schemas without `.openapi()` metadata, preventing "zodSchema.openapi is not a function" errors.
+- **Module Cache Isolation** - Fixed global singleton module cache that could cause corruption across multiple plugin instances.
+- **Error Response Consistency** - Aligned error response shapes across development, production, and OpenAPI schema documentation.
+- **Analytics Demo Tests** - Fixed test timeouts by increasing timeout limits from 5s to 15s/30s.
 
 ### Added
 
-- **Error Enhancement Tests** - 39 new tests covering error message formatting, typo detection, and helpful suggestions
-- **HMR Tests** - 8 new tests for Hot Module Replacement functionality including watcher setup and file change detection
+- **Error Enhancement Tests** - 39 new tests covering error message formatting, typo detection, and helpful suggestions.
+- **HMR Tests** - 8 new tests for Hot Module Replacement functionality including watcher setup and file change detection.
 
 ### Changed
 
-- **Package Homepage** - Updated from GitHub URL to serveractions.dev for better documentation experience
-- **Test Count** - Increased from 206 to 253 tests (100% passing)
+- **Package Homepage** - Updated from GitHub URL to serveractions.dev for better documentation experience.
+- **Test Count** - Increased from 206 to 253 tests (100% passing).
+- **Type Definitions** - Improved `index.d.ts` to accurately reflect runtime behavior of validation and OpenAPI modules.
+- **Documentation** - Clarified default route transform behavior and that validation is disabled by default.
+
+### Removed
+
+- **Dead Code** - Removed unreachable client proxy security check that could never trigger.
 
 ## [1.1.1] - 2025-07-14
 
@@ -158,7 +170,7 @@ First stable release! This version is production-ready with comprehensive featur
 - Hot module replacement support
 - Basic todo app example
 
-[Unreleased]: https://github.com/HelgeSverre/vite-plugin-server-actions/compare/v1.1.1...HEAD
+[1.2.0]: https://github.com/HelgeSverre/vite-plugin-server-actions/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/HelgeSverre/vite-plugin-server-actions/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/HelgeSverre/vite-plugin-server-actions/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/HelgeSverre/vite-plugin-server-actions/compare/v1.0.0...v1.0.1

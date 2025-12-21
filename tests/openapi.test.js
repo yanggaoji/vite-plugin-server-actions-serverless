@@ -193,18 +193,25 @@ describe("OpenAPIGenerator", () => {
 
 			expect(errorSchema.type).toBe("object");
 			expect(errorSchema.properties.error).toBeDefined();
+			expect(errorSchema.properties.error.type).toBe("boolean");
+			expect(errorSchema.properties.status).toBeDefined();
+			expect(errorSchema.properties.message).toBeDefined();
+			expect(errorSchema.properties.timestamp).toBeDefined();
 			expect(errorSchema.properties.details).toBeDefined();
-			expect(errorSchema.properties.validationErrors).toBeDefined();
 			expect(errorSchema.required).toContain("error");
+			expect(errorSchema.required).toContain("status");
+			expect(errorSchema.required).toContain("message");
+			expect(errorSchema.required).toContain("timestamp");
 		});
 
 		it("should include validation error structure", () => {
 			const errorSchema = generator.getErrorSchema();
 
-			expect(errorSchema.properties.validationErrors.type).toBe("array");
-			expect(errorSchema.properties.validationErrors.items.properties.path).toBeDefined();
-			expect(errorSchema.properties.validationErrors.items.properties.message).toBeDefined();
-			expect(errorSchema.properties.validationErrors.items.properties.code).toBeDefined();
+			const validationErrors = errorSchema.properties.details.properties.validationErrors;
+			expect(validationErrors.type).toBe("array");
+			expect(validationErrors.items.properties.path).toBeDefined();
+			expect(validationErrors.items.properties.message).toBeDefined();
+			expect(validationErrors.items.properties.code).toBeDefined();
 		});
 	});
 });

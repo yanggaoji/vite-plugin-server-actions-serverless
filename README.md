@@ -299,16 +299,20 @@ serverActions({
 
 #### Route Transform Options
 
+The plugin uses clean hierarchical paths by default (e.g., `actions/todo/create` instead of `src_actions_todo/create`).
+
 ```javascript
 import { pathUtils } from "vite-plugin-server-actions";
 
 // Available presets:
-pathUtils.createCleanRoute; // (default) auth.server.js → /api/auth/login
-pathUtils.createLegacyRoute; // auth.server.js → /api/auth_server/login
-pathUtils.createMinimalRoute; // auth.server.js → /api/auth.server/login
+pathUtils.createCleanRoute; // (default) src/actions/auth.server.js → /api/actions/auth/login
+pathUtils.createLegacyRoute; // src/actions/auth.server.js → /api/src_actions_auth/login
+pathUtils.createMinimalRoute; // actions/auth.server.js → /api/actions/auth.server/login
 ```
 
 #### Validation Options
+
+Validation is disabled by default. Enable it explicitly in your configuration.
 
 | Option    | Type      | Default | Description                           |
 | --------- | --------- | ------- | ------------------------------------- |

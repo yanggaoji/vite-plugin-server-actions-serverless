@@ -616,7 +616,11 @@ export default function serverActions(userOptions = {}) {
 									}
 
 									const result = await module[functionName](...req.body);
-									res.json(result || "* No response *");
+									if (result === undefined) {
+										res.status(204).end();
+									} else {
+										res.json(result);
+									}
 								} catch (error) {
 									console.error(`Error in ${functionName}: ${error.message}`);
 
@@ -824,10 +828,22 @@ export default function serverActions(userOptions = {}) {
             app.post('${options.apiPrefix}/${routePath}', ${middlewareCall}async (req, res) => {
               try {
                 const result = await serverActions.${moduleName}.${functionName}(...req.body);
-                res.json(result || "* No response *");
+                if (result === undefined) {
+                  res.status(204).end();
+                } else {
+                  res.json(result);
+                }
               } catch (error) {
                 console.error(\`Error in ${functionName}: \${error.message}\`);
-                res.status(500).json({ error: error.message });
+                const status = error.status || 500;
+                res.status(status).json({
+                  error: true,
+                  status,
+                  message: status === 500 ? 'Internal server error' : error.message,
+                  code: error.code || 'SERVER_ACTION_ERROR',
+                  timestamp: new Date().toISOString(),
+                  ...(process.env.NODE_ENV !== 'production' ? { details: { message: error.message, stack: error.stack } } : {})
+                });
               }
             });
           `;
@@ -893,18 +909,13 @@ function generateClientProxy(moduleName, functions, options, filePath) {
 
 	let clientProxy = `\n// vite-server-actions: ${moduleName}\n`;
 
-	// Set proxy flag at module level to prevent false security warnings
+	// Mark this as a legitimate client proxy module
 	if (isDev) {
 		clientProxy += `
-// Development-only safety check
+// Development-only marker for client proxy module
 if (typeof window !== 'undefined') {
-  // Mark that this is a legitimate proxy module
-  window.__VITE_SERVER_ACTIONS_PROXY__ = true;
-  
-  // Only warn if server code is imported outside of proxy context
-  if (!window.__VITE_SERVER_ACTIONS_PROXY__) {
-    console.warn('[Vite Server Actions] SECURITY WARNING: Server file "${moduleName}" detected in client context');
-  }
+  window.__VITE_SERVER_ACTIONS_PROXY__ = window.__VITE_SERVER_ACTIONS_PROXY__ || {};
+  window.__VITE_SERVER_ACTIONS_PROXY__['${moduleName}'] = true;
 }
 `;
 	}
@@ -954,6 +965,12 @@ if (typeof window !== 'undefined') {
           }
 
           console.log("[Vite Server Actions] ✅ - ${functionName} executed successfully");
+          
+          // Handle 204 No Content responses (function returned undefined)
+          if (response.status === 204) {
+            return undefined;
+          }
+          
           const result = await response.json();
           
           ${

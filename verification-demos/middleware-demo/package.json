@@ -1,0 +1,12 @@
+{
+  "name": "middleware-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite"
+  },
+  "dependencies": {
+    "vite": "^5.0.0",
+    "vite-plugin-server-actions": "file:../.."
+  }
+}

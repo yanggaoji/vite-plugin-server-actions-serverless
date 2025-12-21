@@ -162,37 +162,83 @@ export declare const pathUtils: {
 
 // Validation exports
 export interface ValidationAdapter {
-	validate(schema: any, data: any): Promise<any>;
-	getSchemaType(schema: any): string;
+	validate(
+		schema: any,
+		data: any,
+	): Promise<{
+		success: boolean;
+		data?: any;
+		errors?: Array<{ path: string; message: string; code: string; value?: any }>;
+	}>;
+	toOpenAPISchema(schema: any): any;
+	getParameters(schema: any): any[];
 }
 
 export declare class ZodAdapter implements ValidationAdapter {
-	validate(schema: z.ZodSchema<any>, data: any): Promise<any>;
-	getSchemaType(schema: z.ZodSchema<any>): string;
+	validate(
+		schema: z.ZodSchema<any>,
+		data: any,
+	): Promise<{
+		success: boolean;
+		data?: any;
+		errors?: Array<{ path: string; message: string; code: string; value?: any }>;
+	}>;
+	toOpenAPISchema(schema: z.ZodSchema<any>): any;
+	getParameters(schema: z.ZodSchema<any>): any[];
 }
 
 export declare class SchemaDiscovery {
-	constructor();
+	constructor(adapter?: ValidationAdapter);
 	registerSchema(moduleName: string, functionName: string, schema: any): void;
 	getSchema(moduleName: string, functionName: string): any;
+	hasSchema(moduleName: string, functionName: string): boolean;
 	getAllSchemas(): Map<string, any>;
 	discoverFromModule(module: any, moduleName: string): void;
+	clear(): void;
 }
 
 export declare const adapters: {
-	zod: ZodAdapter;
+	zod: typeof ZodAdapter;
 };
 
-export declare function createValidationMiddleware(options: { schemaDiscovery: SchemaDiscovery }): RequestHandler;
+export declare const defaultAdapter: ZodAdapter;
+export declare const defaultSchemaDiscovery: SchemaDiscovery;
+
+export declare function createValidationMiddleware(options?: {
+	adapter?: ValidationAdapter | "zod";
+	schemaDiscovery?: SchemaDiscovery;
+}): RequestHandler;
 
 // OpenAPI exports
 export declare class OpenAPIGenerator {
-	constructor(options?: { info?: any });
-	generateSpec(serverFunctions: Map<string, any>, schemaDiscovery: SchemaDiscovery, options?: any): any;
+	constructor(options?: {
+		info?: { title?: string; version?: string; description?: string };
+		adapter?: ValidationAdapter;
+		servers?: Array<{ url: string; description?: string }>;
+	});
+	generateSpec(
+		serverFunctions: Map<string, any>,
+		schemaDiscovery: SchemaDiscovery,
+		options?: {
+			apiPrefix?: string;
+			routeTransform?: (filePath: string, functionName: string) => string;
+			port?: number | string;
+		},
+	): any;
 }
 
-export declare function setupOpenAPIEndpoints(app: any, options: any): void;
+export declare function setupOpenAPIEndpoints(
+	app: any,
+	openAPISpec: any,
+	options?: {
+		docsPath?: string;
+		specPath?: string;
+		enableSwaggerUI?: boolean;
+		port?: number;
+		swaggerOptions?: any;
+	},
+): void;
 
-export declare function createSwaggerMiddleware(spec: any): RequestHandler;
+export declare function createSwaggerMiddleware(spec: any, options?: { swaggerOptions?: any }): RequestHandler[];
 
 export default serverActions;

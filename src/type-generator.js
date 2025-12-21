@@ -334,6 +334,12 @@ export async ${jsSignature} {
     }
 
     console.log("[Vite Server Actions] ✅ - ${func.name} executed successfully");
+    
+    // Handle 204 No Content responses (function returned undefined)
+    if (response.status === 204) {
+      return undefined;
+    }
+    
     const result = await response.json();
     
     ${

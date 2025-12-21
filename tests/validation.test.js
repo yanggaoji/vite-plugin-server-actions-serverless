@@ -203,22 +203,15 @@ describe("ZodAdapter", () => {
 		});
 
 		it("should handle unsupported schemas gracefully", () => {
-			const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 			const invalidSchema = { _def: { typeName: "UnsupportedType" } };
 
 			const result = adapter.toOpenAPISchema(invalidSchema);
 
-			// The library returns a fallback schema for unsupported types
+			// The adapter uses basic fallback for schemas without .openapi() extension
 			expect(result).toBeDefined();
 			expect(result.type).toBe("object");
-			expect(result.description).toBe("Schema conversion failed");
-
-			// Check if warning was logged
-			expect(consoleWarnSpy).toHaveBeenCalled();
-			const warningMessage = consoleWarnSpy.mock.calls[0][0];
-			expect(warningMessage).toContain("Failed to convert Zod schema to OpenAPI");
-
-			consoleWarnSpy.mockRestore();
+			// Unsupported types get a descriptive fallback
+			expect(result.description).toBe("Zod type: UnsupportedType");
 		});
 	});
 
