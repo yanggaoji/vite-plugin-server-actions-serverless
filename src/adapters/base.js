@@ -1,6 +1,25 @@
 /**
  * Base adapter interface for serverless platforms
- * Abstracts HTTP handling for different platforms (Express, Lambda, Cloudflare Workers)
+ * 
+ * This class provides a platform-agnostic interface that can be extended to support
+ * any serverless platform. Built-in implementations include Express, AWS Lambda, and
+ * Cloudflare Workers, but you can create adapters for:
+ * 
+ * - Azure Functions
+ * - Google Cloud Functions
+ * - Vercel Serverless Functions
+ * - Netlify Functions
+ * - Alibaba Cloud Function Compute
+ * - Tencent Cloud SCF
+ * - Any custom serverless platform
+ * 
+ * To create a custom adapter:
+ * 1. Extend this class
+ * 2. Implement normalizeRequest(platformRequest) to convert platform request to NormalizedRequest
+ * 3. Implement createResponse() to create platform-compatible response wrapper
+ * 4. Implement handleRequest(platformRequest) to handle the complete request lifecycle
+ * 
+ * See docs/custom-adapters.md for detailed guide and examples
  */
 
 /**
@@ -24,6 +43,39 @@
 
 /**
  * Base adapter class that all platform adapters extend
+ * 
+ * @example
+ * ```javascript
+ * import { BaseAdapter } from "vite-plugin-server-actions";
+ * 
+ * export class MyPlatformAdapter extends BaseAdapter {
+ *   async normalizeRequest(platformRequest) {
+ *     return {
+ *       method: platformRequest.method,
+ *       url: platformRequest.path,
+ *       headers: platformRequest.headers,
+ *       body: platformRequest.body,
+ *       query: platformRequest.query,
+ *     };
+ *   }
+ * 
+ *   createResponse() {
+ *     return {
+ *       status(code) { ... },
+ *       json(data) { ... },
+ *       end() { ... },
+ *       header(key, value) { ... },
+ *     };
+ *   }
+ * 
+ *   async handleRequest(platformRequest) {
+ *     const req = await this.normalizeRequest(platformRequest);
+ *     const res = this.createResponse();
+ *     // ... handle request
+ *     return res;
+ *   }
+ * }
+ * ```
  */
 export class BaseAdapter {
 	constructor() {

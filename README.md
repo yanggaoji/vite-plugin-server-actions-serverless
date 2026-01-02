@@ -23,7 +23,7 @@ const users = await getUsers(); // Just call it!
 ## Why Vite Server Actions?
 
 - **Zero API Boilerplate** - No need to define routes, handle HTTP methods, or parse request bodies
-- **Serverless Ready** - Deploy to AWS Lambda, Cloudflare Workers, or traditional servers
+- **Universal Serverless** - Deploy to any platform with extensible adapter pattern
 - **TypeScript Support** - Full TypeScript support with automatic type generation
 - **Built-in Validation** - Automatic request validation using Zod schemas
 - **Auto Documentation** - OpenAPI 3.0 specs and Swagger UI generated automatically
@@ -33,7 +33,7 @@ const users = await getUsers(); // Just call it!
 ## Core Features
 
 - **Seamless Imports** - Import server functions like any other module
-- **Serverless Deployment** - One codebase, deploy anywhere (Lambda, Workers, Express)
+- **Extensible Adapters** - Built-in support for Express, Lambda, Workers; create adapters for any platform
 - **Secure by Default** - Server code never exposed to client, path traversal protection
 - **TypeScript** - Full support with cross-file imports, automatic compilation via Vite's SSR module system
 - **Validation** - Zod schemas with type inference and OpenAPI generation
@@ -41,7 +41,7 @@ const users = await getUsers(); // Just call it!
 - **Middleware Support** - Authentication, logging, CORS, and custom middleware
 - **Flexible Routing** - Multiple routing strategies with hierarchical paths
 - **Developer Experience** - Helpful error messages and development warnings
-- **Production Optimized** - Efficient builds for Express, Lambda, and Workers
+- **Production Optimized** - Efficient builds for any serverless platform
 
 ## Requirements
 
@@ -506,9 +506,9 @@ getDateRange.schema = z.tuple([
 
 ## 🚀 Production Deployment
 
-Vite Server Actions supports multiple deployment targets - choose what works best for your use case.
+Vite Server Actions supports multiple deployment targets through an **extensible adapter pattern**.
 
-### Serverless Deployment (AWS Lambda, Cloudflare Workers)
+### Built-in Platform Support
 
 Enable serverless builds in your config:
 
@@ -518,7 +518,7 @@ export default defineConfig({
     serverActions({
       serverless: {
         enabled: true,
-        targets: ["lambda", "workers"], // or ["express"]
+        targets: ["lambda", "workers"], // Built-in: express, lambda, workers
       },
     }),
   ],
@@ -535,15 +535,37 @@ sam deploy --guided
 
 # Cloudflare Workers (with Wrangler)
 npx wrangler deploy
+
+# Express (traditional)
+node dist/server.js
 ```
 
 **Benefits:**
 - ⚡️ Pay per request
-- 🌍 Global edge distribution (Workers)
+- 🌍 Global edge distribution
 - 📈 Auto-scaling
 - 💰 Cost-effective for variable traffic
+- 🔄 One codebase, deploy anywhere
 
-See [Serverless Deployment Guide](docs/serverless-deployment.md) for detailed instructions.
+### Custom Platform Support
+
+Create adapters for **any serverless platform**:
+- Azure Functions
+- Google Cloud Functions
+- Vercel Serverless Functions
+- Netlify Functions
+- Alibaba Cloud Function Compute
+- Tencent Cloud SCF
+- Your own custom platform
+
+See the [Custom Adapters Guide](docs/custom-adapters.md) for step-by-step instructions.
+
+### Documentation
+
+- [Serverless Deployment Guide](docs/serverless-deployment.md) - Deployment instructions
+- [Custom Adapters Guide](docs/custom-adapters.md) - Create adapters for any platform
+- [AWS Lambda Examples](docs/examples/aws-lambda/) - Lambda deployment examples
+- [Cloudflare Workers Examples](docs/examples/cloudflare-workers/) - Workers deployment examples
 
 ### Traditional Server (Express)
 

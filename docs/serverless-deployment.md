@@ -1,6 +1,6 @@
 # Serverless Deployment Guide
 
-This guide explains how to deploy your Vite Server Actions application to serverless platforms like AWS Lambda and Cloudflare Workers.
+This guide explains how to deploy your Vite Server Actions application to serverless platforms.
 
 ## Table of Contents
 
@@ -10,16 +10,28 @@ This guide explains how to deploy your Vite Server Actions application to server
 - [Cloudflare Workers Deployment](#cloudflare-workers-deployment)
 - [Traditional Express Deployment](#traditional-express-deployment)
 - [Multi-Target Builds](#multi-target-builds)
+- [Custom Adapters](#custom-adapters)
 
 ## Overview
 
-Vite Server Actions now supports serverless deployment through platform-specific adapters. The plugin can generate handlers for:
+Vite Server Actions supports serverless deployment through an **extensible adapter pattern**. Built-in adapters include:
 
 - **Express** - Traditional Node.js server (default)
 - **AWS Lambda** - Serverless functions on AWS
 - **Cloudflare Workers** - Edge computing platform
 
-All three targets share the same server action code, making it easy to switch between deployment platforms.
+**The adapter pattern is designed to be platform-agnostic.** You can create custom adapters for any serverless platform:
+- Azure Functions
+- Google Cloud Functions  
+- Vercel Serverless Functions
+- Netlify Functions
+- Alibaba Cloud Function Compute
+- Tencent Cloud SCF
+- Any other platform
+
+See the [Custom Adapters Guide](custom-adapters.md) for detailed instructions on creating adapters for other platforms.
+
+All adapters share the same server action code, making it easy to switch between deployment platforms.
 
 ## Configuration
 
@@ -491,3 +503,78 @@ export const handler = adapter.createHandler();
 4. Update client to use Workers URL
 
 No code changes required in your server actions!
+
+## Custom Adapters
+
+The adapter pattern is designed to be **extensible and platform-agnostic**. You can create adapters for any serverless platform.
+
+### Supported Platforms
+
+While the plugin includes built-in adapters for Express, Lambda, and Workers, the `BaseAdapter` class can be extended to support any platform:
+
+- **Azure Functions** - Microsoft's serverless platform
+- **Google Cloud Functions** - Google's serverless platform
+- **Vercel Serverless Functions** - Vercel's edge functions
+- **Netlify Functions** - Netlify's serverless functions
+- **Alibaba Cloud Function Compute** - Alibaba's serverless platform
+- **Tencent Cloud SCF** - Tencent's serverless platform
+- **Any custom platform** - Your own serverless infrastructure
+
+### Creating Custom Adapters
+
+To create an adapter for any platform, extend the `BaseAdapter` class and implement three key methods:
+
+```javascript
+import { BaseAdapter } from "vite-plugin-server-actions";
+
+export class MyPlatformAdapter extends BaseAdapter {
+  // Convert platform request to normalized format
+  async normalizeRequest(platformRequest) {
+    return {
+      method: platformRequest.method,
+      url: platformRequest.path,
+      headers: platformRequest.headers,
+      body: platformRequest.body,
+      query: platformRequest.query,
+    };
+  }
+
+  // Create normalized response wrapper
+  createResponse() {
+    return {
+      status(code) { /* ... */ },
+      json(data) { /* ... */ },
+      end() { /* ... */ },
+      header(key, value) { /* ... */ },
+    };
+  }
+
+  // Handle request and return platform response
+  async handleRequest(platformRequest) {
+    const req = await this.normalizeRequest(platformRequest);
+    const res = this.createResponse();
+    
+    // Execute middleware and route handlers
+    await this.executeHandlers(req, res, handlers);
+    
+    return this.toPlatformResponse(res);
+  }
+}
+```
+
+### Complete Guide
+
+For detailed instructions, examples, and best practices for creating custom adapters, see:
+
+**[📖 Custom Adapters Guide](custom-adapters.md)**
+
+This guide includes:
+- Step-by-step adapter creation
+- Examples for Azure, Google Cloud, Vercel, Alibaba Cloud, and more
+- Testing strategies
+- Build integration options
+- Best practices and error handling
+
+### Using Community Adapters
+
+The community has created adapters for various platforms. Check the [community adapters repository](https://github.com/vite-plugin-server-actions/community-adapters) for contributions.
