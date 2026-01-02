@@ -1,0 +1,67 @@
+# Serverless Framework configuration for AWS Lambda
+# Use with: serverless deploy
+
+service: vite-server-actions
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  memorySize: 512
+  timeout: 30
+  environment:
+    NODE_ENV: production
+    # Add your environment variables
+    # DATABASE_URL: ${env:DATABASE_URL}
+    # API_KEY: ${env:API_KEY}
+  
+  # IAM permissions for your server actions
+  iam:
+    role:
+      statements:
+        # Example: DynamoDB access
+        # - Effect: Allow
+        #   Action:
+        #     - dynamodb:Query
+        #     - dynamodb:Scan
+        #     - dynamodb:GetItem
+        #     - dynamodb:PutItem
+        #   Resource: "arn:aws:dynamodb:${aws:region}:*:table/YourTable"
+
+functions:
+  api:
+    handler: lambda.handler
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+          cors:
+            allowedOrigins:
+              - '*'
+            allowedHeaders:
+              - Content-Type
+              - Authorization
+            allowedMethods:
+              - GET
+              - POST
+              - OPTIONS
+
+# Package only necessary files
+package:
+  patterns:
+    - 'dist/lambda.js'
+    - 'dist/actions.js'
+    - 'dist/adapters/**'
+    - 'dist/openapi.json'
+    - '!dist/server.js'
+    - '!dist/workers.js'
+    - '!dist/assets/**'
+    - '!node_modules/**'
+
+plugins:
+  - serverless-offline # For local testing
+
+custom:
+  serverless-offline:
+    httpPort: 3000

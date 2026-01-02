@@ -899,6 +899,71 @@ export default function serverActions(userOptions = {}) {
 				fileName: "server.js",
 				source: serverCode,
 			});
+
+			// Serverless deployment support
+			const targets = options.serverless?.enabled
+				? options.serverless.targets
+				: [];
+
+			if (targets.includes("lambda")) {
+				const lambdaCode = generateLambdaHandler(serverFunctions, options, validationCode);
+				this.emitFile({
+					type: "asset",
+					fileName: "lambda.js",
+					source: lambdaCode,
+				});
+
+				const lambdaAdapterCode = await fs.readFile(
+					new URL("./adapters/lambda.js", import.meta.url),
+					"utf-8"
+				);
+				const baseAdapterCode = await fs.readFile(
+					new URL("./adapters/base.js", import.meta.url),
+					"utf-8"
+				);
+
+				this.emitFile({
+					type: "asset",
+					fileName: "adapters/lambda.js",
+					source: lambdaAdapterCode,
+				});
+				this.emitFile({
+					type: "asset",
+					fileName: "adapters/base.js",
+					source: baseAdapterCode,
+				});
+			}
+
+			if (targets.includes("workers")) {
+				const workersCode = generateWorkersHandler(serverFunctions, options, validationCode);
+				this.emitFile({
+					type: "asset",
+					fileName: "workers.js",
+					source: workersCode,
+				});
+
+				const workersAdapterCode = await fs.readFile(
+					new URL("./adapters/workers.js", import.meta.url),
+					"utf-8"
+				);
+				const baseAdapterCodeWorkers = await fs.readFile(
+					new URL("./adapters/base.js", import.meta.url),
+					"utf-8"
+				);
+
+				this.emitFile({
+					type: "asset",
+					fileName: "adapters/workers.js",
+					source: workersAdapterCode,
+				});
+				if (!targets.includes("lambda")) {
+					this.emitFile({
+						type: "asset",
+						fileName: "adapters/base.js",
+						source: baseAdapterCodeWorkers,
+					});
+				}
+			}
 		},
 	};
 }
@@ -1011,3 +1076,4 @@ if (typeof window !== 'undefined') {
 export { middleware };
 export { createValidationMiddleware, ValidationAdapter, ZodAdapter, SchemaDiscovery, adapters } from "./validation.js";
 export { OpenAPIGenerator, setupOpenAPIEndpoints, createSwaggerMiddleware } from "./openapi.js";
+export { ExpressAdapter, LambdaAdapter, WorkersAdapter, createLambdaHandler, createWorkersHandler } from "./adapters/index.js";

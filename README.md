@@ -23,15 +23,17 @@ const users = await getUsers(); // Just call it!
 ## Why Vite Server Actions?
 
 - **Zero API Boilerplate** - No need to define routes, handle HTTP methods, or parse request bodies
+- **Universal Serverless** - Deploy to any platform with extensible adapter pattern
 - **TypeScript Support** - Full TypeScript support with automatic type generation
 - **Built-in Validation** - Automatic request validation using Zod schemas
 - **Auto Documentation** - OpenAPI 3.0 specs and Swagger UI generated automatically
-- **Production Ready** - Builds to optimized Node.js Express server
+- **Production Ready** - Builds to optimized handlers for any platform
 - **Developer Experience** - Clear error messages, hot reload, and development-time validation
 
 ## Core Features
 
 - **Seamless Imports** - Import server functions like any other module
+- **Extensible Adapters** - Built-in support for Express, Lambda, Workers; create adapters for any platform
 - **Secure by Default** - Server code never exposed to client, path traversal protection
 - **TypeScript** - Full support with cross-file imports, automatic compilation via Vite's SSR module system
 - **Validation** - Zod schemas with type inference and OpenAPI generation
@@ -39,7 +41,7 @@ const users = await getUsers(); // Just call it!
 - **Middleware Support** - Authentication, logging, CORS, and custom middleware
 - **Flexible Routing** - Multiple routing strategies with hierarchical paths
 - **Developer Experience** - Helpful error messages and development warnings
-- **Production Optimized** - Efficient Express server builds
+- **Production Optimized** - Efficient builds for any serverless platform
 
 ## Requirements
 
@@ -504,7 +506,68 @@ getDateRange.schema = z.tuple([
 
 ## 🚀 Production Deployment
 
-### Building for Production
+Vite Server Actions supports multiple deployment targets through an **extensible adapter pattern**.
+
+### Built-in Platform Support
+
+Enable serverless builds in your config:
+
+```javascript
+export default defineConfig({
+  plugins: [
+    serverActions({
+      serverless: {
+        enabled: true,
+        targets: ["lambda", "workers"], // Built-in: express, lambda, workers
+      },
+    }),
+  ],
+});
+```
+
+Build and deploy:
+
+```bash
+npm run build
+
+# AWS Lambda (with SAM)
+sam deploy --guided
+
+# Cloudflare Workers (with Wrangler)
+npx wrangler deploy
+
+# Express (traditional)
+node dist/server.js
+```
+
+**Benefits:**
+- ⚡️ Pay per request
+- 🌍 Global edge distribution
+- 📈 Auto-scaling
+- 💰 Cost-effective for variable traffic
+- 🔄 One codebase, deploy anywhere
+
+### Custom Platform Support
+
+Create adapters for **any serverless platform**:
+- Azure Functions
+- Google Cloud Functions
+- Vercel Serverless Functions
+- Netlify Functions
+- Alibaba Cloud Function Compute
+- Tencent Cloud SCF
+- Your own custom platform
+
+See the [Custom Adapters Guide](docs/custom-adapters.md) for step-by-step instructions.
+
+### Documentation
+
+- [Serverless Deployment Guide](docs/serverless-deployment.md) - Deployment instructions
+- [Custom Adapters Guide](docs/custom-adapters.md) - Create adapters for any platform
+- [AWS Lambda Examples](docs/examples/aws-lambda/) - Lambda deployment examples
+- [Cloudflare Workers Examples](docs/examples/cloudflare-workers/) - Workers deployment examples
+
+### Traditional Server (Express)
 
 ```bash
 npm run build
@@ -512,22 +575,28 @@ npm run build
 
 This generates:
 
-- `dist/server.js` - Your Express server with all endpoints
+- `dist/server.js` - Express server with all endpoints
 - `dist/actions.js` - Bundled server functions
 - `dist/openapi.json` - API specification (if enabled)
 - Client assets with proxy functions
 
 ### Running in Production
 
+**Express Server:**
 ```bash
 node dist/server.js
 ```
 
 Or with PM2:
-
 ```bash
 pm2 start dist/server.js --name my-app
 ```
+
+**AWS Lambda:**
+The `dist/lambda.js` handler is ready for Lambda deployment. See [AWS Lambda examples](docs/examples/aws-lambda/).
+
+**Cloudflare Workers:**
+The `dist/workers.js` handler is ready for Workers deployment. See [Cloudflare Workers examples](docs/examples/cloudflare-workers/).
 
 ### Environment Variables
 
@@ -538,6 +607,8 @@ export async function sendEmail(to, subject, body) {
   // ...
 }
 ```
+
+Works on all platforms (Express, Lambda, Workers).
 
 ## 🛡️ Security Considerations
 
