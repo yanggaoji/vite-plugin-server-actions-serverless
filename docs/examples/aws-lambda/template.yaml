@@ -1,0 +1,62 @@
+# Example AWS Lambda deployment configuration
+# Use with AWS SAM CLI
+
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: Vite Server Actions deployed to AWS Lambda
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: nodejs18.x
+    Environment:
+      Variables:
+        NODE_ENV: production
+
+Resources:
+  # API Gateway
+  ServerActionsApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - "*"
+
+  # Lambda Function
+  ServerActionsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: dist/
+      Handler: lambda.handler
+      Description: Vite Server Actions Lambda Handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ServerActionsApi
+            Path: /{proxy+}
+            Method: ANY
+      # Environment variables for your server actions
+      Environment:
+        Variables:
+          # Add your environment variables here
+          # DATABASE_URL: !Ref DatabaseUrl
+          # API_KEY: !Ref ApiKey
+          LOG_LEVEL: info
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ServerActionsApi}.execute-api.${AWS::Region}.amazonaws.com"
+  
+  FunctionArn:
+    Description: Lambda Function ARN
+    Value: !GetAtt ServerActionsFunction.Arn
